@@ -5,7 +5,9 @@ Queste regole valgono per tutti i membri del team, owner compresi.
 ## 1. Flusso di lavoro
 
 1. **Parti da una issue.** Ogni lavoro nasce da una issue del backlog (storia, task o bug).
-   Assegnatela e spostala in "In corso" sul progetto.
+   Assegnatela e spostala in **In Progress** sulla board
+   [Loggione Roadmap](https://github.com/orgs/loggione-finale/projects/1).
+   Quando apri la PR spostala in **In Review**; dopo il merge va in **Done**.
 2. **Crea un branch da `main` aggiornato.**
    ```bash
    git switch main
