@@ -49,6 +49,91 @@ Regola: **ogni servizio possiede il proprio database** e nessun altro servizio l
 | `/api/bookings/**` | Bookings |
 | `/api/usage/**` | Usage |
 
+## Relazioni tra i dati dei servizi
+
+Con un database per servizio **non esistono foreign key tra database diversi**: PostgreSQL non può
+verificare che un `space_id` salvato in `bookings` esista davvero in `spaces`. Le relazioni diventano
+**riferimenti logici** (si salva solo l'identificativo) e la loro coerenza è garantita dai servizi,
+non dal database.
+
+```mermaid
+erDiagram
+    SPACE ||--o{ UNAVAILABILITY : "FK reale (db spaces)"
+    BOOKING ||--o| CHECK_IN : "FK reale (db bookings)"
+    SPACE ||..o{ BOOKING : "riferimento logico space_id"
+    BOOKING ||..o| BOOKING_COPY : "copia sincronizzata (db usage)"
+    SPACE {
+        uuid id
+        string name
+        string type
+        int capacity
+        bool is_active
+    }
+    UNAVAILABILITY {
+        uuid id
+        uuid space_id
+        tstzrange period
+        string reason
+    }
+    BOOKING {
+        uuid id
+        uuid space_id
+        string space_name_snapshot
+        string user_id
+        tstzrange period
+        string status
+        timestamptz updated_at
+    }
+    CHECK_IN {
+        uuid booking_id
+        timestamptz checked_in_at
+    }
+    BOOKING_COPY {
+        uuid booking_id
+        uuid space_id
+        tstzrange period
+        string status
+        bool checked_in
+    }
+```
+
+Linea continua: foreign key vera, dentro lo stesso database. Linea tratteggiata: riferimento tra servizi
+diversi, senza foreign key.
+
+| Dato | Proprietario | Chi altro lo usa | Come |
+|---|---|---|---|
+| Spazio (`id`, nome, stato attivo, indisponibilità) | Spaces | Bookings | `GET /spaces/{id}` al momento della prenotazione |
+| Prenotazione e check-in | Bookings | Usage | Copia sincronizzata ogni minuto (`GET /bookings/changes`) |
+| Utente (`user_id`, ruolo) | Nessun servizio: elenco di utenti sintetici in `data/synthetic` (D8) | Tutti | Arriva con ogni richiesta (`X-User-Id`, `X-User-Role`) |
+
+### Che cosa succede quando un utente prenota
+
+1. Il Web invia a Bookings `space_id`, utente e fascia oraria.
+2. **Bookings chiede a Spaces** se lo spazio esiste, è attivo e non è indisponibile in quella fascia. È
+   l'unico momento in cui i due database "si parlano", e lo fanno attraverso le API, mai leggendo l'uno
+   le tabelle dell'altro.
+3. Bookings salva nel **proprio** database `space_id` e una **copia del nome dello spazio**
+   (`space_name_snapshot`). Grazie alla copia, "Le mie prenotazioni" funziona anche con Spaces giù (vedi la
+   tabella dei guasti).
+4. Il vincolo di esclusione (D5) controlla le sovrapposizioni dentro il database `bookings`. Serve una
+   **sola transazione locale**: nessuna transazione distribuita, nessuna saga.
+5. Entro un minuto Usage copia la nuova prenotazione nel proprio database.
+
+### Come restano coerenti i riferimenti
+
+| Rischio | Regola |
+|---|---|
+| Una prenotazione punta a uno spazio cancellato | Spaces **non cancella mai** uno spazio: lo disattiva. Ogni `space_id` salvato resta valido per sempre |
+| Si prenota uno spazio che non esiste | Bookings lo verifica con Spaces prima di salvare; se Spaces non risponde, rifiuta (`503`) |
+| Il nome dello spazio cambia dopo la prenotazione | La copia conserva il nome al momento della prenotazione; la pagina di dettaglio mostra quello attuale chiedendolo a Spaces |
+| Uno spazio viene disattivato o va in manutenzione con prenotazioni già confermate | Le prenotazioni esistenti non vengono toccate in automatico. **Domanda aperta per il PO** (n. 4 dell'analisi): se vanno annullate serve un flusso tra due servizi, da valutare dopo il risultato minimo |
+| Usage mostra dati vecchi | Coerenza **eventuale**: ritardo massimo di circa un minuto, sempre dichiarato con la data dell'ultima sincronizzazione |
+
+| Opzione per mostrare il nome dello spazio nelle prenotazioni | Pro | Contro |
+|---|---|---|
+| A. Il Web chiede i nomi a Spaces ogni volta (composizione delle API) | Nessuna copia, nome sempre aggiornato | Con Spaces giù l'elenco delle prenotazioni perde i nomi; più chiamate |
+| **B. Copia del nome in Bookings** (raccomandata) | "Le mie prenotazioni" funziona da sola, coerente con la tabella dei guasti | Il nome copiato può essere vecchio (accettabile: è quello prenotato) |
+
 ## Struttura delle cartelle
 
 ```

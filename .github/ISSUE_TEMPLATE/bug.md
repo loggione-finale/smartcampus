@@ -2,7 +2,7 @@
 name: Bug
 about: Un comportamento diverso da quello atteso
 title: "[Bug] "
-labels: bug
+type: Bug
 ---
 
 ## Cosa succede
