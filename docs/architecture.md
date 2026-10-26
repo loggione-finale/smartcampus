@@ -296,17 +296,36 @@ servizio (Bookings), nessuno strumento nuovo da imparare.
 | **A. REST sincrono con `HttpClient`** (raccomandata) | Già visto nel corso; facile da provare e da mostrare | Con Spaces giù non si creano prenotazioni (scelta voluta) |
 | B. Broker di messaggi (RabbitMQ) | Servizi disaccoppiati | Mai usato nel corso; un componente in più da installare; duplicati e ordine dei messaggi da gestire |
 
-### D4 – Database
+### D4 – Database (relazionale, non relazionale o entrambi)
+
+Le slide citano **SQL e NoSQL** tra le competenze del corso e dicono che la doppia persistenza **non è
+imposta**: usarla è possibile, ma va motivata, come va motivata l'esclusione. Con un database per servizio
+la scelta si fa **servizio per servizio**, guardando a cosa servono i dati.
+
+| Servizio | Dati | Come vengono usati | Che cosa serve al database | Adatto |
+|---|---|---|---|---|
+| **Bookings** | Prenotazioni, partecipanti, check-in | Scritture concorrenti; letture per fascia oraria; aggregazioni per le statistiche | **Vincoli di esclusione** su spazio e persona; **transazioni** su prenotazione + partecipanti; `GROUP BY` | **Solo relazionale** (PostgreSQL) |
+| **Spaces** | Spazi con attributi diversi per tipo (laboratorio: postazioni e software; aula: proiettore e lavagna; sala studio: prese e silenzio), indisponibilità | Molte letture e ricerche per filtri; poche scritture del personale | Schema flessibile, ricerca su attributi variabili; nessun vincolo tra spazi diversi | **Entrambi**: un documento per spazio è molto naturale |
+| **Users** | Profili semplici (nome, ruolo, email fittizia) | Elenco e ricerca per nome | Nulla di particolare | Entrambi |
+
+Bookings non può stare su un database documentale: MongoDB non ha vincoli tra documenti diversi, quindi
+le sovrapposizioni andrebbero controllate nel codice, ed è proprio la soluzione sbagliata con richieste
+simultanee (D5).
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. PostgreSQL, un database per servizio nello stesso container** (raccomandata) | Gratuito e cross-platform; **unico con i vincoli di esclusione sugli intervalli di tempo** (D5); un solo container | Un solo server: punto unico di guasto, da dichiarare |
-| B. SQL Server | Molto integrato con .NET | Nessun vincolo di esclusione: servirebbero transazioni `SERIALIZABLE` o lock; immagine pesante, scomoda sui Mac ARM |
-| C. MySQL / MariaDB | Diffuso | Nessun tipo intervallo né vincolo di esclusione |
-| D. MongoDB | Mostra NoSQL | Nessun vincolo tra documenti diversi: le sovrapposizioni andrebbero controllate nel codice, sbagliato con richieste simultanee |
+| A. Tutto PostgreSQL | Un solo motore, un solo strumento di accesso (EF Core con migrazioni), un solo container; test e CI più semplici | NoSQL resta fuori: va motivato perché (B1 dell'[analisi dei requisiti](analysis/requirements-analysis.md)) |
+| **E. Spaces su MongoDB, Bookings e Users su PostgreSQL** (proposta, da decidere in review) | Usa NoSQL **dove serve davvero** (attributi diversi per tipo di spazio, indisponibilità dentro il documento dello spazio); la regola critica resta relazionale; un guasto di MongoDB ferma solo il catalogo | Due motori in Docker Compose; Spaces usa il driver ufficiale `MongoDB.Driver` invece di EF Core e non ha migrazioni (indici e dati iniziali creati all'avvio); test di Spaces su MongoDB reale; costi di gestione doppi (F5 dell'analisi) |
+| B. SQL Server per tutto | Molto integrato con .NET | Nessun vincolo di esclusione: servirebbero transazioni `SERIALIZABLE` o lock; immagine pesante, scomoda sui Mac ARM |
+| C. MySQL / MariaDB per tutto | Diffuso | Nessun tipo intervallo né vincolo di esclusione |
+| D. MongoDB per tutto | Un solo motore NoSQL | Impossibile garantire l'assenza di sovrapposizioni con richieste simultanee |
 
-Database: `spaces`, `bookings`, `users`. Accesso ai dati: **Entity Framework Core** con il provider Npgsql
-e le migrazioni. Ogni servizio riceve **solo** la stringa di connessione del proprio database.
+**Proposta:** l'opzione **E**, se chi lavora su Spaces si sente sicuro con MongoDB; altrimenti l'opzione
+**A**, scrivendo nell'ADR perché NoSQL è stato escluso. In entrambi i casi Bookings resta su PostgreSQL.
+
+Con l'opzione A i database sono `spaces`, `bookings`, `users` su PostgreSQL, con **Entity Framework Core**
+(provider Npgsql) e migrazioni. Con l'opzione E il database `spaces` diventa una collezione `spaces` su
+MongoDB. In entrambi i casi ogni servizio riceve **solo** la stringa di connessione del proprio database.
 
 ### D5 – Prevenzione delle sovrapposizioni (spazi e persone)
 
@@ -400,7 +419,7 @@ Ruoli nel codice: `Student`, `Staff`.
 | D1 | Microservizi, solo 3 servizi |
 | D2 | Spaces, Bookings (con statistiche), Users |
 | D3 | REST sincrono con `HttpClient` e timeout |
-| D4 | PostgreSQL, un database per servizio |
+| D4 | Un database per servizio: Bookings e Users su PostgreSQL; Spaces su MongoDB o PostgreSQL (da decidere) |
 | D5 | Vincoli di esclusione su spazi e persone |
 | D6 | Angular + Angular Material |
 | D7 | Docker Compose solo per PostgreSQL |

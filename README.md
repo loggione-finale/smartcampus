@@ -13,7 +13,10 @@ vanno registrate in [`docs/decisions/`](docs/decisions/).
 Consegna: **29/10/2026**.
 
 - [Analisi del progetto](docs/analysis/project-analysis.md)
+- [Analisi dei requisiti rispetto alle slide](docs/analysis/requirements-analysis.md)
+- [Flusso dell'applicativo e punti deboli](docs/analysis/application-flow.md)
 - [Architettura proposta (microservizi)](docs/architecture.md)
+- [Sicurezza e test per ogni componente](docs/security-and-testing.md)
 - [Bozza del backlog](docs/backlog/backlog-draft.md)
 
 **Stack:** tre microservizi ASP.NET Core Web API (Spaces, Bookings, Users) con EF Core e PostgreSQL,
