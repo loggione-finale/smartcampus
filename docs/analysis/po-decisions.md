@@ -23,6 +23,13 @@
 | 14 | 26/10 | Accesso | Profilo sintetico; token firmato se c'è tempo | _in attesa_ | | |
 | 15 | 26/10 | Criteri di accettazione e DoD | DoD attuale | _in attesa_ | | |
 | 16 | 26/10 | Product Goal e Sprint Goal | Proposte nell'incontro | _in attesa_ | | |
+| 17 | 26/10 | Perimetro del brainstorming (registrazione, inviti con 2 ore, aule miste, strumenti, commento finale, admin) | Vedi [brainstorming](brainstorming-2026-10-26.md), 73 SP Must con ordine di taglio | _in attesa_ | | |
+| 18 | 26/10 | Telefono nella registrazione | Da confermare: serve davvero? | _in attesa_ | | |
+| 19 | 26/10 | Formato della matricola | Da 6 a 10 cifre | _in attesa_ | | |
+| 20 | 26/10 | Chi prenota aule dedicate e miste | Singoli solo miste; gruppi dedicate o miste fino a 4 persone | _in attesa_ | | |
+| 21 | 26/10 | Scadenza delle conferme per prenotazioni imminenti | 2 ore dalla creazione o l'inizio, se arriva prima | _in attesa_ | | |
+| 22 | 26/10 | Strumenti richiedibili | Videoproiettore, lavagna interattiva, kit audio, altro (testo) | _in attesa_ | | |
+| 23 | 26/10 | Email nella demo | File `.eml` in una cartella locale | _in attesa_ | | |
 
 ## Questioni aperte
 
