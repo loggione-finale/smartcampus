@@ -1,20 +1,28 @@
 ---
 name: User story
-about: Un bisogno di un utente e il valore atteso
-title: "[Storia] "
+about: Un bisogno di un utente, i criteri di accettazione e la stima
+title: "[SC-XX] - "
 labels: storia
 ---
 
-**Come** <studente | personale | ...>
-**voglio** <obiettivo>
-**così che** <valore>
+## User Story
+
+Come <tipo di utente / ruolo>
+voglio <funzionalità / azione>
+in modo da <beneficio / valore ottenuto>.
+
+## Descrizione
+
+<!-- Cosa deve fare il sistema e in quale contesto. Niente dettagli tecnici di implementazione. -->
 
 ## Criteri di accettazione
 
-<!-- Risultati osservabili, concordati con il PO. -->
+La storia è considerata completata quando:
 
-- [ ]
-- [ ]
+- [ ] <Criterio di accettazione 1>
+- [ ] <Criterio di accettazione 2>
+- [ ] <Criterio di accettazione 3>
 
-## Note e domande aperte
+## Story Point
 
+Stima: <1 / 2 / 3 / 5 / 8 / 13>

@@ -10,6 +10,12 @@ Project Work ITS Bari – Novembre 2026.
 Progetto appena avviato: perimetro, architettura e stack di dettaglio sono ancora da concordare
 con il Product Owner. Le decisioni prese vanno registrate in [`docs/decisioni/`](docs/decisioni/).
 
+Consegna: **29/10/2026**.
+
+- [Analisi del progetto](docs/analisi/analisi-progetto.md)
+- [Architettura proposta (microservizi)](docs/architettura.md)
+- [Bozza del backlog](docs/backlog/backlog-bozza.md)
+
 ## Struttura del repository
 
 | Percorso | Contenuto |
@@ -18,6 +24,8 @@ con il Product Owner. Le decisioni prese vanno registrate in [`docs/decisioni/`]
 | `tests/` | Test automatici, inclusi quelli sul database reale scelto |
 | `data/synthetic/` | Dati sintetici prodotti dal gruppo e script per generarli |
 | `docs/analisi/` | Analisi del bisogno, ipotesi, domande aperte, perimetro concordato col PO |
+| `docs/architettura.md` | Servizi, scelte tecniche con pro e contro |
+| `docs/backlog/` | Bozza del backlog prima della creazione delle issue |
 | `docs/decisioni/` | Decisioni architetturali e tecniche motivate (ADR) |
 | `docs/prove/` | Prove eseguite, esiti osservati e limiti noti |
 | `docs/definition-of-done.md` | Definition of Done del gruppo |
