@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Bookings/">
+    <Project Path="src/Services/Bookings/SmartCampus.Bookings.Api/SmartCampus.Bookings.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Spaces/">
+    <Project Path="src/Services/Spaces/SmartCampus.Spaces.Api/SmartCampus.Spaces.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Users/">
+    <Project Path="src/Services/Users/SmartCampus.Users.Api/SmartCampus.Users.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/SmartCampus.Auth/SmartCampus.Auth.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SmartCampus.Bookings.Tests/SmartCampus.Bookings.Tests.csproj" />
+    <Project Path="tests/SmartCampus.Spaces.Tests/SmartCampus.Spaces.Tests.csproj" />
+    <Project Path="tests/SmartCampus.Users.Tests/SmartCampus.Users.Tests.csproj" />
+  </Folder>
+</Solution>

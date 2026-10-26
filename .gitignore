@@ -384,11 +384,8 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# VS Code files for those working on multiple tools
+# VS Code: impostazioni personali, condiviso solo l'elenco delle estensioni consigliate
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
 
@@ -484,3 +481,22 @@ $RECYCLE.BIN/
 # Angular
 .angular/
 src/web/dist/
+
+# --- SmartCampus: mai online ---
+# Segreti: solo il file di esempio è condiviso
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Docker: personalizzazioni locali e dati dei database
+docker-compose.override.yml
+.docker-data/
+
+# Email della demo, generate in locale come file .eml
+mail-outbox/
+
+# Copertura dei test
+coverage/
+*.coverage
