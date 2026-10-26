@@ -37,13 +37,13 @@ voglio avviare l'intero sistema con un solo comando, seguendo il README
 in modo da poter provare il prodotto su qualsiasi macchina senza configurazioni manuali.
 
 **Descrizione**
-Lo scheletro della soluzione contiene tutti i servizi, il gateway, l'interfaccia e il database, collegati
+Lo scheletro della soluzione contiene i tre servizi, il frontend Angular e il database, collegati
 tra loro fin dal primo giorno, anche se ancora senza funzioni. Nessun segreto è salvato nel repository.
 
 **Criteri di accettazione**
 La storia è considerata completata quando:
-- [ ] Seguendo il README su una macchina pulita (con .NET SDK e Docker) il sistema si avvia con un comando.
-- [ ] L'interfaccia raggiunge ogni servizio passando dal gateway.
+- [ ] Seguendo il README su una macchina pulita (con .NET SDK, Node.js e Docker) il sistema si avvia con un comando.
+- [ ] Il frontend raggiunge ogni servizio tramite il proxy di sviluppo di Angular.
 - [ ] Ogni servizio espone un controllo di salute che risponde correttamente.
 - [ ] L'avvio è stato provato su almeno due sistemi operativi diversi, con esito registrato in `docs/evidence/`.
 
