@@ -4,13 +4,17 @@ Queste regole valgono per tutti i membri del team, owner compresi.
 
 ## 1. Flusso di lavoro
 
-1. **Parti da una issue.** Ogni lavoro nasce da una issue del backlog (storia, task o bug).
-   Assegnatela e spostala in "In corso" sul progetto.
+1. **Parti da una issue.** Ogni lavoro nasce da una issue del backlog. Il backlog ha quattro tipi:
+   **Feature** → **User Story** → **Task** (ognuno è sub-issue del livello sopra), più **Bug**.
+   Si lavora sui Task e sui Bug.
+   Assegnatela e spostala in **In Progress** sulla board
+   [Loggione Roadmap](https://github.com/orgs/loggione-finale/projects/1).
+   Quando apri la PR spostala in **In Review**; dopo il merge va in **Done**.
 2. **Crea un branch da `main` aggiornato.**
    ```bash
    git switch main
    git pull
-   git switch -c feature/42-ricerca-aule
+   git switch -c feature/42-room-search
    ```
 3. **Lavora con commit piccoli** e fai push del branch.
 4. **Apri una pull request verso `main`** e collega la issue scrivendo `Closes #42` nella descrizione.
@@ -19,6 +23,12 @@ Queste regole valgono per tutti i membri del team, owner compresi.
    Il branch viene cancellato automaticamente.
 
 Su `main` non si fa mai push diretto: GitHub lo blocca.
+
+### Lingua
+
+- **Nomi in inglese**: file, cartelle, progetti, namespace, classi, metodi, variabili, rotte API, tabelle
+  e colonne, branch, messaggi di commit, label.
+- **Testi in italiano**: documentazione, issue, descrizioni delle PR, commenti di review, testi dell'interfaccia.
 
 ## 2. Nomi dei branch
 
@@ -32,7 +42,7 @@ Su `main` non si fa mai push diretto: GitHub lo blocca.
 | `test/` | Solo test o dati sintetici |
 | `chore/` | Configurazione, dipendenze, manutenzione |
 
-Esempio: `fix/57-doppia-prenotazione-stessa-aula`.
+Esempio: `fix/57-double-booking-same-room`.
 
 ## 3. Messaggi di commit e titolo della PR
 
@@ -40,10 +50,10 @@ Con lo squash, **il titolo della PR diventa il messaggio del commit su `main`**:
 Usiamo il formato [Conventional Commits](https://www.conventionalcommits.org/it/):
 
 ```
-feat: ricerca aule libere per fascia oraria
-fix: impedita la doppia prenotazione della stessa aula
-docs: aggiunta Definition of Done
-test: dati sintetici per prenotazioni sovrapposte
+feat: search free rooms by time slot
+fix: prevent double booking of the same room
+docs: add Definition of Done
+test: synthetic data for overlapping bookings
 ```
 
 ## 4. Pull request
@@ -74,7 +84,7 @@ test: dati sintetici per prenotazioni sovrapposte
   ```bash
   git switch main
   git pull
-  git branch -d feature/42-ricerca-aule
+  git branch -d feature/42-room-search
   ```
 - Se GitHub segnala conflitti, aggiorna il branch con `main` prima del merge.
 

@@ -11,5 +11,7 @@ Un elemento del backlog è **Done** quando:
 - [ ] le proprietà di concorrenza e persistenza sono provate sul **database reale**, non solo con mock;
 - [ ] i dati sintetici necessari sono nel repository o generabili da script;
 - [ ] nessun segreto e nessun dato personale reale sono stati aggiunti;
+- [ ] i controlli di sicurezza e i test previsti per la componente in
+      [security-and-testing.md](security-and-testing.md) sono presenti e passano;
 - [ ] README e documentazione pertinente sono aggiornati;
-- [ ] i limiti noti sono dichiarati in [`docs/prove/`](prove/).
+- [ ] i limiti noti sono dichiarati in [`docs/evidence/`](evidence/).

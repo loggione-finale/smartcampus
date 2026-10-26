@@ -1,30 +1,35 @@
 # Bozza del Product Backlog
 
+> **Questa è la versione storica rivista dal gruppo.** Il backlog aggiornato (Feature, User Story e Task,
+> comprese SC-17–SC-23) vive nelle [issue](https://github.com/loggione-finale/smartcampus/issues) e sulla
+> board [Loggione Roadmap](https://github.com/orgs/loggione-finale/projects/1).
+
 > **Stato: bozza da rivedere insieme, poi da validare con il PO.** Le storie diventeranno issue solo dopo la
 > revisione. Gli story point sono una prima proposta: rivotiamoli insieme (planning poker).
-> Riferimenti: [analisi](../analisi/analisi-progetto.md), [architettura](../architettura.md).
+> Riferimenti: [analisi](../analysis/project-analysis.md), [architettura](../architecture.md).
 
 ## Riepilogo
 
 | ID | Titolo | Priorità | Servizio | SP | Giorno |
 |---|---|---|---|---|---|
-| SC-01 | Avvio riproducibile dell'intero sistema | Must | Piattaforma | 5 | Lun 26 |
-| SC-02 | Dati sintetici riproducibili | Must | Piattaforma | 3 | Lun 26 – Mar 27 |
-| SC-03 | Scelta dell'utente e del ruolo | Must | Web / Gateway | 2 | Lun 26 |
-| SC-04 | Consultare e filtrare il catalogo spazi | Must | Spazi + Web | 3 | Mar 27 |
-| SC-05 | Vedere la disponibilità di uno spazio | Must | Prenotazioni + Web | 3 | Mar 27 |
-| SC-06 | Prenotare uno spazio libero | Must | Prenotazioni + Web | 5 | Mar 27 |
-| SC-07 | Nessuna sovrapposizione, anche con richieste simultanee | Must | Prenotazioni | 5 | Mar 27 |
-| SC-08 | Consultare le mie prenotazioni | Must | Prenotazioni + Web | 2 | Mer 28 |
-| SC-09 | Annullare una prenotazione | Must | Prenotazioni + Web | 3 | Mer 28 |
-| SC-10 | Gestire il catalogo spazi | Must | Spazi + Web | 3 | Mar 27 – Mer 28 |
-| SC-11 | Segnalare l'indisponibilità di uno spazio | Should | Spazi + Prenotazioni | 3 | Mer 28 |
-| SC-12 | Registrare l'uso effettivo (check-in) | Should | Prenotazioni + Web | 3 | Mer 28 |
-| SC-13 | Report di utilizzo con limiti dichiarati | Should | Utilizzo + Web | 5 | Mer 28 |
-| SC-14 | Build e test automatici su ogni PR | Should | Piattaforma | 2 | Lun 26 |
-| SC-15 | Avviso quando uno spazio si libera | Could | Prenotazioni | 8 | Solo se avanza tempo |
+| SC-01 | Avvio riproducibile dell'intero sistema | Must | Platform | 5 | Lun 26 |
+| SC-02 | Dati sintetici riproducibili | Must | Platform | 3 | Lun 26 – Mar 27 |
+| SC-03 | Scelta dell'utente e del ruolo | Must | Users + Web | 2 | Lun 26 |
+| SC-04 | Consultare e filtrare il catalogo spazi | Must | Spaces + Web | 3 | Mar 27 |
+| SC-05 | Vedere la disponibilità di uno spazio | Must | Bookings + Web | 3 | Mar 27 |
+| SC-06 | Prenotare uno spazio libero | Must | Bookings + Web | 5 | Mar 27 |
+| SC-07 | Nessuna sovrapposizione, anche con richieste simultanee | Must | Bookings | 5 | Mar 27 |
+| SC-08 | Consultare le mie prenotazioni | Must | Bookings + Web | 2 | Mer 28 |
+| SC-09 | Annullare una prenotazione | Must | Bookings + Web | 3 | Mer 28 |
+| SC-10 | Gestire il catalogo spazi | Must | Spaces + Web | 3 | Mar 27 – Mer 28 |
+| SC-11 | Segnalare l'indisponibilità di uno spazio | Should | Spaces + Bookings | 3 | Mer 28 |
+| SC-12 | Registrare l'uso effettivo (check-in) | Should | Bookings + Web | 3 | Mer 28 |
+| SC-13 | Report di utilizzo con limiti dichiarati | Should | Bookings + Web | 5 | Mer 28 |
+| SC-14 | Build e test automatici su ogni PR | Should | Platform | 2 | Lun 26 |
+| SC-16 | Prenotare per un gruppo | Must | Bookings + Users + Web | 5 | Mar 27 |
+| SC-15 | Avviso quando uno spazio si libera | Could | Bookings | 8 | Solo se avanza tempo |
 
-**Totale Must: 34 SP. Totale Should: 13 SP.** Giovedì 29 è riservato a correzioni e prova della demo.
+**Totale Must: 39 SP. Totale Should: 13 SP.** Giovedì 29 è riservato a correzioni e prova della demo.
 
 ---
 
@@ -36,15 +41,15 @@ voglio avviare l'intero sistema con un solo comando, seguendo il README
 in modo da poter provare il prodotto su qualsiasi macchina senza configurazioni manuali.
 
 **Descrizione**
-Lo scheletro della soluzione contiene tutti i servizi, il gateway, l'interfaccia e il database, collegati
+Lo scheletro della soluzione contiene i tre servizi, il frontend Angular e il database, collegati
 tra loro fin dal primo giorno, anche se ancora senza funzioni. Nessun segreto è salvato nel repository.
 
 **Criteri di accettazione**
 La storia è considerata completata quando:
-- [ ] Seguendo il README su una macchina pulita (con .NET SDK e Docker) il sistema si avvia con un comando.
-- [ ] L'interfaccia raggiunge ogni servizio passando dal gateway.
+- [ ] Seguendo il README su una macchina pulita (con .NET SDK, Node.js e Docker) il sistema si avvia con un comando.
+- [ ] Il frontend raggiunge ogni servizio tramite il proxy di sviluppo di Angular.
 - [ ] Ogni servizio espone un controllo di salute che risponde correttamente.
-- [ ] L'avvio è stato provato su almeno due sistemi operativi diversi, con esito registrato in `docs/prove/`.
+- [ ] L'avvio è stato provato su almeno due sistemi operativi diversi, con esito registrato in `docs/evidence/`.
 
 **Story Point**
 Stima: 5
@@ -81,7 +86,7 @@ voglio scegliere con quale utente fittizio entrare (studente o personale)
 in modo da usare le funzioni del mio ruolo senza creare un account reale.
 
 **Descrizione**
-All'ingresso si sceglie un utente da un elenco di utenti sintetici. Il ruolo determina quali funzioni sono
+All'ingresso si sceglie un utente dall'elenco dei profili sintetici del servizio Users. Il ruolo determina quali funzioni sono
 visibili. Si tratta di una semplificazione da dichiarare nei limiti noti.
 
 **Criteri di accettazione**
@@ -176,7 +181,7 @@ deve essere eseguita sul database reale, non con simulazioni in memoria.
 La storia è considerata completata quando:
 - [ ] Con molte richieste simultanee per la stessa fascia dello stesso spazio, ne viene accettata esattamente una.
 - [ ] Due prenotazioni adiacenti (una finisce quando inizia l'altra) sono entrambe accettate.
-- [ ] La prova è automatica, gira sul database reale ed è registrata in `docs/prove/`.
+- [ ] La prova è automatica, gira sul database reale ed è registrata in `docs/evidence/`.
 
 **Story Point**
 Stima: 5
@@ -191,12 +196,12 @@ voglio vedere l'elenco delle mie prenotazioni con il loro stato
 in modo da ritrovare in ogni momento una conferma affidabile.
 
 **Descrizione**
-L'elenco mostra le prenotazioni dell'utente, future e passate, con spazio, fascia oraria e stato
+L'elenco mostra le prenotazioni dell'utente, come organizzatore o partecipante, future e passate, con spazio, fascia oraria e stato
 (confermata, annullata).
 
 **Criteri di accettazione**
 La storia è considerata completata quando:
-- [ ] L'elenco mostra solo le prenotazioni dell'utente attuale.
+- [ ] L'elenco mostra le prenotazioni in cui l'utente attuale è organizzatore o partecipante, indicando il ruolo.
 - [ ] Per ogni prenotazione sono visibili spazio, data, fascia e stato.
 - [ ] Le prenotazioni future compaiono prima di quelle passate.
 
@@ -220,7 +225,7 @@ annullata, non viene cancellata.
 La storia è considerata completata quando:
 - [ ] Dopo l'annullamento la fascia risulta libera per tutti gli utenti.
 - [ ] La prenotazione resta visibile nel mio elenco con stato "annullata".
-- [ ] Non è possibile annullare la prenotazione di un altro studente.
+- [ ] Solo l'organizzatore può annullare; un partecipante può solo uscire dalla prenotazione (SC-16).
 
 **Story Point**
 Stima: 3
@@ -280,12 +285,12 @@ voglio confermare di essere arrivato nello spazio prenotato
 in modo che il campus sappia che la prenotazione è stata davvero usata.
 
 **Descrizione**
-Il check-in è possibile solo per una propria prenotazione confermata e solo vicino all'orario di inizio.
+Il check-in è possibile solo per una prenotazione confermata di cui si è organizzatore o partecipante, e solo vicino all'orario di inizio.
 Distingue l'intenzione (prenotazione) dall'uso dichiarato. Non usa sensori reali.
 
 **Criteri di accettazione**
 La storia è considerata completata quando:
-- [ ] Il check-in è possibile solo sulle proprie prenotazioni confermate.
+- [ ] Il check-in è possibile solo sulle prenotazioni confermate di cui si è organizzatore o partecipante.
 - [ ] Fuori dalla finestra di tempo consentita il check-in viene rifiutato con un messaggio chiaro.
 - [ ] Lo stato della prenotazione mostra se il check-in è avvenuto.
 
@@ -307,7 +312,7 @@ informazioni sull'uso. Una nota spiega che l'assenza di dati non dimostra che lo
 
 **Criteri di accettazione**
 La storia è considerata completata quando:
-- [ ] Per un periodo scelto, il report mostra per ogni spazio prenotazioni, annullamenti, check-in e prenotazioni senza check-in.
+- [ ] Per un periodo scelto, il report mostra per ogni spazio prenotazioni, annullamenti, check-in, prenotazioni senza check-in e numero di persone coinvolte.
 - [ ] I numeri coincidono con quelli calcolati a mano su un insieme di dati sintetici noto.
 - [ ] Il report riporta in modo visibile i limiti delle informazioni.
 
@@ -357,6 +362,30 @@ La storia è considerata completata quando:
 
 **Story Point**
 Stima: 8
+
+---
+
+## [SC-16] - Prenotare per un gruppo
+
+**User Story**
+Come studente
+voglio prenotare uno spazio per il mio gruppo aggiungendo i profili delle altre persone
+in modo da organizzare un'attività comune con una sola prenotazione valida per tutti.
+
+**Descrizione**
+Chi prenota sceglie i partecipanti tra i profili del campus. I partecipanti vedono subito la prenotazione
+tra le proprie e possono uscirne. Il sistema controlla che il gruppo non superi la capienza dello spazio e
+che nessuna persona sia già impegnata in un'altra prenotazione nella stessa fascia.
+
+**Criteri di accettazione**
+La storia è considerata completata quando:
+- [ ] L'organizzatore può cercare e aggiungere uno o più partecipanti tra i profili esistenti.
+- [ ] Se organizzatore e partecipanti superano la capienza dello spazio, la prenotazione viene rifiutata con un messaggio chiaro.
+- [ ] Se una persona del gruppo ha già una prenotazione nella stessa fascia, la prenotazione viene rifiutata indicando chi è già impegnato, anche con richieste simultanee.
+- [ ] I partecipanti vedono la prenotazione in "Le mie prenotazioni" e possono uscirne, liberando il proprio posto.
+
+**Story Point**
+Stima: 5
 
 ---
 

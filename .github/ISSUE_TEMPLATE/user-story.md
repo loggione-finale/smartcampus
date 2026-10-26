@@ -2,7 +2,7 @@
 name: User story
 about: Un bisogno di un utente, i criteri di accettazione e la stima
 title: "[SC-XX] - "
-labels: storia
+type: User Story
 ---
 
 ## User Story
