@@ -24,6 +24,12 @@ Il cuore del prodotto in tre regole:
 
 Solo strumenti visti nel corso. Perché: [architecture.md](architecture.md). Dati: [data-model.md](data-model.md).
 
+**Accesso:** nessuna registrazione (studenti e personale hanno già i loro account). Si parte dal mock, cioè la
+scelta di un profilo sintetico; il login con account pre-caricati (SC-20) si fa solo se avanza tempo.
+
+**Dati di servizi diversi:** nessuna query unisce MongoDB e PostgreSQL. Bookings salva una copia di nome, tipo
+ed edificio dello spazio; dove serve il dato attuale, il frontend chiede a entrambi i servizi.
+
 ## Come lavoriamo
 
 1. **Prendi un Task** dalla [board](https://github.com/orgs/loggione-finale/projects/1) (sei già assegnato) e spostalo in **In Progress**.
@@ -38,7 +44,7 @@ Regole: nomi in inglese, testi in italiano; niente segreti né dati reali; ogni 
 
 ## Il backlog
 
-**Feature → User Story → Task** (sub-issue), formato del docente. 6 Feature, 23 User Story, 66 Task.
+**Feature → User Story → Task** (sub-issue), formato del docente. 6 Feature, 23 User Story, 67 Task.
 
 | Feature | User story |
 |---|---|

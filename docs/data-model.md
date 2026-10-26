@@ -74,7 +74,9 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 CREATE TABLE bookings (
     id                  uuid PRIMARY KEY,
     space_id            uuid        NOT NULL,          -- riferimento logico a Spaces
-    space_name_snapshot text        NOT NULL,
+    space_name_snapshot     text    NOT NULL,       -- copie dei dati dello spazio al momento della prenotazione
+    space_type_snapshot     text    NOT NULL,
+    space_building_snapshot text    NOT NULL,
     organizer_id        uuid        NOT NULL,          -- riferimento logico a Users
     period              tstzrange   NOT NULL,
     status              text        NOT NULL CHECK (status IN ('Confirmed', 'Cancelled', 'Released')),
@@ -123,12 +125,45 @@ CREATE TABLE user_profiles (
     display_name  text    NOT NULL,
     role          text    NOT NULL CHECK (role IN ('Student', 'Staff')),
     email         text    NOT NULL UNIQUE,      -- fittizia, dominio @smartcampus.test
-    password_hash text    NULL,                 -- solo se si realizza il login con credenziali demo
+    password_hash text    NULL,                 -- solo con SC-20: account pre-caricati, nessuna registrazione
     is_active     boolean NOT NULL DEFAULT true
 );
 
 CREATE INDEX ix_user_profiles_display_name ON user_profiles (lower(display_name));
 ```
+
+---
+
+**Nessuna registrazione.** I profili (e, con SC-20, le loro password demo) arrivano solo dal seed dei dati
+sintetici, che simula l'anagrafica della scuola: studenti e personale hanno già le loro credenziali. Il servizio
+Users non espone API per creare utenti.
+
+---
+
+## Aggregare i dati di servizi diversi
+
+Spaces è su MongoDB e Bookings su PostgreSQL, ma il punto vero è che sono **due database di due servizi**:
+nessuna query li unisce, con qualsiasi motore. Ogni vista che ha bisogno di dati di entrambi usa una di due
+tecniche.
+
+| Vista | Dati necessari | Come li otteniamo |
+|---|---|---|
+| Creare una prenotazione | Spazio (attivo, capienza, indisponibilità) + prenotazioni | Bookings chiede a Spaces via API, poi salva le **copie** di nome, tipo ed edificio |
+| Le mie prenotazioni | Prenotazioni + nome dello spazio + nomi dei partecipanti | Solo Bookings, grazie alle copie |
+| Disponibilità di uno spazio | Dettagli dello spazio + fasce occupate | Il frontend compone: dettagli da Spaces, fasce da Bookings |
+| Spazi adatti **e liberi** in una fascia | Filtri sugli spazi + fasce libere | Il frontend chiede a Spaces gli spazi che rispettano i filtri, poi a Bookings quali sono liberi (`POST /bookings/availability` con l'elenco degli id) |
+| Calendario del personale con filtri per edificio e tipo | Prenotazioni + edificio e tipo | Solo Bookings, filtrando sulle copie |
+| Statistiche per spazio, tipo o edificio | Prenotazioni + check-in + tipo ed edificio | Solo Bookings, `GROUP BY` sulle copie |
+| Gestione spazi del personale | Solo spazi | Solo Spaces |
+
+**Regole delle copie**
+
+- Si scrivono una volta, quando la prenotazione viene creata, e non si aggiornano: descrivono lo spazio **com'era
+  quando è stato prenotato**, come deve fare uno storico.
+- Se uno spazio cambia nome, tipo o edificio, le nuove prenotazioni avranno i nuovi valori. Le statistiche
+  restano corrette rispetto a ciò che era stato prenotato; il limite va dichiarato nelle misure di utilizzo.
+- Per i dati che devono essere **attuali** (spazio attivo, capienza, indisponibilità) non si usano mai le copie:
+  Bookings chiede sempre a Spaces.
 
 ---
 

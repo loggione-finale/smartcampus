@@ -52,7 +52,7 @@ avrebbe dovuto tenerne una copia sincronizzata, con più codice e più punti di 
 | Rotta usata dal frontend | Inoltrata a | Esempi |
 |---|---|---|
 | `/api/spaces/**` | Spaces `http://localhost:5101` | `GET /spaces`, `GET /spaces/{id}`, `POST /spaces/{id}/unavailabilities` |
-| `/api/bookings/**` | Bookings `http://localhost:5102` | `POST /bookings`, `GET /bookings/mine`, `POST /bookings/{id}/leave`, `GET /bookings/stats` |
+| `/api/bookings/**` | Bookings `http://localhost:5102` | `POST /bookings`, `POST /bookings/availability`, `GET /bookings/mine`, `POST /bookings/{id}/leave`, `GET /bookings/stats` |
 | `/api/users/**` | Users `http://localhost:5103` | `GET /users`, `GET /users?search=`, `GET /users/{id}` |
 
 L'inoltro lo fa il **proxy di sviluppo di Angular** (`proxy.conf.json`): il browser parla solo con
@@ -130,6 +130,8 @@ erDiagram
         uuid id
         uuid space_id
         string space_name_snapshot
+        string space_type_snapshot
+        string space_building_snapshot
         uuid organizer_id
         tstzrange period
         string status
@@ -330,6 +332,20 @@ vincoli e transazioni (Bookings, Users). Bookings e Users usano **Entity Framewo
 migrazioni; Spaces usa `MongoDB.Driver` con indici creati all'avvio. Ogni servizio riceve **solo** la stringa
 di connessione del proprio database. Schemi, regole di dominio e sicurezza in [data-model.md](data-model.md).
 
+**Aggregare dati di MongoDB e PostgreSQL** (dubbio sollevato in review). Nessuna query unisce i due database,
+ma non è un costo di MongoDB: con **un database per servizio** non ci sarebbero JOIN tra Spaces e Bookings
+nemmeno con tutto su PostgreSQL. I dati si uniscono in due modi:
+
+- **copie scritte in Bookings al momento della prenotazione** (nome, tipo ed edificio dello spazio): così le
+  mie prenotazioni, il calendario del personale e le statistiche per tipo o edificio si calcolano **dentro
+  Bookings**, con normali `GROUP BY`;
+- **composizione tramite API** dove serve il dato aggiornato, ad esempio "spazi adatti **e liberi** in una
+  fascia": il frontend chiede a Spaces gli spazi che rispettano i filtri, poi a Bookings quali sono liberi.
+
+Il dettaglio di ogni vista è in [data-model.md](data-model.md#aggregare-i-dati-di-servizi-diversi). MongoDB
+aggiunge invece un costo di **gestione** (un secondo motore da avviare, proteggere e testare), già considerato
+nei contro dell'opzione E.
+
 ### D5 – Prevenzione delle sovrapposizioni (spazi e persone)
 
 È la regola più importante. Le slide: "per dimostrare concorrenza e persistenza servono prove sul database
@@ -375,7 +391,7 @@ Le slide: "l'interfaccia è utilizzabile negli ambienti proposti e la portabilit
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. Docker Compose solo per PostgreSQL; servizi con `dotnet run`, frontend con `ng serve`** (raccomandata) | Strumenti noti; un solo file Docker; debug normale da Visual Studio o VS Code | Quattro processi da avviare (si può aggiungere uno script) |
+| **A. Docker Compose solo per i database (MongoDB e PostgreSQL); servizi con `dotnet run`, frontend con `ng serve`** (raccomandata) | Strumenti noti; un solo file Docker; debug normale da Visual Studio o VS Code | Quattro processi da avviare (si può aggiungere uno script) |
 | B. PostgreSQL installato su ogni PC | Niente Docker | Installazioni e versioni diverse su 7 macchine; i test di CI vanno configurati a parte |
 | C. Tutto in Docker Compose | Un solo comando | Un Dockerfile per progetto; debug meno immediato |
 | D. .NET Aspire | Avvio e configurazione automatici | **Mai usato nel corso** |
@@ -384,8 +400,12 @@ Le slide: "l'interfaccia è utilizzabile negli ambienti proposti e la portabilit
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. Profili sintetici nel servizio Users, scelti all'ingresso** (punto di partenza) | Nessun account reale (come chiedono le slide); i profili servono anche come partecipanti dei gruppi | Non è sicurezza vera: il frontend invia l'utente scelto (header `X-User-Id`, `X-User-Role`); va dichiarato nei limiti noti |
-| **B. Password demo e token firmato (JWT) emesso da Users** (evoluzione prevista, SC-20 #79, Should) | Risolve il punto debole W1: il ruolo arriva da un token firmato, non dal browser | Mezza giornata di lavoro distribuita su tre persone |
+| **A. Mock: profili sintetici nel servizio Users, scelti all'ingresso** (scelta per il risultato minimo) | Nessun account reale (come chiedono le slide); i profili servono anche come partecipanti dei gruppi | Non è sicurezza vera: il frontend invia l'utente scelto (header `X-User-Id`, `X-User-Role`); va dichiarato nei limiti noti |
+| **B. Account pre-caricati con password demo e token firmato (JWT) emesso da Users** (evoluzione, SC-20 #79, Should) | Simula le credenziali che studenti e personale hanno già dalla scuola; risolve il punto debole W1 | Mezza giornata di lavoro distribuita su tre persone |
+| C. Registrazione di nuovi utenti | — | **Esclusa**: studenti e personale fanno già parte della scuola e hanno già le loro credenziali; anche il personale non si registra |
+
+**Nessuna registrazione, in nessuna opzione.** Gli account esistono già: arrivano dal seed dei dati sintetici,
+che simula l'anagrafica della scuola. Si parte dal mock (A); SC-20 (B) si fa solo se avanza tempo.
 
 Ruoli nel codice: `Student`, `Staff`.
 
