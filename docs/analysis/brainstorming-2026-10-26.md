@@ -233,18 +233,20 @@ completo (registrazione → prenotazione → conferma → commento) prima di tut
 
 ## 8. Divisione del lavoro: nessuno si pesta i piedi
 
+**Applicato su GitHub il 26/10:** 10 task a testa, assegnati come in questa tabella.
+
 **Principio:** ognuno è **proprietario di cartelle**, non solo di storie. Si modifica solo il proprio codice;
 se serve toccare quello di un altro, lo si chiede a lui o lo si fa con lui in review.
 
 | Persona | Ruolo | Cartelle di cui è proprietario | Storie |
 |---|---|---|---|
-| **asprenolapo** | Scrum Master + piattaforma | `/` (soluzione), `docker-compose.yml`, `infra/`, `.github/`, `docs/process.md`, `docs/analysis/po-*`, `docs/decisions/` | SC-01, SC-14, SC-21, SC-22, coordinamento di SC-23 |
-| **fedeericodl** | Users + autenticazione + commento finale | `src/Services/Users/`, `src/Shared/SmartCampus.Auth/`, `tests/SmartCampus.Users.Tests/`, `Bookings/Features/Closure/`, `src/web/src/app/closure/` | SC-24, SC-25 (backend), SC-29 (verticale completo) |
-| **AldAndrew0** | Spaces | `src/Services/Spaces/`, `tests/SmartCampus.Spaces.Tests/` | SC-04, SC-10, SC-11 (backend), SC-28 (backend, cartella `Bookings/Features/Equipment/`) |
-| **Rhaastrake** | Bookings: nucleo | `src/Services/Bookings/` **tranne** `Features/` degli altri: `Program.cs`, `Data/`, `Migrations/`, `Domain/`, `Features/Bookings/` | SC-05, SC-06, SC-07, SC-08, SC-09 (backend) |
-| **FranDeSa456** | Bookings: gruppi, inviti, email | `Bookings/Features/Invitations/`, `Bookings/Features/Notifications/`, servizi in background, `src/web/src/app/invitations/` | SC-16 (backend), SC-27 (verticale completo, compresa la pagina di conferma), test di concorrenza su persone e aule miste |
-| **antoStr** | Admin, verticale completo | `Bookings/Features/Admin/`, `src/web/src/app/admin/` | SC-18, SC-30, SC-13 |
-| **Leo-prova** | Frontend utente | `src/web/` (struttura, `core/`, `auth/`, `booking/`) **tranne** `admin/`, `invitations/`, `closure/` | Pagine di SC-24, SC-25, SC-04, SC-05, SC-06, SC-16, SC-08, SC-09 |
+| **asprenolapo** | Scrum Master + piattaforma | `/` (soluzione), `docker-compose.yml`, `infra/`, `.github/`, `docs/process.md` (con Leo-prova), `docs/analysis/po-*`, `docs/decisions/` | SC-01, SC-14, SC-21 (incontro PO), SC-22 (ADR), SC-23 (prova di portabilità) |
+| **fedeericodl** | Users, autenticazione, disponibilità, commento finale | `src/Services/Users/`, `src/Shared/SmartCampus.Auth/`, `tests/SmartCampus.Users.Tests/`, `data/synthetic/`, `Bookings/Features/Availability/`, `Bookings/Features/Closure/`, `src/web/src/app/closure/` | SC-02, SC-24 e SC-25 (backend), SC-05 (backend), SC-29 (verticale completo), SC-22 (valore e costi) |
+| **AldAndrew0** | Spaces e strumenti, catalogo nel frontend | `src/Services/Spaces/`, `tests/SmartCampus.Spaces.Tests/`, `Bookings/Features/Equipment/`, `src/web/src/app/spaces/` | SC-04 e SC-05 (pagine), SC-10, SC-11, SC-28 (backend) |
+| **Rhaastrake** | Bookings: nucleo | `src/Services/Bookings/` **tranne** le cartelle `Features/` degli altri: `Program.cs`, `Data/` (anche seed), `Migrations/`, `Domain/`, `Features/Bookings/` | SC-06, SC-07 (vincoli e aule miste), SC-09, SC-16 (schema), SC-21 (release), SC-23 (presentazione) |
+| **FranDeSa456** | Bookings: gruppi, inviti, email, mie prenotazioni | `Bookings/Features/Invitations/`, `Bookings/Features/Notifications/`, `Bookings/Features/MyBookings/`, servizi in background, `src/web/src/app/invitations/` | SC-16 (backend), SC-27 (verticale completo), SC-08 (backend), test di concorrenza e di sicurezza |
+| **antoStr** | Admin, verticale completo | `Bookings/Features/Admin/`, `src/web/src/app/admin/` | SC-10 (pagine), SC-13, SC-18, SC-30, SC-21 (retrospettiva) |
+| **Leo-prova** | Frontend utente | `src/web/` (struttura, `core/`, `auth/`, `booking/`) **tranne** `admin/`, `spaces/`, `invitations/`, `closure/` | Pagine di SC-24, SC-25, SC-06, SC-16, SC-28, SC-08, SC-09; gestione errori; `docs/process.md` |
 
 **I file condivisi hanno un solo proprietario**
 
@@ -253,7 +255,7 @@ se serve toccare quello di un altro, lo si chiede a lui o lo si fa con lui in re
 | `Bookings/Program.cs` | Rhaastrake | Ogni modulo si registra con un metodo di estensione (`AddInvitations()`, `AddAdmin()`…) nel proprio file; Rhaastrake aggiunge la riga una volta sola, il primo giorno |
 | `BookingsDbContext` e migrazioni | Rhaastrake | **Schema prima di tutto:** lunedì crea tutte le tabelle (anche inviti, strumenti, commenti, avvisi, email). Le modifiche successive passano da lui |
 | `SmartCampus.Auth` | fedeericodl | Gli altri servizi chiamano solo `AddSmartCampusAuth()` |
-| `src/web/src/app/app.routes.ts`, `core/` | Leo-prova | Ogni area ha le proprie rotte caricate a parte (`loadChildren`): `admin/`, `invitations/` e `closure/` non toccano le rotte utente |
+| `src/web/src/app/app.routes.ts`, `core/` | Leo-prova | Ogni area ha le proprie rotte caricate a parte (`loadChildren`): `admin/`, `spaces/`, `invitations/` e `closure/` non toccano le rotte utente |
 | `docker-compose.yml`, `.github/` | asprenolapo | |
 
 **Contratti prima del codice:** entro lunedì sera `docs/api-contracts.md` elenca endpoint e DTO di ogni
