@@ -135,3 +135,55 @@ In ordine di importanza. Le modifiche al perimetro (1, 2, 3) vanno **proposte al
 
 Il flusso dell'applicativo con i punti deboli è in [application-flow.md](application-flow.md); la
 sicurezza e i test per ogni componente sono in [security-and-testing.md](../security-and-testing.md).
+
+---
+
+## Copertura dopo l'aggiornamento del backlog
+
+Tutti i **24 requisiti parziali o mancanti** hanno ora un'issue o un documento che li copre. Le modifiche di
+priorità sono **proposte**: valgono dopo l'accordo con il PO (SC-21.T2, #85).
+
+| ID | Stato prima | Coperto da |
+|---|---|---|
+| A5 | Parziale | SC-15 (#16) portata a Should, con avviso solo dentro l'app |
+| A6 | Mancante | **SC-17 (#68)** rilascio automatico senza check-in |
+| A7 | Mancante | **SC-18 (#72)** calendario delle prenotazioni per il personale |
+| A8 | Parziale | SC-12 (#13) e SC-13 (#14) proposte in **Must** |
+| A9 | Parziale | SC-13.T3 (#97) misure di utilizzo definite e verificate |
+| A11 | Parziale | SC-12, SC-13 in Must + validazione con il PO (#85) |
+| B1 | Parziale | D4: **MongoDB per Spaces**, PostgreSQL per Bookings e Users ([data-model.md](../data-model.md)); ADR in #89 |
+| B3 | Parziale | ADR sulle esclusioni (#89) e analisi dei costi (#90) |
+| B4 | Parziale | SC-23.T2 (#93) prova su due sistemi operativi e smartphone |
+| C4 | Parziale | SC-21.T2 (#85) perimetro validato e registrato |
+| C5 | Parziale | [data-model.md](../data-model.md): schemi e regole di dominio R1–R12 |
+| C6 | Parziale | Registro delle decisioni del PO (#85), tag e release per incremento (#86) |
+| C8 | Mancante | SC-22.T1 (#89) un ADR per ogni decisione |
+| D2 | Parziale | [security-and-testing.md](../security-and-testing.md) (log e AI), SC-01.T7 (#94) |
+| E1 | Mancante | SC-21.T1 (#84) Product Goal |
+| E2 | Mancante | SC-21.T1 (#84) Sprint Goal per i due Sprint |
+| E5 | Parziale | SC-21.T2 (#85) DoD e criteri concordati con il PO |
+| E7 | Mancante | SC-21.T1 (#84) eventi; SC-21.T4 (#87) retrospettiva registrata |
+| E8 | Mancante | SC-21.T1 (#84) adattamenti dichiarati |
+| E9 | Parziale | Priorità marcate "proposta, da confermare con il PO"; decisione in #85 |
+| F3 | Parziale | SC-13.T3 (#97) |
+| F4 | Parziale | Criterio nella demo (#51) e in SC-23 (#91) |
+| F5 | Mancante | SC-22.T2 (#90) valore e costi |
+| F6 | Mancante | SC-22.T2 (#90) scenario di scala futura |
+
+| Requisito implicito | Coperto da |
+|---|---|
+| I1 Orari coerenti | SC-06.T4 (#95) e criterio in SC-06 (#7) |
+| I2 Regole sulle fasce | Regole R3–R4 in [data-model.md](../data-model.md#regole-di-dominio-in-un-solo-posto); valori da chiedere al PO |
+| I3 Nessuno blocca il tempo di un altro | Limite di 5 prenotazioni di gruppo e uscita dal gruppo (#58, #60, #61) |
+| I4 Storico per il personale | Date di creazione, annullamento e check-in, `added_by` ([data-model.md](../data-model.md#bookings-postgresql)); calendario #72 |
+| I5 Messaggi comprensibili | `ProblemDetails` ([security-and-testing.md](../security-and-testing.md)) e messaggi nel frontend (#65) |
+
+### Carico dopo l'aggiornamento
+
+| Priorità | User story | Story point |
+|---|---|---|
+| Must | 16 | 56 |
+| Should | 7 | 26 |
+
+56 punti Must in tre giornate sono **molti**. È il motivo principale per portare subito al PO le priorità
+proposte (SC-21.T2, #85): se il PO non conferma SC-12 e SC-13 in Must, il carico Must scende a 48.

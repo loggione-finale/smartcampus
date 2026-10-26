@@ -42,24 +42,24 @@ flowchart TD
     W8[W8 dati dichiarati]:::weak -.- P2
 ```
 
-## Punti deboli
+## Punti deboli e risoluzioni
 
-| ID | Dove | Problema | Impatto | Contromisura | Stato |
+| ID | Dove | Problema | Risoluzione | Issue | Rischio residuo |
 |---|---|---|---|---|---|
-| **W1** | Scelta del profilo | L'utente è indicato dagli header `X-User-Id` e `X-User-Role` inviati dal frontend: chiunque, con uno strumento come `curl`, può fingersi un altro utente o il personale | Alto in produzione, accettabile in una demo con dati sintetici | Limite **dichiarato**. Miglioramento se avanza tempo: token firmato (JWT) emesso da Users e verificato dai servizi | Limite noto |
-| **W2** | Chiamate tra servizi | Bookings ha bisogno di Spaces (e di Users per i gruppi) per creare una prenotazione | Con un servizio giù non si prenota | Timeout di 3 s, risposta `503` chiara, il resto dell'app funziona; prove di guasto (SC-01.T6) | Nel backlog |
-| **W3** | Disponibilità e prenotazione | Orari salvati e mostrati in fusi diversi; il cambio dell'ora legale sposta le fasce | Prenotazioni all'ora sbagliata, conflitti "invisibili" | API e database in **UTC** (`timestamptz`), frontend in **Europe/Rome**; test sulla notte del cambio d'ora | Da aggiungere come criterio |
-| **W4** | Tra la verifica e il salvataggio | Bookings verifica lo spazio con Spaces, poi salva: se nel frattempo il personale lo disattiva o riduce la capienza, la prenotazione passa lo stesso | Raro (millisecondi), ma possibile | Limite **dichiarato**: è il prezzo di non avere transazioni tra servizi. Il caso "spazio disattivato con prenotazioni" è la domanda 4 per il PO | Limite noto |
-| **W5** | Database | Un solo container PostgreSQL per tutti i servizi | Se cade, cade tutto | Accettabile per una demo locale; in produzione un database per servizio su server separati | Limite noto |
-| **W6** | Prenotazione di gruppo | L'organizzatore aggiunge partecipanti senza il loro consenso, e il vincolo sulle persone **blocca la loro fascia** | Una persona può trovarsi "occupata" da un gruppo che non conosce | Il partecipante può uscire (SC-16.T3); proposta: limite di prenotazioni future per persona; alternativa: inviti da accettare (scartata per i tempi) | Da discutere con il PO |
-| **W7** | Dopo la prenotazione | Una prenotazione senza check-in tiene lo spazio occupato fino alla fine | È **esattamente il problema delle slide** (7): spazio "apparentemente occupato" mentre è vuoto | Proposta: **rilascio automatico** se nessuno fa check-in entro 15 minuti dall'inizio (servizio in background in Bookings) | Proposta di nuova US |
-| **W8** | Report | Il check-in è dichiarato da chi prenota: nessuno verifica che sia vero | Il report può sovrastimare l'uso | Il report lo dice esplicitamente ("uso dichiarato, non misurato"); i sensori reali sono fuori perimetro | Criterio in SC-13 |
+| **W1** | Scelta del profilo | Utente e ruolo arrivano da header `X-User-*` che chiunque può falsificare | Accesso con password demo; Users rilascia un **token firmato (JWT)** con id e ruolo; i servizi accettano solo token validi | SC-20 (#79) | Password demo note a tutti: va bene per una demo con dati sintetici. Finché SC-20 non è fatta, limite dichiarato |
+| **W2** | Chiamate tra servizi | Bookings ha bisogno di Spaces (e di Users per i gruppi) per creare una prenotazione | Timeout di 3 s, `503` con messaggio chiaro, pagine indipendenti nel frontend, prove di guasto | #32, #60, #65, #66 | Con Spaces giù non si prenota: scelta voluta per non confermare prenotazioni sbagliate |
+| **W3** | Disponibilità e prenotazione | Fusi orari e ora legale spostano le fasce | UTC in database e API, Europe/Rome solo nel frontend, fasce da 15 minuti, test sul cambio d'ora | SC-06.T4 (#95), criterio in SC-06 (#7) | Nessuno, se il test sul cambio d'ora passa |
+| **W4** | Tra la verifica e il salvataggio | Uno spazio disattivato mentre una prenotazione è in corso passa lo stesso | Spaces **prima disattiva** lo spazio, poi chiede a Bookings di annullare le prenotazioni future; se Bookings non risponde, ripristina e rifiuta | SC-19 (#75) | Una prenotazione verificata pochi millisecondi prima della disattivazione può sfuggire: limite dichiarato. Da confermare con il PO (domanda 4) |
+| **W5** | Database | Un solo container PostgreSQL per Bookings e Users | MongoDB separato per Spaces; riavvio automatico, health check e volumi in Compose; `EnableRetryOnFailure`; un utente per servizio | SC-01.T7 (#94), [data-model.md](../data-model.md#sicurezza-dei-database) | Se PostgreSQL cade, prenotazioni e profili si fermano finché non riparte: accettabile in locale |
+| **W6** | Prenotazione di gruppo | Chi organizza può bloccare la fascia di altre persone aggiungendole | Il partecipante vede chi l'ha aggiunto e può uscire; massimo 5 prenotazioni di gruppo future per organizzatore | SC-16 (#58), SC-16.T2 (#60), SC-16.T3 (#61) | Un abuso resta possibile fino al limite; gli inviti da accettare restano un'alternativa da proporre al PO |
+| **W7** | Dopo la prenotazione | Prenotazione senza check-in: spazio "apparentemente occupato" (slide 7) | **Rilascio automatico** 15 minuti dopo l'inizio senza check-in | SC-17 (#68) | Chi arriva in ritardo di oltre 15 minuti perde la prenotazione: soglia da confermare con il PO |
+| **W8** | Report | Il check-in è dichiarato, nessuno verifica che sia vero | Il report lo dice esplicitamente e conta a parte le prenotazioni rilasciate; misure documentate e verificate a mano | SC-13 (#14), SC-13.T3 (#97) | L'uso reale non è misurabile senza sensori, che sono fuori perimetro |
 
 ## Che cosa ci dice il flusso
 
 - Il punto più solido è il **salvataggio**: le due regole critiche (spazio e persona) sono garantite dal database
   in una sola transazione, anche con richieste simultanee.
-- I punti più deboli rispetto al **bisogno** sono **W7** e **W6**: il primo lascia irrisolto uno dei problemi
-  descritti nelle slide, il secondo ne introduce uno nuovo con le prenotazioni di gruppo.
-- I punti deboli **tecnici** (W1, W4, W5) sono accettabili per una demo locale solo se **dichiarati** nei
-  limiti noti e nella presentazione.
+- Tutti gli otto punti deboli hanno ora una **risoluzione nel backlog**. Restano dei rischi residui, che vanno
+  **dichiarati** nei limiti noti e nella presentazione.
+- W4, W6 e W7 dipendono da decisioni del **PO** (domanda 4, inviti, soglia dei 15 minuti): vanno portate
+  all'incontro previsto in SC-21.T2 (#85).

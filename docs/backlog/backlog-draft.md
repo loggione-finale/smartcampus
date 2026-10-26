@@ -1,5 +1,9 @@
 # Bozza del Product Backlog
 
+> **Questa è la versione storica rivista dal gruppo.** Il backlog aggiornato (Feature, User Story e Task,
+> comprese SC-17–SC-23) vive nelle [issue](https://github.com/loggione-finale/smartcampus/issues) e sulla
+> board [Loggione Roadmap](https://github.com/orgs/loggione-finale/projects/1).
+
 > **Stato: bozza da rivedere insieme, poi da validare con il PO.** Le storie diventeranno issue solo dopo la
 > revisione. Gli story point sono una prima proposta: rivotiamoli insieme (planning poker).
 > Riferimenti: [analisi](../analysis/project-analysis.md), [architettura](../architecture.md).

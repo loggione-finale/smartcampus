@@ -12,14 +12,16 @@ vanno registrate in [`docs/decisions/`](docs/decisions/).
 
 Consegna: **29/10/2026**.
 
+- **[Promemoria: che cosa stiamo facendo e come](docs/project-overview.md)**
 - [Analisi del progetto](docs/analysis/project-analysis.md)
 - [Analisi dei requisiti rispetto alle slide](docs/analysis/requirements-analysis.md)
 - [Flusso dell'applicativo e punti deboli](docs/analysis/application-flow.md)
 - [Architettura proposta (microservizi)](docs/architecture.md)
+- [Modello dati e sicurezza dei database](docs/data-model.md)
 - [Sicurezza e test per ogni componente](docs/security-and-testing.md)
 - [Bozza del backlog](docs/backlog/backlog-draft.md)
 
-**Stack:** tre microservizi ASP.NET Core Web API (Spaces, Bookings, Users) con EF Core e PostgreSQL,
+**Stack:** tre microservizi ASP.NET Core Web API (Spaces su MongoDB; Bookings e Users su PostgreSQL con EF Core),
 frontend Angular + Angular Material.
 
 ## Struttura del repository
@@ -28,7 +30,7 @@ frontend Angular + Angular Material.
 |---|---|
 | `src/Services/` | I tre microservizi .NET: Spaces, Bookings, Users |
 | `src/web/` | Frontend Angular |
-| `docker-compose.yml`, `infra/` | PostgreSQL con un database per servizio |
+| `docker-compose.yml`, `infra/` | MongoDB e PostgreSQL, un database per servizio |
 | `tests/` | Test automatici, inclusi quelli sul database reale scelto |
 | `data/synthetic/` | Dati sintetici prodotti dal gruppo e script per generarli |
 | `docs/analysis/` | Analisi del bisogno, ipotesi, domande aperte, perimetro concordato col PO |
@@ -45,7 +47,7 @@ Il backlog vive nelle **Issue** e nel progetto **Loggione Roadmap** dell'organiz
 
 - .NET SDK 10
 - Node.js LTS e Angular CLI (`npm install -g @angular/cli`)
-- Docker Desktop (o equivalente), solo per PostgreSQL
+- Docker Desktop (o equivalente), solo per i database
 
 ## Installazione, avvio e test
 
@@ -55,7 +57,7 @@ repository**. Schema previsto:
 
 ```bash
 cp .env.example .env               # poi imposta una password locale
-docker compose up -d               # PostgreSQL con i database spaces, bookings, users
+docker compose up -d               # MongoDB (spaces) e PostgreSQL (bookings, users)
 dotnet run --project src/Services/Spaces/SmartCampus.Spaces.Api
 dotnet run --project src/Services/Bookings/SmartCampus.Bookings.Api
 dotnet run --project src/Services/Users/SmartCampus.Users.Api
@@ -65,7 +67,7 @@ cd src/web && npm install && ng serve   # http://localhost:4200
 Test:
 
 ```bash
-dotnet test                        # serve PostgreSQL avviato
+dotnet test                        # servono i database avviati
 cd src/web && ng test
 ```
 

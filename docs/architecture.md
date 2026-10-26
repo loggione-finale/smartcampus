@@ -18,8 +18,10 @@ flowchart TB
     S --> DBS[(spaces)]
     B --> DBB[(bookings)]
     US --> DBU[(users)]
-    subgraph PG [PostgreSQL in Docker Compose]
+    subgraph MG [MongoDB in Docker Compose]
         DBS
+    end
+    subgraph PG [PostgreSQL in Docker Compose]
         DBB
         DBU
     end
@@ -28,10 +30,10 @@ flowchart TB
 | Componente | Tecnologia | Avvio in locale |
 |---|---|---|
 | Frontend | Angular + Angular Material | `ng serve` (porta 4200) |
-| Spaces API | ASP.NET Core Web API, EF Core | `dotnet run` (porta 5101) |
+| Spaces API | ASP.NET Core Web API, `MongoDB.Driver` | `dotnet run` (porta 5101) |
 | Bookings API | ASP.NET Core Web API, EF Core | `dotnet run` (porta 5102) |
 | Users API | ASP.NET Core Web API, EF Core | `dotnet run` (porta 5103) |
-| Database | PostgreSQL, tre database nello stesso container | `docker compose up -d` |
+| Database | **MongoDB** per Spaces; **PostgreSQL** per Bookings e Users (due database nello stesso container). Dettagli in [data-model.md](data-model.md) | `docker compose up -d` |
 
 ## Servizi e responsabilità
 
@@ -59,9 +61,10 @@ L'inoltro lo fa il **proxy di sviluppo di Angular** (`proxy.conf.json`): il brow
 ## Struttura delle cartelle
 
 ```
-docker-compose.yml                 # PostgreSQL con i database spaces, bookings, users
+docker-compose.yml                 # MongoDB (spaces) e PostgreSQL (bookings, users)
 .env.example                       # variabili d'esempio, senza valori reali
-infra/postgres/init.sql            # crea i database (anche quelli di test)
+infra/postgres/init.sql            # crea i database bookings, users e quelli di test
+infra/mongo/init.js                # crea l'utente applicativo di spaces
 src/
   Services/
     Spaces/SmartCampus.Spaces.Api/
@@ -227,7 +230,8 @@ distribuita, nessuna saga, nessuna "mezza prenotazione".
 | Frontend | Spaces, Bookings, Users | Le rispettive pagine | Si ferma solo la parte del servizio giù |
 | Bookings | Spaces | **Solo creazione** di una prenotazione | Le nuove prenotazioni vengono rifiutate (`503`), il resto funziona |
 | Bookings | Users | **Solo creazione** di una prenotazione di gruppo | Le prenotazioni di gruppo vengono rifiutate (`503`), quelle singole funzionano |
-| Spaces, Bookings, Users | PostgreSQL | Persistenza | Il servizio risponde `503` e il suo health check fallisce |
+| Spaces | MongoDB | Persistenza | Spaces risponde `503`: è come se Spaces fosse giù |
+| Bookings, Users | PostgreSQL | Persistenza | Il servizio risponde `503` e il suo health check fallisce |
 
 Spaces e Users non dipendono da nessun altro servizio.
 
@@ -238,7 +242,8 @@ Spaces e Users non dipendono da nessun altro servizio.
 | **Spaces** | Le mie prenotazioni, annullamento, uscita dal gruppo, check-in, statistiche | Catalogo e ricerca, gestione spazi, **nuove prenotazioni** | "Catalogo momentaneamente non disponibile"; alla prenotazione: "Impossibile verificare lo spazio, riprova tra poco" |
 | **Users** | Chi ha già scelto il profilo continua a lavorare; catalogo; prenotazioni singole; le mie prenotazioni | Scelta del profilo all'ingresso, ricerca partecipanti, **nuove prenotazioni di gruppo** | "Elenco profili non disponibile"; nella prenotazione di gruppo: "Impossibile verificare i partecipanti" |
 | **Bookings** | Catalogo e gestione spazi, profili | Disponibilità, prenotazioni, partecipanti, check-in, statistiche | "Prenotazioni momentaneamente non disponibili" |
-| **PostgreSQL** | Nulla che usi dati | Tutti i servizi | "Servizio non raggiungibile" |
+| **MongoDB** | Come "Spaces giù" | Catalogo, gestione spazi, nuove prenotazioni | Come "Spaces giù" |
+| **PostgreSQL** | Catalogo e ricerca spazi (MongoDB) | Prenotazioni, profili, statistiche | "Servizio non raggiungibile" |
 | **Frontend** | Le API restano attive | L'interfaccia | Pagina non raggiungibile |
 
 ### Meccanismi di resilienza (solo strumenti di base)
@@ -254,7 +259,7 @@ Spaces e Users non dipendono da nessun altro servizio.
 
 ### Limiti accettati
 
-- **PostgreSQL è un punto unico di guasto** (un solo container). Accettabile per una dimostrazione locale.
+- **PostgreSQL è un punto unico di guasto per Bookings e Users** (un solo container). Mitigato con riavvio automatico e health check in Compose e `EnableRetryOnFailure` in EF Core (vedi [data-model.md](data-model.md#sicurezza-dei-database)); accettabile per una dimostrazione locale.
 - **Il proxy di Angular è solo per lo sviluppo.** In produzione servirebbe un reverse proxy vero.
 - **L'identità non è verificata:** il frontend invia l'utente scelto (D8). Va dichiarato nei limiti noti.
 
@@ -315,17 +320,15 @@ simultanee (D5).
 | Opzione | Pro | Contro |
 |---|---|---|
 | A. Tutto PostgreSQL | Un solo motore, un solo strumento di accesso (EF Core con migrazioni), un solo container; test e CI più semplici | NoSQL resta fuori: va motivato perché (B1 dell'[analisi dei requisiti](analysis/requirements-analysis.md)) |
-| **E. Spaces su MongoDB, Bookings e Users su PostgreSQL** (proposta, da decidere in review) | Usa NoSQL **dove serve davvero** (attributi diversi per tipo di spazio, indisponibilità dentro il documento dello spazio); la regola critica resta relazionale; un guasto di MongoDB ferma solo il catalogo | Due motori in Docker Compose; Spaces usa il driver ufficiale `MongoDB.Driver` invece di EF Core e non ha migrazioni (indici e dati iniziali creati all'avvio); test di Spaces su MongoDB reale; costi di gestione doppi (F5 dell'analisi) |
+| **E. Spaces su MongoDB, Bookings e Users su PostgreSQL** (scelta) | Usa NoSQL **dove serve davvero** (attributi diversi per tipo di spazio, indisponibilità dentro il documento dello spazio); la regola critica resta relazionale; un guasto di MongoDB ferma solo il catalogo | Due motori in Docker Compose; Spaces usa il driver ufficiale `MongoDB.Driver` invece di EF Core e non ha migrazioni (indici e dati iniziali creati all'avvio); test di Spaces su MongoDB reale; costi di gestione doppi (F5 dell'analisi) |
 | B. SQL Server per tutto | Molto integrato con .NET | Nessun vincolo di esclusione: servirebbero transazioni `SERIALIZABLE` o lock; immagine pesante, scomoda sui Mac ARM |
 | C. MySQL / MariaDB per tutto | Diffuso | Nessun tipo intervallo né vincolo di esclusione |
 | D. MongoDB per tutto | Un solo motore NoSQL | Impossibile garantire l'assenza di sovrapposizioni con richieste simultanee |
 
-**Proposta:** l'opzione **E**, se chi lavora su Spaces si sente sicuro con MongoDB; altrimenti l'opzione
-**A**, scrivendo nell'ADR perché NoSQL è stato escluso. In entrambi i casi Bookings resta su PostgreSQL.
-
-Con l'opzione A i database sono `spaces`, `bookings`, `users` su PostgreSQL, con **Entity Framework Core**
-(provider Npgsql) e migrazioni. Con l'opzione E il database `spaces` diventa una collezione `spaces` su
-MongoDB. In entrambi i casi ogni servizio riceve **solo** la stringa di connessione del proprio database.
+**Scelta: opzione E.** NoSQL dove la struttura dei dati è davvero variabile (Spaces), relazionale dove servono
+vincoli e transazioni (Bookings, Users). Bookings e Users usano **Entity Framework Core** (provider Npgsql) con
+migrazioni; Spaces usa `MongoDB.Driver` con indici creati all'avvio. Ogni servizio riceve **solo** la stringa
+di connessione del proprio database. Schemi, regole di dominio e sicurezza in [data-model.md](data-model.md).
 
 ### D5 – Prevenzione delle sovrapposizioni (spazi e persone)
 
@@ -381,15 +384,15 @@ Le slide: "l'interfaccia è utilizzabile negli ambienti proposti e la portabilit
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. Profili sintetici nel servizio Users, scelti all'ingresso** (raccomandata) | Nessun account reale (come chiedono le slide); i profili servono anche come partecipanti dei gruppi | Non è sicurezza vera: il frontend invia l'utente scelto (header `X-User-Id`, `X-User-Role`); va dichiarato nei limiti noti |
-| B. Login con password e JWT | Più realistico | Un giorno di lavoro su qualcosa che non è il bisogno |
+| **A. Profili sintetici nel servizio Users, scelti all'ingresso** (punto di partenza) | Nessun account reale (come chiedono le slide); i profili servono anche come partecipanti dei gruppi | Non è sicurezza vera: il frontend invia l'utente scelto (header `X-User-Id`, `X-User-Role`); va dichiarato nei limiti noti |
+| **B. Password demo e token firmato (JWT) emesso da Users** (evoluzione prevista, SC-20 #79, Should) | Risolve il punto debole W1: il ruolo arriva da un token firmato, non dal browser | Mezza giornata di lavoro distribuita su tre persone |
 
 Ruoli nel codice: `Student`, `Staff`.
 
 ### D9 – Test
 
 - **xUnit** per i test dei servizi.
-- **Test di integrazione sul PostgreSQL di Docker Compose**, su database dedicati (`bookings_test`, …):
+- **Test di integrazione sui database reali di Docker Compose**, su database dedicati (`bookings_test`, `users_test` su PostgreSQL, `spaces_test` su MongoDB):
   il test di concorrenza (molte richieste simultanee sulla stessa fascia, ne passa esattamente una, sia per
   lo spazio sia per la persona) gira sul database reale.
 - Prove di guasto come descritto sopra.
@@ -419,7 +422,7 @@ Ruoli nel codice: `Student`, `Staff`.
 | D1 | Microservizi, solo 3 servizi |
 | D2 | Spaces, Bookings (con statistiche), Users |
 | D3 | REST sincrono con `HttpClient` e timeout |
-| D4 | Un database per servizio: Bookings e Users su PostgreSQL; Spaces su MongoDB o PostgreSQL (da decidere) |
+| D4 | Un database per servizio: Spaces su MongoDB, Bookings e Users su PostgreSQL |
 | D5 | Vincoli di esclusione su spazi e persone |
 | D6 | Angular + Angular Material |
 | D7 | Docker Compose solo per PostgreSQL |

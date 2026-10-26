@@ -40,7 +40,7 @@
 |---|---|
 | XSS: testo inserito da un utente (nome di uno spazio, motivo di indisponibilità) eseguito come codice | Usare solo l'interpolazione di Angular (`{{ }}`), che fa l'escape automatico; **mai** `[innerHTML]` né `bypassSecurityTrust*` |
 | Funzioni del personale visibili a uno studente | Route guard per ruolo. È solo comodità: **il controllo vero è sul server** |
-| Profilo scelto salvato nel browser e modificabile | Accettato (W1). Il browser conserva solo id e ruolo, nessun dato sensibile |
+| Utente e ruolo falsificabili dal browser (W1) | Accesso con password demo e **token firmato** emesso da Users (SC-20, #79); il ruolo arriva dal token, non dal browser. Finché SC-20 non è fatta: limite dichiarato |
 | Chiamate a servizi esterni non previsti | Il frontend chiama solo `/api/...` tramite il proxy; nessuna URL assoluta nel codice |
 | Dipendenze npm vulnerabili | `npm audit` in CI; versioni bloccate da `package-lock.json` |
 
