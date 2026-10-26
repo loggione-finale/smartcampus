@@ -118,3 +118,24 @@ e chiediamo al PO se aggiungerebbe o toglierebbe qualcosa.
 2. Aggiornare priorità e criteri sulla board e nelle issue (le storie con "proposta, da confermare con il PO").
 3. Scrivere Product Goal e Sprint Goal concordati in `docs/process.md` (#84).
 4. Comunicare le decisioni al gruppo con un commento sull'issue #98.
+
+---
+
+## Aggiornamento dopo il brainstorming del gruppo (26/10 pomeriggio)
+
+Il gruppo ha rivisto il prodotto: vedi [brainstorming-2026-10-26.md](brainstorming-2026-10-26.md). All'incontro
+si porta **quel perimetro**, con il suo ordine di taglio (sezione 7).
+
+**Domande superate** (il brainstorming propone già una risposta da validare):
+
+| Domanda | Nuova proposta |
+|---|---|
+| 5 – partecipanti diretti o con invito | Invito per email, conferma entro 2 ore, anche per non registrati |
+| 7 – chi fa il check-in | Niente check-in: commento finale obbligatorio con presenze |
+| 8 – soglia del rilascio automatico | Niente rilascio automatico |
+| 9, 10 – spazio disattivato, annullamenti del personale | Gestiti come eccezioni dall'admin, con mail ai partecipanti |
+| 14 – accesso | Registrazione e login con password, nessun mock |
+
+**Domande nuove** (sezione 9 del brainstorming): telefono necessario?, formato della matricola, chi prenota
+aule dedicate e miste, scadenza delle conferme per prenotazioni imminenti, elenco degli strumenti, email
+come file `.eml` locali.

@@ -1,6 +1,10 @@
 # Promemoria: che cosa stiamo facendo e come
 
 > Una pagina da rileggere prima di ogni giornata di lavoro. I dettagli sono nei documenti linkati.
+>
+> **Aggiornamento 26/10 pomeriggio:** il [brainstorming del gruppo](analysis/brainstorming-2026-10-26.md) cambia
+> accesso (registrazione e login), gruppi (inviti per email con conferma entro 2 ore), aule (dedicate e miste),
+> admin e divisione del lavoro. Questa pagina verrà aggiornata dopo la validazione del PO.
 
 ## Che cosa
 

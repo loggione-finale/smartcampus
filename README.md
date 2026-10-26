@@ -13,6 +13,7 @@ vanno registrate in [`docs/decisions/`](docs/decisions/).
 Consegna: **29/10/2026**.
 
 - **[Promemoria: che cosa stiamo facendo e come](docs/project-overview.md)**
+- **[Brainstorming del 26/10: nuovo perimetro e divisione del lavoro](docs/analysis/brainstorming-2026-10-26.md)**
 - [Analisi del progetto](docs/analysis/project-analysis.md)
 - [Analisi dei requisiti rispetto alle slide](docs/analysis/requirements-analysis.md)
 - [Flusso dell'applicativo e punti deboli](docs/analysis/application-flow.md)
