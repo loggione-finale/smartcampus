@@ -3,51 +3,99 @@
 > **Stato: proposta da rivedere insieme.** Ogni scelta riporta opzioni, pro, contro e una raccomandazione.
 > Quando il gruppo concorda, la scelta diventa un ADR in [`decisions/`](decisions/).
 > Le slide chiedono di **motivare** ogni scelta: "Quale scelta serve al prodotto? Quale aggiungerebbe
-> soltanto complessità?".
+> soltanto complessità?". Per questo usiamo **solo strumenti già visti durante il corso**.
 
 ## Vista d'insieme
 
 ```mermaid
 flowchart TB
-    U[Studente / Personale<br/>browser] --> W[Web<br/>Blazor]
-    W --> G[Gateway<br/>YARP]
-    G --> S[Spaces]
-    G --> B[Bookings]
-    G --> R[Usage]
-    B -- "REST sincrono, solo alla creazione:<br/>lo spazio esiste ed è prenotabile?" --> S
-    R -. "sincronizzazione periodica<br/>(fuori dal percorso delle richieste)" .-> B
+    U[Studente / Personale<br/>browser] --> W[Frontend<br/>Angular Material]
+    W -- "proxy di sviluppo Angular<br/>/api/spaces · /api/bookings · /api/users" --> S[Spaces API]
+    W --> B[Bookings API]
+    W --> US[Users API]
+    B -- "REST: lo spazio esiste, è attivo,<br/>ha capienza sufficiente?" --> S
+    B -- "REST: i partecipanti esistono?<br/>(solo prenotazioni di gruppo)" --> US
     S --> DBS[(spaces)]
     B --> DBB[(bookings)]
-    R --> DBR[(usage)]
-    subgraph PG [PostgreSQL in container]
+    US --> DBU[(users)]
+    subgraph PG [PostgreSQL in Docker Compose]
         DBS
         DBB
-        DBR
+        DBU
     end
 ```
 
-Linea continua: dipendenza **sincrona**, se il servizio chiamato è giù la funzione si ferma.
-Linea tratteggiata: dipendenza **asincrona**, se il servizio chiamato è giù si lavora con dati meno recenti.
-
-Tutto si avvia insieme con **.NET Aspire** (`dotnet run` sull'AppHost), che avvia anche PostgreSQL in Docker.
+| Componente | Tecnologia | Avvio in locale |
+|---|---|---|
+| Frontend | Angular + Angular Material | `ng serve` (porta 4200) |
+| Spaces API | ASP.NET Core Web API, EF Core | `dotnet run` (porta 5101) |
+| Bookings API | ASP.NET Core Web API, EF Core | `dotnet run` (porta 5102) |
+| Users API | ASP.NET Core Web API, EF Core | `dotnet run` (porta 5103) |
+| Database | PostgreSQL, tre database nello stesso container | `docker compose up -d` |
 
 ## Servizi e responsabilità
 
 | Servizio | Responsabilità | Dati di sua proprietà |
 |---|---|---|
-| **Spaces** | Catalogo di aule, laboratori e sale studio; attrezzature; indisponibilità (manutenzione, chiusure) | Spazi, attrezzature, indisponibilità |
-| **Bookings** | Disponibilità, prenotazione, annullamento, check-in; **garantisce l'assenza di sovrapposizioni** | Prenotazioni e check-in |
-| **Usage** | Report per il personale: prenotato, check-in avvenuto, nessun dato; limiti dichiarati | Copia locale delle prenotazioni e data dell'ultima sincronizzazione |
-| **Gateway** | Unico punto d'ingresso per il frontend; instradamento verso i servizi | Nessuno |
-| **Web** | Interfaccia per studenti e personale | Nessuno |
+| **Spaces** | Catalogo di aule, laboratori e sale studio; capienza e attrezzature; indisponibilità (manutenzione, chiusure) | Spazi, attrezzature, indisponibilità |
+| **Bookings** | Disponibilità; prenotazioni singole e di gruppo; partecipanti; annullamento; check-in; **statistiche di utilizzo**. **Garantisce che né uno spazio né una persona abbiano due prenotazioni sovrapposte** | Prenotazioni, partecipanti, check-in |
+| **Users** | Profili sintetici di studenti e personale: scelta del profilo all'ingresso, ricerca dei partecipanti | Profili (nome, ruolo, email fittizia) |
+| **Frontend** | Interfaccia per studenti e personale | Nessuno |
 
 Regola: **ogni servizio possiede il proprio database** e nessun altro servizio lo legge direttamente.
 
-| Rotta pubblica (Gateway) | Servizio |
+Le statistiche stanno in Bookings perché si calcolano solo dai dati delle prenotazioni: un servizio a parte
+avrebbe dovuto tenerne una copia sincronizzata, con più codice e più punti di guasto.
+
+| Rotta usata dal frontend | Inoltrata a | Esempi |
+|---|---|---|
+| `/api/spaces/**` | Spaces `http://localhost:5101` | `GET /spaces`, `GET /spaces/{id}`, `POST /spaces/{id}/unavailabilities` |
+| `/api/bookings/**` | Bookings `http://localhost:5102` | `POST /bookings`, `GET /bookings/mine`, `POST /bookings/{id}/leave`, `GET /bookings/stats` |
+| `/api/users/**` | Users `http://localhost:5103` | `GET /users`, `GET /users?search=`, `GET /users/{id}` |
+
+L'inoltro lo fa il **proxy di sviluppo di Angular** (`proxy.conf.json`): il browser parla solo con
+`localhost:4200`, quindi non servono gateway né configurazioni CORS.
+
+## Struttura delle cartelle
+
+```
+docker-compose.yml                 # PostgreSQL con i database spaces, bookings, users
+.env.example                       # variabili d'esempio, senza valori reali
+infra/postgres/init.sql            # crea i database (anche quelli di test)
+src/
+  Services/
+    Spaces/SmartCampus.Spaces.Api/
+    Bookings/SmartCampus.Bookings.Api/
+    Users/SmartCampus.Users.Api/
+  web/                             # progetto Angular (Angular Material)
+    proxy.conf.json
+tests/
+  SmartCampus.Spaces.Tests/
+  SmartCampus.Bookings.Tests/      # include i test di concorrenza su PostgreSQL reale
+  SmartCampus.Users.Tests/
+data/synthetic/                    # dati sintetici (JSON) caricati all'avvio
+SmartCampus.slnx
+```
+
+Ogni servizio è un sottogruppo di lavoro: le PR di persone diverse toccano cartelle diverse.
+Tutti i nomi (progetti, classi, rotte, tabelle) sono in inglese; vedi [CONTRIBUTING](../CONTRIBUTING.md).
+
+---
+
+## Prenotazioni singole e di gruppo
+
+Una prenotazione ha sempre un **organizzatore** (chi prenota) e zero o più **partecipanti**, scelti tra i
+profili del servizio Users.
+
+| Regola | Come è garantita |
 |---|---|
-| `/api/spaces/**` | Spaces |
-| `/api/bookings/**` | Bookings |
-| `/api/usage/**` | Usage |
+| Lo spazio non ha due prenotazioni confermate sovrapposte | Vincolo di esclusione su `bookings` (D5) |
+| **Una persona non è in due prenotazioni confermate sovrapposte**, né come organizzatore né come partecipante | Vincolo di esclusione su `booking_participants` (D5) |
+| Organizzatore + partecipanti non superano la capienza dello spazio | Bookings legge la capienza da Spaces prima di salvare |
+| I partecipanti esistono | Bookings li verifica con Users prima di salvare |
+| I partecipanti li aggiunge l'organizzatore, senza invito da accettare | Compaiono subito in "Le mie prenotazioni" dei partecipanti |
+| Un partecipante può uscire dalla prenotazione | `POST /bookings/{id}/leave`: la sua riga diventa "uscito" e il posto si libera |
+| Solo l'organizzatore annulla l'intera prenotazione | Bookings confronta l'utente con `organizer_id` |
 
 ## Relazioni tra i dati dei servizi
 
@@ -59,9 +107,9 @@ non dal database.
 ```mermaid
 erDiagram
     SPACE ||--o{ UNAVAILABILITY : "FK reale (db spaces)"
-    BOOKING ||--o| CHECK_IN : "FK reale (db bookings)"
+    BOOKING ||--|{ BOOKING_PARTICIPANT : "FK reale (db bookings)"
     SPACE ||..o{ BOOKING : "riferimento logico space_id"
-    BOOKING ||..o| BOOKING_COPY : "copia sincronizzata (db usage)"
+    USER_PROFILE ||..o{ BOOKING_PARTICIPANT : "riferimento logico user_id"
     SPACE {
         uuid id
         string name
@@ -79,236 +127,143 @@ erDiagram
         uuid id
         uuid space_id
         string space_name_snapshot
-        string user_id
+        uuid organizer_id
         tstzrange period
         string status
-        timestamptz updated_at
-    }
-    CHECK_IN {
-        uuid booking_id
         timestamptz checked_in_at
     }
-    BOOKING_COPY {
+    BOOKING_PARTICIPANT {
         uuid booking_id
-        uuid space_id
+        uuid user_id
+        string display_name_snapshot
+        string role
         tstzrange period
         string status
-        bool checked_in
+    }
+    USER_PROFILE {
+        uuid id
+        string display_name
+        string role
+        string email
     }
 ```
 
 Linea continua: foreign key vera, dentro lo stesso database. Linea tratteggiata: riferimento tra servizi
 diversi, senza foreign key.
 
+L'organizzatore è anche una riga di `booking_participants` (con `role = Organizer`): così **un solo vincolo**
+impedisce a una persona di essere in due posti alla stessa ora, qualunque sia il suo ruolo. `period` e
+`status` sono copiati dalla prenotazione e aggiornati nella stessa transazione.
+
 | Dato | Proprietario | Chi altro lo usa | Come |
 |---|---|---|---|
-| Spazio (`id`, nome, stato attivo, indisponibilità) | Spaces | Bookings | `GET /spaces/{id}` al momento della prenotazione |
-| Prenotazione e check-in | Bookings | Usage | Copia sincronizzata ogni minuto (`GET /bookings/changes`) |
-| Utente (`user_id`, ruolo) | Nessun servizio: elenco di utenti sintetici in `data/synthetic` (D8) | Tutti | Arriva con ogni richiesta (`X-User-Id`, `X-User-Role`) |
+| Spazio (`id`, nome, capienza, stato, indisponibilità) | Spaces | Bookings | `GET /spaces/{id}` alla creazione della prenotazione |
+| Profilo (`id`, nome, ruolo) | Users | Bookings, Frontend | Bookings verifica i partecipanti; il frontend mostra l'elenco all'ingresso e nella ricerca |
+| Prenotazione, partecipanti, check-in, statistiche | Bookings | Frontend | API di Bookings |
 
-### Che cosa succede quando un utente prenota
+### Che cosa succede quando un utente prenota per un gruppo
 
-1. Il Web invia a Bookings `space_id`, utente e fascia oraria.
-2. **Bookings chiede a Spaces** se lo spazio esiste, è attivo e non è indisponibile in quella fascia. È
-   l'unico momento in cui i due database "si parlano", e lo fanno attraverso le API, mai leggendo l'uno
-   le tabelle dell'altro.
-3. Bookings salva nel **proprio** database `space_id` e una **copia del nome dello spazio**
-   (`space_name_snapshot`). Grazie alla copia, "Le mie prenotazioni" funziona anche con Spaces giù (vedi la
-   tabella dei guasti).
-4. Il vincolo di esclusione (D5) controlla le sovrapposizioni dentro il database `bookings`. Serve una
-   **sola transazione locale**: nessuna transazione distribuita, nessuna saga.
-5. Entro un minuto Usage copia la nuova prenotazione nel proprio database.
+```mermaid
+sequenceDiagram
+    actor O as Organizzatore
+    participant W as Frontend
+    participant B as Bookings
+    participant SP as Spaces
+    participant U as Users
+    participant DB as db bookings
+    O->>W: sceglie spazio, fascia e partecipanti
+    W->>B: POST /api/bookings (participantIds)
+    B->>B: valida la fascia (fine dopo inizio, non nel passato)
+    B->>SP: GET /spaces/{id} (timeout 3 s)
+    alt Spaces non risponde
+        B-->>W: 503 "impossibile verificare lo spazio"
+    else spazio inesistente, disattivato, indisponibile o troppo piccolo
+        B-->>W: 422 con il motivo
+    else spazio prenotabile
+        B->>U: GET /users?ids=... (timeout 3 s)
+        alt Users non risponde
+            B-->>W: 503 "impossibile verificare i partecipanti"
+        else un partecipante non esiste
+            B-->>W: 422 con il nome mancante
+        else partecipanti validi
+            B->>DB: INSERT booking + righe participants (una transazione)
+            alt spazio già occupato
+                DB-->>B: violazione del vincolo sullo spazio
+                B-->>W: 409 "fascia già occupata"
+            else una persona è già impegnata
+                DB-->>B: violazione del vincolo sulle persone
+                B-->>W: 409 "Mario Rossi ha già una prenotazione in quella fascia"
+            else tutto libero
+                DB-->>B: ok
+                B-->>W: 201 prenotazione confermata
+            end
+        end
+    end
+    W-->>O: conferma o messaggio chiaro
+```
+
+Per una prenotazione **singola** il passo verso Users non serve: l'organizzatore è l'utente corrente.
+
+Le scritture toccano **solo il database `bookings`, in una sola transazione**: nessuna transazione
+distribuita, nessuna saga, nessuna "mezza prenotazione".
 
 ### Come restano coerenti i riferimenti
 
 | Rischio | Regola |
 |---|---|
-| Una prenotazione punta a uno spazio cancellato | Spaces **non cancella mai** uno spazio: lo disattiva. Ogni `space_id` salvato resta valido per sempre |
-| Si prenota uno spazio che non esiste | Bookings lo verifica con Spaces prima di salvare; se Spaces non risponde, rifiuta (`503`) |
-| Il nome dello spazio cambia dopo la prenotazione | La copia conserva il nome al momento della prenotazione; la pagina di dettaglio mostra quello attuale chiedendolo a Spaces |
-| Uno spazio viene disattivato o va in manutenzione con prenotazioni già confermate | Le prenotazioni esistenti non vengono toccate in automatico. **Domanda aperta per il PO** (n. 4 dell'analisi): se vanno annullate serve un flusso tra due servizi, da valutare dopo il risultato minimo |
-| Usage mostra dati vecchi | Coerenza **eventuale**: ritardo massimo di circa un minuto, sempre dichiarato con la data dell'ultima sincronizzazione |
-
-| Opzione per mostrare il nome dello spazio nelle prenotazioni | Pro | Contro |
-|---|---|---|
-| A. Il Web chiede i nomi a Spaces ogni volta (composizione delle API) | Nessuna copia, nome sempre aggiornato | Con Spaces giù l'elenco delle prenotazioni perde i nomi; più chiamate |
-| **B. Copia del nome in Bookings** (raccomandata) | "Le mie prenotazioni" funziona da sola, coerente con la tabella dei guasti | Il nome copiato può essere vecchio (accettabile: è quello prenotato) |
-
-## Struttura delle cartelle
-
-```
-src/
-  SmartCampus.AppHost/            # Aspire: avvia servizi, gateway, web e PostgreSQL
-  SmartCampus.ServiceDefaults/    # Health check, logging, resilienza comuni
-  SmartCampus.Gateway/            # YARP reverse proxy
-  SmartCampus.Web/                # Blazor Web App
-  Services/
-    Spaces/SmartCampus.Spaces.Api/
-    Bookings/SmartCampus.Bookings.Api/
-    Usage/SmartCampus.Usage.Api/
-tests/
-  SmartCampus.Spaces.Tests/
-  SmartCampus.Bookings.Tests/      # include i test di concorrenza su PostgreSQL reale
-  SmartCampus.Usage.Tests/
-data/synthetic/                    # dati sintetici (JSON) e generatore
-SmartCampus.slnx
-```
-
-Ogni servizio è un sottogruppo di lavoro: le PR di persone diverse toccano cartelle diverse.
-Tutti i nomi (progetti, classi, rotte, tabelle) sono in inglese; vedi [CONTRIBUTING](../CONTRIBUTING.md).
+| Una prenotazione punta a uno spazio o a un profilo cancellato | Spaces e Users **non cancellano mai**: disattivano. Ogni id salvato resta valido |
+| Si prenota uno spazio o si aggiunge una persona che non esiste | Bookings lo verifica prima di salvare; se il servizio non risponde, rifiuta (`503`) |
+| Nome dello spazio o della persona cambiato dopo la prenotazione | Bookings conserva una copia del nome (`*_snapshot`), così l'elenco funziona anche con Spaces o Users giù |
+| Spazio disattivato o in manutenzione con prenotazioni già confermate | Le prenotazioni esistenti non vengono toccate in automatico. **Domanda aperta per il PO**: se vanno annullate serve un flusso tra due servizi, da valutare dopo il risultato minimo |
 
 ---
 
 ## Dipendenze e comportamento in caso di guasto
 
-In un'architettura a microservizi un servizio può non rispondere mentre gli altri funzionano. Per ogni
-servizio va deciso **che cosa continua a funzionare, che cosa si ferma e che cosa vede l'utente**.
-
 ### Matrice delle dipendenze
 
-| Chi | Dipende da | Tipo | Per quale funzione | Se la dipendenza è giù |
-|---|---|---|---|---|
-| Web | Gateway | Sincrona | Tutto | L'interfaccia non raggiunge nessun servizio |
-| Gateway | Spaces, Bookings, Usage | Sincrona | Instradamento | Si ferma solo la parte del servizio giù |
-| Bookings | Spaces | Sincrona | **Solo creazione** di una prenotazione: lo spazio esiste, è attivo, non è indisponibile | Le nuove prenotazioni vengono rifiutate (`503`), tutto il resto di Bookings funziona |
-| Usage | Bookings | **Asincrona** (sincronizzazione periodica) | Aggiornare la copia locale delle prenotazioni | Il report resta disponibile con i dati dell'ultima sincronizzazione, con data e avviso |
-| Spaces, Bookings, Usage | PostgreSQL | Sincrona | Persistenza | Il servizio risponde `503` e il suo health check diventa "unhealthy" |
+| Chi | Dipende da | Per quale funzione | Se la dipendenza è giù |
+|---|---|---|---|
+| Frontend | Spaces, Bookings, Users | Le rispettive pagine | Si ferma solo la parte del servizio giù |
+| Bookings | Spaces | **Solo creazione** di una prenotazione | Le nuove prenotazioni vengono rifiutate (`503`), il resto funziona |
+| Bookings | Users | **Solo creazione** di una prenotazione di gruppo | Le prenotazioni di gruppo vengono rifiutate (`503`), quelle singole funzionano |
+| Spaces, Bookings, Users | PostgreSQL | Persistenza | Il servizio risponde `503` e il suo health check fallisce |
 
-Spaces non dipende da nessun altro servizio.
+Spaces e Users non dipendono da nessun altro servizio.
 
 ### Che cosa succede se va giù un servizio
 
 | Servizio giù | Continua a funzionare | Si ferma | Cosa vede l'utente |
 |---|---|---|---|
-| **Spaces** | Le mie prenotazioni, annullamento, check-in, disponibilità di uno spazio, report | Catalogo e ricerca, gestione spazi e indisponibilità, **nuove prenotazioni** | "Catalogo momentaneamente non disponibile"; alla prenotazione: "Impossibile verificare lo spazio, riprova tra poco" |
-| **Bookings** | Catalogo e ricerca, gestione spazi, report (dall'ultima sincronizzazione) | Disponibilità, prenotazione, annullamento, mie prenotazioni, check-in | "Prenotazioni momentaneamente non disponibili"; nel report: "Dati aggiornati alle HH:MM, le prenotazioni più recenti potrebbero mancare" |
-| **Usage** | Tutto tranne il report | Report di utilizzo | "Report momentaneamente non disponibile" |
-| **Gateway** | I servizi sono attivi ma irraggiungibili dall'interfaccia | Tutto | "Servizio non raggiungibile" |
+| **Spaces** | Le mie prenotazioni, annullamento, uscita dal gruppo, check-in, statistiche | Catalogo e ricerca, gestione spazi, **nuove prenotazioni** | "Catalogo momentaneamente non disponibile"; alla prenotazione: "Impossibile verificare lo spazio, riprova tra poco" |
+| **Users** | Chi ha già scelto il profilo continua a lavorare; catalogo; prenotazioni singole; le mie prenotazioni | Scelta del profilo all'ingresso, ricerca partecipanti, **nuove prenotazioni di gruppo** | "Elenco profili non disponibile"; nella prenotazione di gruppo: "Impossibile verificare i partecipanti" |
+| **Bookings** | Catalogo e gestione spazi, profili | Disponibilità, prenotazioni, partecipanti, check-in, statistiche | "Prenotazioni momentaneamente non disponibili" |
 | **PostgreSQL** | Nulla che usi dati | Tutti i servizi | "Servizio non raggiungibile" |
-| **Web** | Le API restano attive | L'interfaccia | Pagina non raggiungibile |
+| **Frontend** | Le API restano attive | L'interfaccia | Pagina non raggiungibile |
 
-**Nessun dato si perde a metà:** ogni operazione di scrittura (prenotare, annullare, check-in) è una sola
-transazione nel database di un solo servizio. Se il servizio cade prima della conferma, la prenotazione
-semplicemente non esiste; non può esistere "mezza prenotazione".
+### Meccanismi di resilienza (solo strumenti di base)
 
-### Risposta alla domanda "che cosa succede a Usage se va giù Bookings?"
-
-Nella prima versione della proposta Usage leggeva le prenotazioni da Bookings **a ogni richiesta**: con
-Bookings giù il report si sarebbe fermato. Per questo la proposta cambia: Usage tiene una **copia locale**
-delle prenotazioni, aggiornata periodicamente.
-
-| Opzione | Pro | Contro |
-|---|---|---|
-| A. Lettura REST a ogni richiesta (proposta precedente) | Dati sempre aggiornati; nessuna copia | Con Bookings giù il report non funziona; ogni report carica Bookings |
-| **B. Sincronizzazione periodica nel database di Usage** (raccomandata) | Il report funziona anche con Bookings giù; il report è indipendente dal carico di Bookings; giustifica il database di Usage | Dati in ritardo di qualche istante; un job in background da scrivere |
-| C. Eventi tramite broker (RabbitMQ) | Aggiornamento quasi immediato | Un componente in più da installare e gestire; consegna duplicata o fuori ordine; troppo per 3 giorni |
-
-Come funziona la sincronizzazione (opzione B):
-
-1. Bookings espone `GET /bookings/changes?since=<data>`, che restituisce le prenotazioni create o
-   modificate dopo quella data.
-2. Usage, ogni minuto, chiama questo endpoint partendo dalla data dell'ultima sincronizzazione riuscita e
-   aggiorna la propria copia.
-3. Se Bookings non risponde, Usage salta il giro e riprova al successivo: la data dell'ultima
-   sincronizzazione non avanza, quindi al ritorno di Bookings recupera tutto.
-4. Il report mostra sempre la **data dell'ultima sincronizzazione**. Coerente con il bisogno: l'assenza di
-   dati recenti non viene mai mostrata come assenza di utilizzo.
-
-### Perché Bookings rifiuta le prenotazioni se Spaces è giù
-
-| Opzione | Pro | Contro |
-|---|---|---|
-| **A. Rifiutare la prenotazione (`503`)** (raccomandata) | Nessuna prenotazione su uno spazio disattivato o in manutenzione: la conferma resta affidabile | Con Spaces giù non si prenota |
-| B. Bookings tiene una copia degli spazi | Si prenota anche con Spaces giù | Si può confermare una prenotazione su uno spazio appena disattivato; un'altra sincronizzazione da scrivere |
-
-Il bisogno principale è una **conferma affidabile**: meglio un rifiuto chiaro e temporaneo che una conferma
-sbagliata.
-
-### Flussi principali
-
-**Creazione di una prenotazione**
-
-```mermaid
-sequenceDiagram
-    actor S as Studente
-    participant W as Web
-    participant G as Gateway
-    participant B as Bookings
-    participant SP as Spaces
-    participant DB as db bookings
-    S->>W: sceglie spazio e fascia
-    W->>G: POST /api/bookings
-    G->>B: POST /bookings
-    B->>B: valida la fascia (fine dopo inizio, non nel passato)
-    B->>SP: GET /spaces/{id} (con timeout)
-    alt Spaces non risponde
-        B-->>W: 503 "impossibile verificare lo spazio"
-    else spazio inesistente, disattivato o indisponibile
-        B-->>W: 422 con il motivo
-    else spazio prenotabile
-        B->>DB: INSERT (vincolo di esclusione)
-        alt sovrapposizione
-            DB-->>B: violazione del vincolo
-            B-->>W: 409 "fascia già occupata"
-        else libero
-            DB-->>B: ok
-            B-->>W: 201 prenotazione confermata
-        end
-    end
-    W-->>S: conferma o messaggio chiaro
-```
-
-**Report di utilizzo**
-
-```mermaid
-sequenceDiagram
-    participant U as Usage (job ogni minuto)
-    participant B as Bookings
-    participant DB as db usage
-    U->>B: GET /bookings/changes?since=ultima_sync
-    alt Bookings risponde
-        B-->>U: prenotazioni cambiate
-        U->>DB: aggiorna copia e ultima_sync
-    else Bookings non risponde
-        U->>U: salta il giro, ultima_sync invariata
-    end
-    Note over U,DB: Il personale chiede il report: Usage risponde<br/>dal proprio database, con la data di ultima_sync
-```
-
-### Meccanismi di resilienza
-
-- **Timeout, retry e circuit breaker** sulle chiamate HTTP tra servizi, con il gestore standard di
-  resilienza di Aspire (`AddStandardResilienceHandler` in ServiceDefaults). Un servizio lento non blocca
-  chi lo chiama.
-- **Retry solo per le richieste che si possono ripetere senza effetti** (le `GET`). Un `POST` di
-  prenotazione ripetuto automaticamente potrebbe scontrarsi con la prenotazione appena creata e restituire
-  un falso `409`: per i `POST` niente retry automatico.
-- **Health check** (`/health`, `/alive`) su ogni servizio, visibili nella dashboard di Aspire.
-- **Degradazione nell'interfaccia:** ogni pagina gestisce da sola l'errore del proprio servizio e mostra un
-  messaggio chiaro, senza bloccare le altre pagine.
+- **Timeout** di 3 secondi su ogni `HttpClient` tra servizi (`HttpClient.Timeout`): un servizio lento non
+  blocca chi lo chiama. In caso di timeout o errore si risponde `503` con un messaggio chiaro.
+- **Nessun retry automatico sui `POST`:** una prenotazione ripetuta in automatico si scontrerebbe con quella
+  appena creata e restituirebbe un falso `409`.
+- **Health check** di ASP.NET Core (`AddHealthChecks`, endpoint `/health`) su ogni servizio, con controllo
+  del database.
+- **Degradazione nell'interfaccia:** ogni pagina Angular gestisce l'errore del proprio servizio e mostra un
+  messaggio (ad esempio con uno snackbar di Angular Material), senza bloccare le altre pagine.
 
 ### Limiti accettati
 
-- **Gateway e PostgreSQL sono punti unici di guasto.** Per una dimostrazione locale è accettabile; in
-  produzione servirebbero più istanze e database separati. Va dichiarato nei limiti noti.
-- **Nessuna replica dei servizi:** ogni servizio ha una sola istanza.
+- **PostgreSQL è un punto unico di guasto** (un solo container). Accettabile per una dimostrazione locale.
+- **Il proxy di Angular è solo per lo sviluppo.** In produzione servirebbe un reverse proxy vero.
+- **L'identità non è verificata:** il frontend invia l'utente scelto (D8). Va dichiarato nei limiti noti.
 
 ### Come lo proviamo
 
-Per ogni riga della tabella "Che cosa succede se va giù un servizio": dalla dashboard di Aspire si ferma il
-servizio (Stop), si prova l'interfaccia, si riavvia il servizio e si verifica il recupero. L'esito si
-registra in [`evidence/`](evidence/). In più, un test automatico verifica che Bookings risponda `503`
-quando Spaces non è raggiungibile.
-
-### Impatto sul backlog (da confermare in review)
-
-| Modifica | Dove |
-|---|---|
-| Usage usa la sincronizzazione periodica invece della lettura REST a ogni richiesta | Cambia SC-13.T1 |
-| Endpoint `GET /bookings/changes?since=` in Bookings | Nuovo task in SC-13 |
-| Resilienza HTTP: timeout, retry solo su `GET`, circuit breaker | Nuovo task in SC-01 |
-| Messaggi di servizio non disponibile in ogni pagina del Web | Nuovo task in SC-01 |
-| Prove di guasto per ogni servizio, registrate in `docs/evidence/` | Nuovo task in SC-01 |
+Per ogni riga della tabella "Che cosa succede se va giù un servizio": si ferma il servizio (Ctrl+C sul suo
+`dotnet run`, oppure `docker compose stop` per il database), si prova l'interfaccia, si riavvia e si verifica
+il recupero. L'esito si registra in [`evidence/`](evidence/). In più, un test automatico verifica che
+Bookings risponda `503` quando Spaces non è raggiungibile.
 
 ---
 
@@ -316,106 +271,108 @@ quando Spaces non è raggiungibile.
 
 ### D1 – Stile architetturale: microservizi
 
-**Scelta del gruppo:** microservizi. Va motivata al PO, perché le slide chiedono di evitare complessità
-che non serve al bisogno.
+**Scelta del gruppo:** microservizi, realizzati con gli strumenti del corso.
 
 | | Microservizi | Monolite modulare (alternativa) |
 |---|---|---|
-| **Pro** | Confini netti: 7 persone lavorano in parallelo su servizi diversi con pochi conflitti; ogni servizio si testa e si avvia da solo; un guasto resta limitato a una parte del prodotto; obiettivo didattico esplicito | Un solo processo e un solo database: avvio, debug e test più semplici; transazioni locali; meno codice di infrastruttura |
-| **Contro** | Più infrastruttura (gateway, configurazione, avvio coordinato); chiamate di rete che possono fallire e vanno gestite (vedi sopra); dati distribuiti, niente transazioni tra servizi; test di integrazione più complessi | Confini rispettati solo per disciplina; tutti lavorano nello stesso progetto, più conflitti di merge; se cade, cade tutto |
+| **Pro** | Confini netti: 7 persone lavorano in parallelo su servizi diversi con pochi conflitti; ogni servizio si avvia e si testa da solo; un guasto resta limitato a una parte del prodotto | Un solo processo e un solo database: avvio, debug e test più semplici; transazioni locali ovunque |
+| **Contro** | Più processi da avviare; chiamate di rete che possono fallire e vanno gestite; niente foreign key né transazioni tra servizi | Confini rispettati solo per disciplina; più conflitti di merge; se cade, cade tutto |
 
-**Come contenere i contro in 3 giorni:**
-- solo **3 servizi di dominio**, non uno per ogni entità;
-- scheletro comune (Aspire + ServiceDefaults) pronto il **primo giorno**;
-- la regola critica (niente sovrapposizioni) vive **dentro un solo servizio**, Bookings, così non
-  serve nessuna transazione distribuita.
+**Come contenere i contro:** 3 servizi soltanto, sola comunicazione REST, la regola critica dentro un solo
+servizio (Bookings), nessuno strumento nuovo da imparare.
 
 ### D2 – Confini dei servizi
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. Spaces, Bookings, Usage** (raccomandata) | Seguono i tre bisogni (trovare, prenotare, capire l'uso); conflitti gestiti in un solo posto | Usage ha bisogno dei dati di Bookings (risolto con la sincronizzazione periodica) |
-| B. Aggiungere un servizio Users/Identity | Autenticazione separata e riutilizzabile | Un servizio in più da costruire, senza valore diretto per il bisogno |
-| C. Bookings e check-in separati | Separa intenzione e uso | Il check-in è legato alla prenotazione: due servizi da tenere coerenti |
+| **A. Spaces, Bookings, Users** (raccomandata) | Seguono i bisogni: trovare gli spazi, prenotare (anche in gruppo), sapere chi sono le persone; statistiche dove stanno i dati | Bookings è il servizio più grande |
+| B. Spaces, Bookings, Usage, Users | Statistiche isolate | Usage deve copiare i dati di Bookings: sincronizzazione o broker, più guasti possibili |
+| C. Spaces e Bookings, profili dentro Bookings | Un servizio in meno | I profili non c'entrano con le prenotazioni; Bookings diventa troppo grande |
 
 ### D3 – Comunicazione tra servizi
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. REST**: sincrono per Bookings → Spaces, sincronizzazione periodica per Usage ← Bookings (raccomandata) | Semplice, già noto, facile da provare e da mostrare; Usage non dipende dalla disponibilità di Bookings | Con Spaces giù non si creano prenotazioni (scelta voluta, vedi sopra) |
-| B. Eventi asincroni con broker (RabbitMQ) | Servizi completamente disaccoppiati | Un componente in più; consegna duplicata o fuori ordine da gestire; difficile da completare in 3 giorni |
+| **A. REST sincrono con `HttpClient`** (raccomandata) | Già visto nel corso; facile da provare e da mostrare | Con Spaces giù non si creano prenotazioni (scelta voluta) |
+| B. Broker di messaggi (RabbitMQ) | Servizi disaccoppiati | Mai usato nel corso; un componente in più da installare; duplicati e ordine dei messaggi da gestire |
 
 ### D4 – Database
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. PostgreSQL, un database per servizio nello stesso container** (raccomandata) | Gratuito e cross-platform; supporta i vincoli di esclusione sugli intervalli di tempo (vedi D5); un solo container da avviare | Un solo server condiviso è un punto unico di guasto: va dichiarato come semplificazione |
-| B. SQL Server | Molto integrato con .NET | Immagine Docker pesante; su Mac con Apple Silicon più scomodo; niente vincolo di esclusione nativo |
-| C. MongoDB per il catalogo + SQL per le prenotazioni | Mostra NoSQL dove la struttura è flessibile | Due tecnologie da conoscere e configurare; le slide dicono che la doppia persistenza **non** è richiesta |
-| D. Un solo database condiviso | Semplicissimo | Viola il principio dei microservizi: i servizi si accoppiano tramite le tabelle |
+| **A. PostgreSQL, un database per servizio nello stesso container** (raccomandata) | Gratuito e cross-platform; **unico con i vincoli di esclusione sugli intervalli di tempo** (D5); un solo container | Un solo server: punto unico di guasto, da dichiarare |
+| B. SQL Server | Molto integrato con .NET | Nessun vincolo di esclusione: servirebbero transazioni `SERIALIZABLE` o lock; immagine pesante, scomoda sui Mac ARM |
+| C. MySQL / MariaDB | Diffuso | Nessun tipo intervallo né vincolo di esclusione |
+| D. MongoDB | Mostra NoSQL | Nessun vincolo tra documenti diversi: le sovrapposizioni andrebbero controllate nel codice, sbagliato con richieste simultanee |
 
-Database: `spaces`, `bookings`, `usage`. Accesso ai dati: **Entity Framework Core** con il provider Npgsql
-e le migrazioni.
+Database: `spaces`, `bookings`, `users`. Accesso ai dati: **Entity Framework Core** con il provider Npgsql
+e le migrazioni. Ogni servizio riceve **solo** la stringa di connessione del proprio database.
 
-### D5 – Prevenzione delle prenotazioni sovrapposte
+### D5 – Prevenzione delle sovrapposizioni (spazi e persone)
 
 È la regola più importante. Le slide: "per dimostrare concorrenza e persistenza servono prove sul database
 reale scelto: mock e provider in-memory, da soli, non dimostrano queste proprietà".
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. Vincolo di esclusione in PostgreSQL** (raccomandata) | È il database a rifiutare la seconda prenotazione, anche con richieste simultanee e più istanze del servizio; poche righe di SQL | Specifico di PostgreSQL (estensione `btree_gist`) |
-| B. Controllo nel codice ("se è libero, inserisci") | Semplice da scrivere | **Sbagliato con richieste simultanee**: due richieste vedono lo spazio libero e inseriscono entrambe |
-| C. Transazione `SERIALIZABLE` | Corretta, standard SQL | Errori di serializzazione da ritentare; più difficile da capire e provare |
-| D. Lock applicativo (`lock`, semaforo) | Facile | Funziona solo con una singola istanza del servizio |
-
-Esempio del vincolo:
+| **A. Vincoli di esclusione in PostgreSQL** (raccomandata) | È il database a rifiutare la seconda prenotazione, anche con richieste simultanee; poche righe di SQL in una migrazione | Specifico di PostgreSQL |
+| B. Controllo nel codice ("se è libero, inserisci") | Semplice | **Sbagliato con richieste simultanee**: due richieste vedono libero e inseriscono entrambe |
+| C. Transazione `SERIALIZABLE` | Standard SQL | Errori di serializzazione da ritentare; più difficile da provare |
+| D. Lock applicativo (`lock`) | Facile | Funziona solo con una singola istanza del servizio |
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+-- Uno spazio non ha due prenotazioni confermate sovrapposte
 ALTER TABLE bookings
-  ADD CONSTRAINT bookings_no_overlap
+  ADD CONSTRAINT bookings_space_no_overlap
   EXCLUDE USING gist (space_id WITH =, period WITH &&)
+  WHERE (status = 'Confirmed');
+
+-- Una persona non è in due prenotazioni confermate sovrapposte
+ALTER TABLE booking_participants
+  ADD CONSTRAINT booking_participants_person_no_overlap
+  EXCLUDE USING gist (user_id WITH =, period WITH &&)
   WHERE (status = 'Confirmed');
 ```
 
-Il servizio traduce la violazione del vincolo in una risposta `409 Conflict` comprensibile per l'utente.
+Il nome del vincolo violato dice a Bookings quale messaggio restituire (`409`: spazio occupato o persona
+già impegnata).
 
-### D6 – Interfaccia
+### D6 – Frontend
 
 Le slide: "l'interfaccia è utilizzabile negli ambienti proposti e la portabilità è dimostrabile".
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. Blazor Web App** (raccomandata) | Tutto in C#; funziona su qualsiasi sistema con un browser, anche da smartphone; portabilità facile da dimostrare | Non è un'app installabile |
-| B. .NET MAUI | App nativa per Windows, Android, iOS, macOS | Build e emulatori lenti da configurare su 7 macchine; iOS richiede un Mac |
-| C. React/Angular + API | Molto diffuso | Un secondo linguaggio e un secondo ecosistema da gestire |
+| **A. Angular + Angular Material** (raccomandata) | Conosciuto dal gruppo; componenti pronti (tabelle, form, date picker, snackbar); funziona in qualsiasi browser, anche da smartphone | Un secondo linguaggio (TypeScript) e Node.js da installare |
+| B. Blazor | Tutto in C# | Mai usato nel corso |
+| C. .NET MAUI | App nativa | Build ed emulatori lenti da configurare su 7 macchine |
 
-### D7 – Avvio e orchestrazione locale
+### D7 – Avvio in locale
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. .NET Aspire** (raccomandata) | Un comando avvia tutto; database, stringhe di connessione e indirizzi dei servizi configurati in automatico; dashboard con stato, log e tracce, utile anche per le prove di guasto | Strumento in più da imparare; serve Docker |
-| B. Docker Compose | Standard, non dipende da .NET | Dockerfile e configurazione da scrivere per ogni servizio; debug meno immediato |
-
-Con entrambe serve **Docker** (Docker Desktop o equivalente) su ogni macchina: va verificato subito.
+| **A. Docker Compose solo per PostgreSQL; servizi con `dotnet run`, frontend con `ng serve`** (raccomandata) | Strumenti noti; un solo file Docker; debug normale da Visual Studio o VS Code | Quattro processi da avviare (si può aggiungere uno script) |
+| B. PostgreSQL installato su ogni PC | Niente Docker | Installazioni e versioni diverse su 7 macchine; i test di CI vanno configurati a parte |
+| C. Tutto in Docker Compose | Un solo comando | Un Dockerfile per progetto; debug meno immediato |
+| D. .NET Aspire | Avvio e configurazione automatici | **Mai usato nel corso** |
 
 ### D8 – Utenti e ruoli
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. Utenti sintetici selezionabili** (raccomandata) | Nessun account reale (come chiedono le slide); si scelgono "studente" o "personale" da un elenco; zero tempo di sviluppo sull'autenticazione | Non è sicurezza vera: va dichiarato nei limiti noti |
-| B. JWT emesso da un servizio di sviluppo | Più realistico; ruoli verificati dai servizi | Un giorno di lavoro su qualcosa che non è il bisogno |
-| C. Identity provider (Keycloak) | Standard | Molta configurazione, un altro container |
+| **A. Profili sintetici nel servizio Users, scelti all'ingresso** (raccomandata) | Nessun account reale (come chiedono le slide); i profili servono anche come partecipanti dei gruppi | Non è sicurezza vera: il frontend invia l'utente scelto (header `X-User-Id`, `X-User-Role`); va dichiarato nei limiti noti |
+| B. Login con password e JWT | Più realistico | Un giorno di lavoro su qualcosa che non è il bisogno |
 
 Ruoli nel codice: `Student`, `Staff`.
 
 ### D9 – Test
 
-- **xUnit** per i test.
-- **Testcontainers** per i test di integrazione: avviano un PostgreSQL vero in Docker, così il test di
-  concorrenza (ad esempio 20 richieste simultanee sullo stesso spazio: deve passarne esattamente una) gira
-  sul database reale.
+- **xUnit** per i test dei servizi.
+- **Test di integrazione sul PostgreSQL di Docker Compose**, su database dedicati (`bookings_test`, …):
+  il test di concorrenza (molte richieste simultanee sulla stessa fascia, ne passa esattamente una, sia per
+  lo spazio sia per la persona) gira sul database reale.
 - Prove di guasto come descritto sopra.
 - Ogni prova eseguita si registra in [`evidence/`](evidence/) con esito atteso e osservato.
 
@@ -423,32 +380,35 @@ Ruoli nel codice: `Student`, `Staff`.
 
 | Opzione | Pro | Contro |
 |---|---|---|
-| **A. GitHub Actions: build e test su ogni PR** (raccomandata) | Gratis sui repo pubblici; il revisore vede subito se la PR rompe qualcosa; può diventare un controllo obbligatorio per il merge | Mezz'ora di configurazione |
+| **A. GitHub Actions: build e test su ogni PR** (raccomandata) | Gratis sui repo pubblici; PostgreSQL disponibile come *service container* del workflow; può diventare un controllo obbligatorio | Mezz'ora di configurazione |
 | B. Solo test in locale | Nessuna configurazione | "Sul mio PC funziona": nessuna prova condivisa |
+
+## Strumenti valutati e scartati
+
+| Strumento | Perché no |
+|---|---|
+| .NET Aspire | Mai usato nel corso; Docker Compose e `dotnet run` bastano per 3 servizi |
+| YARP (gateway) | Il proxy di sviluppo di Angular fa lo stesso lavoro in locale |
+| RabbitMQ con outbox | Mai usato nel corso; nessuna funzione lo richiede, una volta tolto il servizio Usage |
+| Blazor | Il gruppo conosce Angular |
+| Testcontainers | Il PostgreSQL di Docker Compose è già un database reale per i test |
 
 ## Riepilogo delle raccomandazioni
 
 | # | Scelta proposta |
 |---|---|
-| D1 | Microservizi (scelta del gruppo), solo 3 servizi di dominio |
-| D2 | Spaces, Bookings, Usage + Gateway + Web |
-| D3 | REST: sincrono per Bookings → Spaces, sincronizzazione periodica per Usage |
+| D1 | Microservizi, solo 3 servizi |
+| D2 | Spaces, Bookings (con statistiche), Users |
+| D3 | REST sincrono con `HttpClient` e timeout |
 | D4 | PostgreSQL, un database per servizio |
-| D5 | Vincolo di esclusione nel database |
-| D6 | Blazor Web App |
-| D7 | .NET Aspire |
-| D8 | Utenti sintetici selezionabili |
-| D9 | xUnit + Testcontainers + prove di guasto |
+| D5 | Vincoli di esclusione su spazi e persone |
+| D6 | Angular + Angular Material |
+| D7 | Docker Compose solo per PostgreSQL |
+| D8 | Profili sintetici nel servizio Users |
+| D9 | xUnit + test sul PostgreSQL reale + prove di guasto |
 | D10 | GitHub Actions su ogni PR |
 
-## Proposta di divisione del lavoro (7 persone)
+## Requisiti su ogni macchina
 
-| Area | Persone | Note |
-|---|---|---|
-| Platform: AppHost, Gateway, CI, dati sintetici, resilienza | 1 | Primo giorno: scheletro che si avvia per tutti |
-| Spaces | 1 | |
-| Bookings | 2 | Area più critica: conflitti e test di concorrenza |
-| Usage | 1 | Può aiutare Bookings il primo giorno |
-| Web | 2 | Parte subito con dati finti, poi si collega al Gateway |
-
-La review incrociata tra aree diverse aiuta tutti a saper spiegare l'intero prodotto alla presentazione.
+.NET SDK 10, Node.js LTS con Angular CLI, Docker Desktop (o equivalente). Da verificare subito su tutti
+e 7 i PC.

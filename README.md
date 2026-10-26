@@ -7,8 +7,8 @@ Project Work ITS Bari – Novembre 2026.
 
 ## Stato
 
-Progetto appena avviato: perimetro, architettura e stack di dettaglio sono ancora da concordare
-con il Product Owner. Le decisioni prese vanno registrate in [`docs/decisions/`](docs/decisions/).
+Progetto appena avviato: il perimetro è ancora da concordare con il Product Owner. Le decisioni prese
+vanno registrate in [`docs/decisions/`](docs/decisions/).
 
 Consegna: **29/10/2026**.
 
@@ -16,11 +16,16 @@ Consegna: **29/10/2026**.
 - [Architettura proposta (microservizi)](docs/architecture.md)
 - [Bozza del backlog](docs/backlog/backlog-draft.md)
 
+**Stack:** tre microservizi ASP.NET Core Web API (Spaces, Bookings, Users) con EF Core e PostgreSQL,
+frontend Angular + Angular Material.
+
 ## Struttura del repository
 
 | Percorso | Contenuto |
 |---|---|
-| `src/` | Codice dell'applicazione (.NET / C#) |
+| `src/Services/` | I tre microservizi .NET: Spaces, Bookings, Users |
+| `src/web/` | Frontend Angular |
+| `docker-compose.yml`, `infra/` | PostgreSQL con un database per servizio |
 | `tests/` | Test automatici, inclusi quelli sul database reale scelto |
 | `data/synthetic/` | Dati sintetici prodotti dal gruppo e script per generarli |
 | `docs/analysis/` | Analisi del bisogno, ipotesi, domande aperte, perimetro concordato col PO |
@@ -36,17 +41,29 @@ Il backlog vive nelle **Issue** e nel progetto **Loggione Roadmap** dell'organiz
 ## Requisiti
 
 - .NET SDK 10
-- _Database: da definire_
+- Node.js LTS e Angular CLI (`npm install -g @angular/cli`)
+- Docker Desktop (o equivalente), solo per PostgreSQL
 
 ## Installazione, avvio e test
 
-_Da completare appena esiste il primo incremento._ Le istruzioni devono permettere a chiunque di
-ricostruire configurazione, dipendenze, dati sintetici e avvio **senza segreti nel repository**.
+_Da completare e provare appena esiste il primo incremento (task SC-01)._ Le istruzioni devono permettere
+a chiunque di ricostruire configurazione, dipendenze, dati sintetici e avvio **senza segreti nel
+repository**. Schema previsto:
 
 ```bash
-dotnet restore
-dotnet build
-dotnet test
+cp .env.example .env               # poi imposta una password locale
+docker compose up -d               # PostgreSQL con i database spaces, bookings, users
+dotnet run --project src/Services/Spaces/SmartCampus.Spaces.Api
+dotnet run --project src/Services/Bookings/SmartCampus.Bookings.Api
+dotnet run --project src/Services/Users/SmartCampus.Users.Api
+cd src/web && npm install && ng serve   # http://localhost:4200
+```
+
+Test:
+
+```bash
+dotnet test                        # serve PostgreSQL avviato
+cd src/web && ng test
 ```
 
 ## Come contribuire

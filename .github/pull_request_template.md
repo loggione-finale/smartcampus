@@ -10,6 +10,7 @@ Closes #
 
 - [ ] `dotnet build` senza errori
 - [ ] `dotnet test` eseguito, test passati
+- [ ] Se tocca il frontend: `ng build` e `ng test` senza errori
 - [ ] Provato manualmente:
 
 ## Checklist

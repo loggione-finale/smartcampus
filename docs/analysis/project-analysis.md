@@ -34,15 +34,19 @@ Il risultato atteso è un **prodotto funzionante e integrato**, non parti scolle
 2. **Disponibilità**: vedere se uno spazio è libero in una fascia oraria.
 3. **Prenotazione senza conflitti**: due prenotazioni sovrapposte sullo stesso spazio non devono mai
    essere accettate, **anche se arrivano nello stesso istante**.
-4. **Le mie prenotazioni**: stato chiaro (confermata, annullata), ritrovabile in ogni momento.
-5. **Annullamento**: chi annulla libera subito lo spazio, e gli altri lo vedono libero.
-6. **Gestione spazi** da parte del personale.
-7. **Dati sintetici e avvio riproducibile**: chiunque ricostruisce il sistema con le istruzioni del README.
+4. **Prenotazione di gruppo**: chi prenota può aggiungere i profili delle altre persone del gruppo.
+   Nessuna persona può risultare in due prenotazioni sovrapposte e il gruppo non supera la capienza.
+   I partecipanti vedono la prenotazione tra le proprie e possono uscirne.
+5. **Le mie prenotazioni**: stato chiaro (confermata, annullata), ritrovabile in ogni momento, sia come
+   organizzatore sia come partecipante.
+6. **Annullamento**: chi ha prenotato annulla e libera subito lo spazio, e gli altri lo vedono libero.
+7. **Gestione spazi** da parte del personale.
+8. **Dati sintetici e avvio riproducibile**: chiunque ricostruisce il sistema con le istruzioni del README.
 
 ### Importante, se c'è tempo
-8. **Indisponibilità** (manutenzione, chiusure) che bloccano le prenotazioni.
-9. **Check-in**: chi usa davvero lo spazio lo dichiara. Separa l'intenzione (prenotazione) dall'uso dichiarato.
-10. **Report di utilizzo** che distingue *prenotato*, *check-in avvenuto*, *nessun dato*.
+9. **Indisponibilità** (manutenzione, chiusure) che bloccano le prenotazioni.
+10. **Check-in**: chi usa davvero lo spazio lo dichiara. Separa l'intenzione (prenotazione) dall'uso dichiarato.
+11. **Report di utilizzo** che distingue *prenotato*, *check-in avvenuto*, *nessun dato*.
     Un'assenza di dati non è un'assenza di utilizzo.
 
 ### Fuori perimetro (dalle slide)
@@ -86,7 +90,8 @@ Il dettaglio è nella [bozza del backlog](../backlog/backlog-draft.md).
 
 | Rischio | Impatto | Contromisura |
 |---|---|---|
-| Tempo molto breve con un'architettura a microservizi | Alto | Pochi servizi, scheletro comune pronto il primo giorno, perimetro minimo validato dal PO |
+| Tempo molto breve con un'architettura a microservizi | Alto | Solo 3 servizi e solo strumenti già visti nel corso, scheletro comune pronto il primo giorno, perimetro minimo validato dal PO |
+| Strumenti nuovi da imparare durante il progetto | Alto | Esclusi: niente Aspire, gateway dedicati o broker ([architettura](../architecture.md#strumenti-valutati-e-scartati)) |
 | Integrazione tra servizi lasciata alla fine | Alto | Il sistema si avvia integrato da subito, anche se vuoto ("walking skeleton") |
 | Prevenzione dei conflitti provata solo con mock | Alto | Test di concorrenza sul database reale (le slide lo chiedono esplicitamente) |
 | Un microservizio giù blocca funzioni che non dovrebbero dipendere da lui | Alto | Dipendenze e comportamento in caso di guasto definiti per ogni servizio ([architettura](../architecture.md#dipendenze-e-comportamento-in-caso-di-guasto)) e provati |
@@ -97,8 +102,13 @@ Il dettaglio è nella [bozza del backlog](../backlog/backlog-draft.md).
 
 1. Quali tipi di spazio rientrano nel perimetro (aule, laboratori, sale studio)?
 2. Esiste una durata massima o un anticipo massimo per una prenotazione?
-3. Un gruppo prenota a nome di una persona sola o di più persone?
+3. ~~Un gruppo prenota a nome di una persona sola o di più persone?~~ **Deciso dal gruppo, da
+   confermare:** l'organizzatore aggiunge i profili dei partecipanti, senza invito da accettare; nessuno può
+   essere in due prenotazioni sovrapposte; il gruppo non supera la capienza.
 4. Il personale può annullare o spostare prenotazioni altrui (ad esempio per una chiusura)?
-5. Il check-in è dentro il risultato minimo o è un miglioramento?
-6. Che cosa deve mostrare, al minimo, il report di utilizzo?
+5. Il check-in è dentro il risultato minimo o è un miglioramento? In un gruppo lo fa l'organizzatore o
+   ogni partecipante?
+6. Che cosa deve mostrare, al minimo, il report di utilizzo? Deve contare anche le persone?
 7. In quali ambienti deve funzionare l'interfaccia (browser desktop, smartphone, app)?
+8. Se l'organizzatore annulla, i partecipanti devono essere avvisati? (Oggi: vedono lo stato "annullata".)
+9. Uno studente può aggiungere un membro del personale come partecipante?
