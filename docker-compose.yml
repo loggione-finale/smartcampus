@@ -1,0 +1,52 @@
+# Database di SmartCampus per lo sviluppo locale.
+# Prima volta: copia .env.example in .env e scegli le password, poi `docker compose up -d`.
+# Dettagli e stringhe di connessione: infra/README.md
+name: smartcampus
+
+services:
+  # Bookings e Users (un database per servizio, più quelli di test)
+  postgres:
+    image: postgres:17
+    container_name: smartcampus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Imposta POSTGRES_ADMIN_PASSWORD nel file .env}
+      BOOKINGS_DB_PASSWORD: ${BOOKINGS_DB_PASSWORD:?Imposta BOOKINGS_DB_PASSWORD nel file .env}
+      USERS_DB_PASSWORD: ${USERS_DB_PASSWORD:?Imposta USERS_DB_PASSWORD nel file .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # Spaces
+  mongo:
+    image: mongo:8
+    container_name: smartcampus-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ADMIN_USER:-mongoadmin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ADMIN_PASSWORD:?Imposta MONGO_ADMIN_PASSWORD nel file .env}
+      SPACES_DB_PASSWORD: ${SPACES_DB_PASSWORD:?Imposta SPACES_DB_PASSWORD nel file .env}
+    ports:
+      - "127.0.0.1:${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./infra/mongo/init.js:/docker-entrypoint-initdb.d/init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  postgres_data:
+  mongo_data:
