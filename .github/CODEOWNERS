@@ -1,2 +1,41 @@
-# Ogni PR chiede automaticamente la review al team dev.
-* @loggione-finale/dev
+# Proprietari e revisori fissi per area: GitHub chiede la review a queste persone in automatico.
+# Vince l'ULTIMA regola che corrisponde al file modificato.
+# Due nomi per riga (proprietario, revisore fisso): GitHub non chiede la review all'autore della PR,
+# quindi serve sempre una seconda persona. Aree e cartelle: docs/analysis/brainstorming-2026-10-26.md
+
+# Predefinito e radice: soluzione, global.json, .gitignore, docker-compose.yml, infra/, .github/
+*                                                    @asprenolapo @Rhaastrake
+
+# Documentazione: tutto il team
+/docs/                                               @asprenolapo @loggione-finale/dev
+
+# Users e autenticazione
+/src/Services/Users/                                 @fedeericodl @Leo-prova
+/src/Shared/SmartCampus.Auth/                        @fedeericodl @Leo-prova
+/tests/SmartCampus.Users.Tests/                      @fedeericodl @Leo-prova
+
+# Spaces
+/src/Services/Spaces/                                @AldAndrew0 @antoStr
+/tests/SmartCampus.Spaces.Tests/                     @AldAndrew0 @antoStr
+
+# Bookings: nucleo (Program.cs, Data, Migrations, Domain, Features/Bookings)
+/src/Services/Bookings/                              @Rhaastrake @FranDeSa456
+/tests/SmartCampus.Bookings.Tests/                   @Rhaastrake @FranDeSa456
+
+# Bookings: moduli con proprietari diversi dal nucleo
+/src/Services/Bookings/**/Features/Invitations/      @FranDeSa456 @Rhaastrake
+/src/Services/Bookings/**/Features/Notifications/    @FranDeSa456 @Rhaastrake
+/src/Services/Bookings/**/Features/MyBookings/       @FranDeSa456 @Rhaastrake
+/src/Services/Bookings/**/Features/Availability/     @fedeericodl @FranDeSa456
+/src/Services/Bookings/**/Features/Closure/          @fedeericodl @FranDeSa456
+/src/Services/Bookings/**/Features/Equipment/        @AldAndrew0 @antoStr
+/src/Services/Bookings/**/Features/Admin/            @antoStr @AldAndrew0
+
+# Frontend: struttura e pagine utente
+/src/web/                                            @Leo-prova @antoStr
+
+# Frontend: aree con proprietari diversi
+/src/web/src/app/admin/                              @antoStr @AldAndrew0
+/src/web/src/app/spaces/                             @AldAndrew0 @Leo-prova
+/src/web/src/app/invitations/                        @FranDeSa456 @Leo-prova
+/src/web/src/app/closure/                            @fedeericodl @Leo-prova
