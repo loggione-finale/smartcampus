@@ -12,4 +12,4 @@ Un elemento del backlog è **Done** quando:
 - [ ] i dati sintetici necessari sono nel repository o generabili da script;
 - [ ] nessun segreto e nessun dato personale reale sono stati aggiunti;
 - [ ] README e documentazione pertinente sono aggiornati;
-- [ ] i limiti noti sono dichiarati in [`docs/prove/`](prove/).
+- [ ] i limiti noti sono dichiarati in [`docs/evidence/`](evidence/).

@@ -65,8 +65,8 @@ flowchart LR
     G -- ok --> H[Demo e presentazione<br/>29/10/2026]
 ```
 
-Ogni passaggio lascia una traccia nel repository: analisi e perimetro in `docs/analisi/`, scelte in
-`docs/decisioni/`, backlog nelle issue, prove in `docs/prove/`.
+Ogni passaggio lascia una traccia nel repository: analisi e perimetro in `docs/analysis/`, scelte in
+`docs/decisions/`, backlog nelle issue, prove in `docs/evidence/`.
 
 ## 5. Tempi
 
@@ -80,7 +80,7 @@ Le slide chiedono di non contare su lavoro obbligatorio fuori aula.
 | **Mer 28** | Annullamento, interfaccia completa, report (se c'è tempo), dati sintetici, README, prove registrate |
 | **Gio 29** | Solo correzioni e prova della demo: niente nuove funzioni |
 
-Il dettaglio è nella [bozza del backlog](../backlog/backlog-bozza.md).
+Il dettaglio è nella [bozza del backlog](../backlog/backlog-draft.md).
 
 ## 6. Rischi
 
@@ -89,6 +89,7 @@ Il dettaglio è nella [bozza del backlog](../backlog/backlog-bozza.md).
 | Tempo molto breve con un'architettura a microservizi | Alto | Pochi servizi, scheletro comune pronto il primo giorno, perimetro minimo validato dal PO |
 | Integrazione tra servizi lasciata alla fine | Alto | Il sistema si avvia integrato da subito, anche se vuoto ("walking skeleton") |
 | Prevenzione dei conflitti provata solo con mock | Alto | Test di concorrenza sul database reale (le slide lo chiedono esplicitamente) |
+| Un microservizio giù blocca funzioni che non dovrebbero dipendere da lui | Alto | Dipendenze e comportamento in caso di guasto definiti per ogni servizio ([architettura](../architecture.md#dipendenze-e-comportamento-in-caso-di-guasto)) e provati |
 | Sette persone sugli stessi file | Medio | Un servizio per sottogruppo, PR piccole, review rapide |
 | Ambienti diversi (Windows, macOS, Linux) | Medio | Database in container, istruzioni provate su almeno due sistemi |
 

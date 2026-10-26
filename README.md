@@ -8,13 +8,13 @@ Project Work ITS Bari – Novembre 2026.
 ## Stato
 
 Progetto appena avviato: perimetro, architettura e stack di dettaglio sono ancora da concordare
-con il Product Owner. Le decisioni prese vanno registrate in [`docs/decisioni/`](docs/decisioni/).
+con il Product Owner. Le decisioni prese vanno registrate in [`docs/decisions/`](docs/decisions/).
 
 Consegna: **29/10/2026**.
 
-- [Analisi del progetto](docs/analisi/analisi-progetto.md)
-- [Architettura proposta (microservizi)](docs/architettura.md)
-- [Bozza del backlog](docs/backlog/backlog-bozza.md)
+- [Analisi del progetto](docs/analysis/project-analysis.md)
+- [Architettura proposta (microservizi)](docs/architecture.md)
+- [Bozza del backlog](docs/backlog/backlog-draft.md)
 
 ## Struttura del repository
 
@@ -23,11 +23,11 @@ Consegna: **29/10/2026**.
 | `src/` | Codice dell'applicazione (.NET / C#) |
 | `tests/` | Test automatici, inclusi quelli sul database reale scelto |
 | `data/synthetic/` | Dati sintetici prodotti dal gruppo e script per generarli |
-| `docs/analisi/` | Analisi del bisogno, ipotesi, domande aperte, perimetro concordato col PO |
-| `docs/architettura.md` | Servizi, scelte tecniche con pro e contro |
+| `docs/analysis/` | Analisi del bisogno, ipotesi, domande aperte, perimetro concordato col PO |
+| `docs/architecture.md` | Servizi, scelte tecniche con pro e contro |
 | `docs/backlog/` | Bozza del backlog prima della creazione delle issue |
-| `docs/decisioni/` | Decisioni architetturali e tecniche motivate (ADR) |
-| `docs/prove/` | Prove eseguite, esiti osservati e limiti noti |
+| `docs/decisions/` | Decisioni architetturali e tecniche motivate (ADR) |
+| `docs/evidence/` | Prove eseguite, esiti osservati e limiti noti |
 | `docs/definition-of-done.md` | Definition of Done del gruppo |
 | `.github/` | Template di issue e pull request, CODEOWNERS |
 

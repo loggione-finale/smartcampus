@@ -2,27 +2,27 @@
 
 > **Stato: bozza da rivedere insieme, poi da validare con il PO.** Le storie diventeranno issue solo dopo la
 > revisione. Gli story point sono una prima proposta: rivotiamoli insieme (planning poker).
-> Riferimenti: [analisi](../analisi/analisi-progetto.md), [architettura](../architettura.md).
+> Riferimenti: [analisi](../analysis/project-analysis.md), [architettura](../architecture.md).
 
 ## Riepilogo
 
 | ID | Titolo | Priorità | Servizio | SP | Giorno |
 |---|---|---|---|---|---|
-| SC-01 | Avvio riproducibile dell'intero sistema | Must | Piattaforma | 5 | Lun 26 |
-| SC-02 | Dati sintetici riproducibili | Must | Piattaforma | 3 | Lun 26 – Mar 27 |
+| SC-01 | Avvio riproducibile dell'intero sistema | Must | Platform | 5 | Lun 26 |
+| SC-02 | Dati sintetici riproducibili | Must | Platform | 3 | Lun 26 – Mar 27 |
 | SC-03 | Scelta dell'utente e del ruolo | Must | Web / Gateway | 2 | Lun 26 |
-| SC-04 | Consultare e filtrare il catalogo spazi | Must | Spazi + Web | 3 | Mar 27 |
-| SC-05 | Vedere la disponibilità di uno spazio | Must | Prenotazioni + Web | 3 | Mar 27 |
-| SC-06 | Prenotare uno spazio libero | Must | Prenotazioni + Web | 5 | Mar 27 |
-| SC-07 | Nessuna sovrapposizione, anche con richieste simultanee | Must | Prenotazioni | 5 | Mar 27 |
-| SC-08 | Consultare le mie prenotazioni | Must | Prenotazioni + Web | 2 | Mer 28 |
-| SC-09 | Annullare una prenotazione | Must | Prenotazioni + Web | 3 | Mer 28 |
-| SC-10 | Gestire il catalogo spazi | Must | Spazi + Web | 3 | Mar 27 – Mer 28 |
-| SC-11 | Segnalare l'indisponibilità di uno spazio | Should | Spazi + Prenotazioni | 3 | Mer 28 |
-| SC-12 | Registrare l'uso effettivo (check-in) | Should | Prenotazioni + Web | 3 | Mer 28 |
-| SC-13 | Report di utilizzo con limiti dichiarati | Should | Utilizzo + Web | 5 | Mer 28 |
-| SC-14 | Build e test automatici su ogni PR | Should | Piattaforma | 2 | Lun 26 |
-| SC-15 | Avviso quando uno spazio si libera | Could | Prenotazioni | 8 | Solo se avanza tempo |
+| SC-04 | Consultare e filtrare il catalogo spazi | Must | Spaces + Web | 3 | Mar 27 |
+| SC-05 | Vedere la disponibilità di uno spazio | Must | Bookings + Web | 3 | Mar 27 |
+| SC-06 | Prenotare uno spazio libero | Must | Bookings + Web | 5 | Mar 27 |
+| SC-07 | Nessuna sovrapposizione, anche con richieste simultanee | Must | Bookings | 5 | Mar 27 |
+| SC-08 | Consultare le mie prenotazioni | Must | Bookings + Web | 2 | Mer 28 |
+| SC-09 | Annullare una prenotazione | Must | Bookings + Web | 3 | Mer 28 |
+| SC-10 | Gestire il catalogo spazi | Must | Spaces + Web | 3 | Mar 27 – Mer 28 |
+| SC-11 | Segnalare l'indisponibilità di uno spazio | Should | Spaces + Bookings | 3 | Mer 28 |
+| SC-12 | Registrare l'uso effettivo (check-in) | Should | Bookings + Web | 3 | Mer 28 |
+| SC-13 | Report di utilizzo con limiti dichiarati | Should | Usage + Web | 5 | Mer 28 |
+| SC-14 | Build e test automatici su ogni PR | Should | Platform | 2 | Lun 26 |
+| SC-15 | Avviso quando uno spazio si libera | Could | Bookings | 8 | Solo se avanza tempo |
 
 **Totale Must: 34 SP. Totale Should: 13 SP.** Giovedì 29 è riservato a correzioni e prova della demo.
 
@@ -44,7 +44,7 @@ La storia è considerata completata quando:
 - [ ] Seguendo il README su una macchina pulita (con .NET SDK e Docker) il sistema si avvia con un comando.
 - [ ] L'interfaccia raggiunge ogni servizio passando dal gateway.
 - [ ] Ogni servizio espone un controllo di salute che risponde correttamente.
-- [ ] L'avvio è stato provato su almeno due sistemi operativi diversi, con esito registrato in `docs/prove/`.
+- [ ] L'avvio è stato provato su almeno due sistemi operativi diversi, con esito registrato in `docs/evidence/`.
 
 **Story Point**
 Stima: 5
@@ -176,7 +176,7 @@ deve essere eseguita sul database reale, non con simulazioni in memoria.
 La storia è considerata completata quando:
 - [ ] Con molte richieste simultanee per la stessa fascia dello stesso spazio, ne viene accettata esattamente una.
 - [ ] Due prenotazioni adiacenti (una finisce quando inizia l'altra) sono entrambe accettate.
-- [ ] La prova è automatica, gira sul database reale ed è registrata in `docs/prove/`.
+- [ ] La prova è automatica, gira sul database reale ed è registrata in `docs/evidence/`.
 
 **Story Point**
 Stima: 5
