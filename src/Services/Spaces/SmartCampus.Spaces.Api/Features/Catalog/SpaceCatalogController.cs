@@ -24,18 +24,23 @@ public sealed class SpaceCatalogController(
         [FromQuery] SpaceSearchQuery query,
         CancellationToken cancellationToken)
     {
-        if (query.IncludeInactive)
+        var isAuthenticated = User.Identity?.IsAuthenticated == true;
+        var isAdmin = false;
+
+        if (isAuthenticated)
         {
-            if (User.Identity?.IsAuthenticated != true)
+            var authResult = await authorizationService.AuthorizeAsync(User, null, SmartCampusAuthConstants.PolicyAdmin);
+            isAdmin = authResult.Succeeded;
+        }
+
+        if (query.IncludeInactive && !isAdmin)
+        {
+            if (!isAuthenticated)
             {
                 return Challenge();
             }
 
-            var authResult = await authorizationService.AuthorizeAsync(User, null, SmartCampusAuthConstants.PolicyAdmin);
-            if (!authResult.Succeeded)
-            {
-                return Forbid();
-            }
+            return Forbid();
         }
 
         if (!query.TryNormalize(out var filter, out var errorDetail))
@@ -46,9 +51,11 @@ public sealed class SpaceCatalogController(
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
+        filter = filter! with { IncludeInactive = query.IncludeInactive && isAdmin };
+
         try
         {
-            var spaces = await catalogService.SearchAsync(filter!, cancellationToken);
+            var spaces = await catalogService.SearchAsync(filter, cancellationToken);
             return Ok(spaces);
         }
         catch (Exception ex) when (ex is MongoException or TimeoutException)
