@@ -30,24 +30,38 @@ public class UsersController(UsersDbContext dbContext) : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<UserResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetUsers([FromQuery] string? emails, CancellationToken cancellationToken)
     {
-        var query = dbContext.UserProfiles
-            .AsNoTracking()
-            .Where(u => u.IsActive);
-
-        if (!string.IsNullOrWhiteSpace(emails))
+        if (string.IsNullOrWhiteSpace(emails))
         {
-            var emailList = emails
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(e => e.ToLowerInvariant())
-                .Distinct()
-                .ToList();
-
-            query = query.Where(u => emailList.Contains(u.Email));
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Bad Request",
+                Detail = "The 'emails' query parameter is required for user lookup.",
+                Status = StatusCodes.Status400BadRequest
+            });
         }
 
-        var users = await query
+        var emailList = emails
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(e => e.ToLowerInvariant())
+            .Distinct()
+            .ToList();
+
+        if (emailList.Count == 0)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Bad Request",
+                Detail = "The 'emails' query parameter cannot be empty.",
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
+
+        var users = await dbContext.UserProfiles
+            .AsNoTracking()
+            .Where(u => u.IsActive && emailList.Contains(u.Email))
             .OrderBy(u => u.DisplayName)
             .ToListAsync(cancellationToken);
 

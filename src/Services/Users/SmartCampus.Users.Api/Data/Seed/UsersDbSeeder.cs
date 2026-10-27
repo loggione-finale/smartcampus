@@ -1,18 +1,42 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using SmartCampus.Users.Api.Domain.Entities;
 using SmartCampus.Users.Api.Domain.Enums;
 
 namespace SmartCampus.Users.Api.Data.Seed;
 
-public class UsersDbSeeder(UsersDbContext dbContext, IPasswordHasher<UserProfile> passwordHasher)
+public class UsersDbSeeder(
+    UsersDbContext dbContext,
+    IPasswordHasher<UserProfile> passwordHasher,
+    IConfiguration configuration,
+    IHostEnvironment environment)
 {
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
+        // Seeding is enabled in Development and Testing by default, or explicitly via configuration
+        var isSeedingEnabled = environment.IsDevelopment()
+            || environment.IsEnvironment("Testing")
+            || configuration.GetValue<bool>("Seed:Enabled", false);
+
+        if (!isSeedingEnabled)
+        {
+            return;
+        }
+
         if (await dbContext.UserProfiles.AnyAsync(cancellationToken))
         {
             return;
         }
+
+        var isDevOrTest = environment.IsDevelopment() || environment.IsEnvironment("Testing");
+
+        var adminPassword = configuration["Seed:AdminPassword"]
+            ?? (isDevOrTest ? "AdminPass123" : throw new InvalidOperationException("Missing required configuration 'Seed:AdminPassword' for seeding in non-development environment."));
+
+        var defaultUserPassword = configuration["Seed:DefaultUserPassword"]
+            ?? (isDevOrTest ? "Password123" : throw new InvalidOperationException("Missing required configuration 'Seed:DefaultUserPassword' for seeding in non-development environment."));
 
         var users = new List<UserProfile>();
 
@@ -29,7 +53,7 @@ public class UsersDbSeeder(UsersDbContext dbContext, IPasswordHasher<UserProfile
             Role = UserRole.Admin,
             IsActive = true
         };
-        admin.PasswordHash = passwordHasher.HashPassword(admin, "AdminPass123");
+        admin.PasswordHash = passwordHasher.HashPassword(admin, adminPassword);
         users.Add(admin);
 
         // 2. Synthetic Student accounts
@@ -45,7 +69,7 @@ public class UsersDbSeeder(UsersDbContext dbContext, IPasswordHasher<UserProfile
             Role = UserRole.User,
             IsActive = true
         };
-        student1.PasswordHash = passwordHasher.HashPassword(student1, "Password123");
+        student1.PasswordHash = passwordHasher.HashPassword(student1, defaultUserPassword);
         users.Add(student1);
 
         var student2 = new UserProfile
@@ -60,7 +84,7 @@ public class UsersDbSeeder(UsersDbContext dbContext, IPasswordHasher<UserProfile
             Role = UserRole.User,
             IsActive = true
         };
-        student2.PasswordHash = passwordHasher.HashPassword(student2, "Password123");
+        student2.PasswordHash = passwordHasher.HashPassword(student2, defaultUserPassword);
         users.Add(student2);
 
         var student3 = new UserProfile
@@ -75,7 +99,7 @@ public class UsersDbSeeder(UsersDbContext dbContext, IPasswordHasher<UserProfile
             Role = UserRole.User,
             IsActive = true
         };
-        student3.PasswordHash = passwordHasher.HashPassword(student3, "Password123");
+        student3.PasswordHash = passwordHasher.HashPassword(student3, defaultUserPassword);
         users.Add(student3);
 
         dbContext.UserProfiles.AddRange(users);

@@ -2,11 +2,13 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SmartCampus.Users.Api.Data;
+using SmartCampus.Users.Api.Domain.Entities;
 using SmartCampus.Users.Api.Features.Registration;
 
 namespace SmartCampus.Users.Tests;
@@ -177,6 +179,20 @@ public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
     }
 
     [Fact]
+    public async Task GetUsers_WithoutEmailsFilter_Returns400BadRequest()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("/users");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var emptyResponse = await client.GetAsync("/users?emails=");
+        Assert.Equal(HttpStatusCode.BadRequest, emptyResponse.StatusCode);
+
+        var whitespaceResponse = await client.GetAsync("/users?emails=   ");
+        Assert.Equal(HttpStatusCode.BadRequest, whitespaceResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task GetById_WithExistingUser_Returns200Ok()
     {
         var client = _factory.CreateClient();
@@ -209,5 +225,22 @@ public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
         var response = await client.GetAsync("/health");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Seeder_PreloadsAdminAndSyntheticUsers_WithValidPasswordHash()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
+        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<UserProfile>>();
+
+        var admin = await db.UserProfiles.FirstOrDefaultAsync(u => u.Email == "admin@smartcampus.test");
+        Assert.NotNull(admin);
+        Assert.Equal("Admin", admin.Role);
+        var verificationResult = hasher.VerifyHashedPassword(admin, admin.PasswordHash, "AdminPass123");
+        Assert.Equal(PasswordVerificationResult.Success, verificationResult);
+
+        var students = await db.UserProfiles.Where(u => u.Role == "User" && u.Email.EndsWith("@smartcampus.test")).ToListAsync();
+        Assert.NotEmpty(students);
     }
 }
