@@ -5,7 +5,9 @@ using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
 using SmartCampus.Bookings.Api.Features.Bookings.Closure;
 using SmartCampus.Bookings.Api.Features.Bookings.Spaces;
+using SmartCampus.Bookings.Api.Features.Bookings.Users;
 using SmartCampus.Bookings.Api.Features.Equipment;
+using SmartCampus.Bookings.Api.Features.Notifications;
 
 namespace SmartCampus.Bookings.Api.Features.Bookings;
 
@@ -15,7 +17,9 @@ public class BookingService(
     ISpacesClient spacesClient,
     IPendingClosureChecker pendingClosureChecker,
     TimeProvider timeProvider,
-    IBookingEquipmentService? bookingEquipmentService = null)
+    IUsersClient? usersClient = null,
+    IBookingEquipmentService? bookingEquipmentService = null,
+    IEmailOutbox? emailOutbox = null)
 {
     private const string SpaceOverlapConstraint = "ex_bookings_dedicated_space_no_overlap";
     private const string PersonOverlapConstraint = "ex_invitations_person_no_overlap";
@@ -81,6 +85,30 @@ public class BookingService(
             return CreateBookingResult.NoSeatsLeft(space.Capacity);
         }
 
+        var registeredParticipants = new Dictionary<string, RegisteredUser>(StringComparer.OrdinalIgnoreCase);
+        if (normalizedParticipants.Count > 0)
+        {
+            if (usersClient is null)
+            {
+                throw new InvalidOperationException("IUsersClient is required when participantEmails are provided.");
+            }
+
+            IReadOnlyList<RegisteredUser> registered;
+            try
+            {
+                registered = await usersClient.GetRegisteredUsersAsync(normalizedParticipants, cancellationToken);
+            }
+            catch (UsersUnavailableException)
+            {
+                return CreateBookingResult.UsersUnavailable();
+            }
+
+            foreach (var user in registered)
+            {
+                registeredParticipants[user.Email] = user;
+            }
+        }
+
         var equipmentPlan = EquipmentResolutionPlan.Empty;
         if (normalizedEquipment.Count > 0)
         {
@@ -124,6 +152,7 @@ public class BookingService(
                         end,
                         seatsRequested,
                         normalizedParticipants,
+                        registeredParticipants,
                         equipmentPlan,
                         cancellationToken)
                     : await InsertAsync(
@@ -135,6 +164,7 @@ public class BookingService(
                         end,
                         seatsRequested,
                         normalizedParticipants,
+                        registeredParticipants,
                         equipmentPlan,
                         cancellationToken);
             }
@@ -174,6 +204,7 @@ public class BookingService(
         DateTime end,
         int seatsRequested,
         IReadOnlyList<string> participantEmails,
+        Dictionary<string, RegisteredUser> registeredParticipants,
         EquipmentResolutionPlan equipmentPlan,
         CancellationToken cancellationToken)
     {
@@ -186,10 +217,13 @@ public class BookingService(
             end,
             seatsRequested,
             participantEmails,
+            registeredParticipants,
             equipmentPlan);
 
         dbContext.Bookings.Add(booking);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await EnqueueInvitationEmailsAsync(booking, cancellationToken);
 
         if (equipmentPlan.MissingItems.Count > 0 && bookingEquipmentService is not null)
         {
@@ -208,6 +242,7 @@ public class BookingService(
         DateTime end,
         int seatsRequested,
         IReadOnlyList<string> participantEmails,
+        Dictionary<string, RegisteredUser> registeredParticipants,
         EquipmentResolutionPlan equipmentPlan,
         CancellationToken cancellationToken)
     {
@@ -244,10 +279,13 @@ public class BookingService(
                 end,
                 seatsRequested,
                 participantEmails,
+                registeredParticipants,
                 equipmentPlan);
 
             dbContext.Bookings.Add(booking);
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            await EnqueueInvitationEmailsAsync(booking, cancellationToken);
 
             if (equipmentPlan.MissingItems.Count > 0 && bookingEquipmentService is not null)
             {
@@ -260,6 +298,20 @@ public class BookingService(
         });
     }
 
+    private async Task EnqueueInvitationEmailsAsync(Booking booking, CancellationToken cancellationToken)
+    {
+        if (emailOutbox is null)
+        {
+            return;
+        }
+
+        foreach (var invitation in booking.Invitations
+                     .Where(i => i.Role == ParticipantRole.Participant && i.Status == InvitationStatus.Invited))
+        {
+            await emailOutbox.EnqueueInvitationEmailAsync(invitation, booking, cancellationToken);
+        }
+    }
+
     private Booking BuildBooking(
         Guid organizerId,
         string organizerName,
@@ -269,6 +321,7 @@ public class BookingService(
         DateTime end,
         int seatsRequested,
         IReadOnlyList<string> participantEmails,
+        Dictionary<string, RegisteredUser> registeredParticipants,
         EquipmentResolutionPlan equipmentPlan)
     {
         var now = timeProvider.GetUtcNow().UtcDateTime;
@@ -302,13 +355,14 @@ public class BookingService(
 
         foreach (var email in participantEmails)
         {
+            registeredParticipants.TryGetValue(email, out var registeredUser);
             invitations.Add(new Invitation
             {
                 Id = Guid.NewGuid(),
                 BookingId = bookingId,
                 Email = email,
-                UserId = null,
-                DisplayNameSnapshot = null,
+                UserId = registeredUser?.Id,
+                DisplayNameSnapshot = registeredUser?.DisplayName,
                 Role = ParticipantRole.Participant,
                 Status = InvitationStatus.Invited,
                 Period = period,

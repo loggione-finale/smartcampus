@@ -283,7 +283,7 @@ public class EquipmentRequestValidationAndHttpTests
             new FakeSpacesClient(),
             new NoPendingClosureChecker(),
             timeProvider,
-            new StubBookingEquipmentService());
+            bookingEquipmentService: new StubBookingEquipmentService());
 
         var start = new DateTimeOffset(2026, 10, 29, 9, 0, 0, TimeSpan.Zero);
         var result = await bookingService.CreateAsync(
