@@ -47,13 +47,78 @@
         </p>
       </div>
 
-      <a class="hero-cta" href="#spazi">
+      <a class="hero-cta" href="#prenota">
         Trova uno spazio
         <svg viewBox="0 0 34 30" aria-hidden="true">
           <path d="M2 2l13 13L2 28M17 2l13 13-13 13" />
         </svg>
       </a>
     </div>
+  </section>
+
+  <section class="booking" id="prenota" aria-labelledby="booking-title">
+    <div class="booking-intro" data-reveal>
+      <p class="eyebrow">Una fascia, un posto per te</p>
+      <h2 id="booking-title">Prenota senza sorprese.</h2>
+      <p>
+        Scegli lo spazio e la fascia oraria. Il sistema controlla sovrapposizioni, disponibilità e
+        commenti finali prima di confermare.
+      </p>
+      <p class="booking-note">Gli orari sono interpretati nel fuso del dispositivo e inviati al servizio in UTC.</p>
+    </div>
+
+    <form class="booking-form" [formGroup]="bookingForm" (ngSubmit)="submitBooking()" novalidate data-reveal>
+      <mat-form-field appearance="outline">
+        <mat-label>Spazio</mat-label>
+        <mat-select formControlName="spaceId">
+          @for (space of bookingSpaces; track space.id) {
+            <mat-option [value]="space.id">{{ space.name }} · {{ space.detail }}</mat-option>
+          }
+        </mat-select>
+        @if (bookingForm.controls.spaceId.invalid && bookingForm.controls.spaceId.touched) {
+          <mat-error>{{ fieldError('spaceId') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Data</mat-label>
+        <input matInput type="date" formControlName="date" [min]="minimumBookingDate" />
+        @if (bookingForm.controls.date.invalid && bookingForm.controls.date.touched) {
+          <mat-error>{{ fieldError('date') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="booking-times">
+        <mat-form-field appearance="outline">
+          <mat-label>Inizio</mat-label>
+          <input matInput type="time" step="900" formControlName="start" />
+          @if (bookingForm.controls.start.invalid && bookingForm.controls.start.touched) {
+            <mat-error>{{ fieldError('start') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fine</mat-label>
+          <input matInput type="time" step="900" formControlName="end" />
+          @if (bookingForm.controls.end.invalid && bookingForm.controls.end.touched) {
+            <mat-error>{{ fieldError('end') }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <button mat-flat-button class="booking-submit" type="submit" [disabled]="bookingState() === 'submitting'">
+        {{ bookingState() === 'submitting' ? 'Invio in corso…' : 'Conferma prenotazione' }}
+      </button>
+
+      @if (bookingState() === 'success') {
+        <p class="booking-feedback success" role="status">
+          {{ bookingMessage() }}
+          @if (bookingReference()) { <strong>Codice: {{ bookingReference() }}</strong> }
+        </p>
+      } @else if (bookingState() === 'error') {
+        <p class="booking-feedback error" role="alert">{{ bookingMessage() }}</p>
+      }
+    </form>
   </section>
 
   <section class="intro" id="come-funziona" aria-labelledby="intro-title">
@@ -99,7 +164,7 @@
               <li>{{ fact }}</li>
             }
           </ul>
-          <a class="text-link" href="#contatti">
+          <a class="text-link" href="#prenota">
             Prenota <mat-icon aria-hidden="true">north_east</mat-icon>
           </a>
         </li>

@@ -1,8 +1,12 @@
 import { Component, ElementRef, afterNextRender, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSelectModule } from '@angular/material/select';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 type Health = 'checking' | 'online' | 'offline';
 
@@ -23,9 +27,26 @@ type Space = {
   alt: string;
 };
 
+type BookingSpace = {
+  id: string;
+  name: string;
+  detail: string;
+};
+
+type BookingState = 'idle' | 'submitting' | 'success' | 'error';
+
 @Component({
   selector: 'app-root',
-  imports: [MatButtonModule, MatIconModule, MatMenuModule, RouterOutlet],
+  imports: [
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatMenuModule,
+    MatSelectModule,
+    ReactiveFormsModule,
+    RouterOutlet,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -35,11 +56,30 @@ export class App {
   protected readonly navLinks = [
     { label: 'Come funziona', href: '#come-funziona', icon: 'route' },
     { label: 'Spazi', href: '#spazi', icon: 'meeting_room' },
+    { label: 'Prenota', href: '#prenota', icon: 'event_available' },
     { label: 'Servizi', href: '#servizi', icon: 'hub' },
     { label: 'Contatti', href: '#contatti', icon: 'mail' },
   ];
 
   protected readonly heroWords = ['Cerca.', 'Prenota.', 'Studia.'];
+
+  protected readonly bookingSpaces: BookingSpace[] = [
+    { id: '3f2a9c1e-0000-4000-8000-000000000001', name: 'Aula 101', detail: 'Edificio A · 30 posti' },
+    { id: '3f2a9c1e-0000-4000-8000-000000000002', name: 'Laboratorio Informatica 2', detail: 'Edificio B · 24 posti' },
+    { id: '3f2a9c1e-0000-4000-8000-000000000003', name: 'Sala Studio Piano Terra', detail: 'Edificio A · 12 posti' },
+    { id: '3f2a9c1e-0000-4000-8000-000000000004', name: 'Aula 204', detail: 'Edificio A · 6 posti' },
+  ];
+
+  protected readonly bookingForm = new FormGroup({
+    spaceId: new FormControl(this.bookingSpaces[0].id, { nonNullable: true, validators: [Validators.required] }),
+    date: new FormControl(this.todayLocal(), { nonNullable: true, validators: [Validators.required] }),
+    start: new FormControl('09:00', { nonNullable: true, validators: [Validators.required] }),
+    end: new FormControl('10:00', { nonNullable: true, validators: [Validators.required] }),
+  });
+
+  protected readonly bookingState = signal<BookingState>('idle');
+  protected readonly bookingMessage = signal('');
+  protected readonly bookingReference = signal('');
 
   protected readonly steps = [
     { title: 'Cerca', text: 'lo spazio giusto per posti, orari e attrezzature.' },
@@ -114,6 +154,8 @@ export class App {
 
   protected readonly year = new Date().getFullYear();
 
+  protected readonly minimumBookingDate = this.todayLocal();
+
   constructor() {
     afterNextRender(() => {
       this.checkHealth();
@@ -132,6 +174,103 @@ export class App {
           ),
         );
     }
+  }
+
+  protected async submitBooking(): Promise<void> {
+    this.bookingForm.markAllAsTouched();
+    if (this.bookingForm.invalid) {
+      this.bookingState.set('error');
+      this.bookingMessage.set('Controlla i campi obbligatori prima di inviare la prenotazione.');
+      return;
+    }
+
+    const { date, start, end, spaceId } = this.bookingForm.getRawValue();
+    const startDate = new Date(`${date}T${start}`);
+    const endDate = new Date(`${date}T${end}`);
+    if (Number.isNaN(startDate.valueOf()) || Number.isNaN(endDate.valueOf())) {
+      this.bookingState.set('error');
+      this.bookingMessage.set('Inserisci una data e un orario validi.');
+      return;
+    }
+
+    this.bookingState.set('submitting');
+    this.bookingMessage.set('Invio della prenotazione in corso…');
+    this.bookingReference.set('');
+
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          spaceId,
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
+        }),
+      });
+
+      const payload = await this.readJson(response);
+      if (response.ok) {
+        this.bookingState.set('success');
+        this.bookingReference.set(payload?.['referenceCode'] ?? '');
+        this.bookingMessage.set('Prenotazione confermata.');
+        return;
+      }
+
+      this.bookingState.set('error');
+      this.bookingMessage.set(this.bookingErrorMessage(response.status, payload));
+      this.applyServerValidation(payload);
+    } catch {
+      this.bookingState.set('error');
+      this.bookingMessage.set('Il servizio prenotazioni non è raggiungibile. Riprova tra poco.');
+    }
+  }
+
+  protected fieldError(name: 'spaceId' | 'date' | 'start' | 'end'): string {
+    const control = this.bookingForm.controls[name];
+    if (control.hasError('server')) return control.getError('server');
+    if (control.hasError('required')) return 'Campo obbligatorio.';
+    return '';
+  }
+
+  private async readJson(response: Response): Promise<Record<string, any>> {
+    try {
+      return (await response.json()) as Record<string, any>;
+    } catch {
+      return {};
+    }
+  }
+
+  private bookingErrorMessage(status: number, payload: Record<string, any>): string {
+    const title = String(payload['title'] ?? '');
+    const detail = String(payload['detail'] ?? '');
+    if (status === 401) return 'Devi effettuare l’accesso per confermare una prenotazione.';
+    if (status === 400) return 'I dati della prenotazione non sono validi.';
+    if (title === 'Space already booked') return 'Questa fascia è già occupata. Scegli un altro orario.';
+    if (title === 'Not enough seats') return 'Non ci sono abbastanza posti liberi in questa fascia.';
+    if (title === 'Overlapping booking') return 'Hai già una prenotazione sovrapposta in questa fascia.';
+    if (title === 'Closing comment pending') {
+      const code = payload['bookingToComment'] ? ` (${payload['bookingToComment']})` : '';
+      return `Prima di prenotare devi completare il commento finale della prenotazione${code}.`;
+    }
+    if (status === 404) return 'Lo spazio selezionato non è più disponibile.';
+    if (status === 503) return 'Il catalogo spazi non è momentaneamente disponibile.';
+    return detail || 'Non è stato possibile creare la prenotazione.';
+  }
+
+  private applyServerValidation(payload: Record<string, any>): void {
+    const errors = payload['errors'] as Record<string, string[]> | undefined;
+    if (!errors) return;
+    for (const [name, messages] of Object.entries(errors)) {
+      const controlName = name.charAt(0).toLowerCase() + name.slice(1) as 'spaceId' | 'date' | 'start' | 'end';
+      const control = this.bookingForm.get(controlName);
+      if (control && messages[0]) control.setErrors({ server: messages[0] });
+    }
+  }
+
+  private todayLocal(): string {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - offset).toISOString().slice(0, 10);
   }
 
   // Content stays visible without script: only the .js class hides it before it enters.
