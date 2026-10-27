@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using SmartCampus.Auth;
 using SmartCampus.Spaces.Api.Features.Catalog.Models;
 
 namespace SmartCampus.Spaces.Api.Features.Catalog;
@@ -10,16 +11,33 @@ namespace SmartCampus.Spaces.Api.Features.Catalog;
 [Route("spaces")]
 public sealed class SpaceCatalogController(
     ISpaceCatalogService catalogService,
+    IAuthorizationService authorizationService,
     ILogger<SpaceCatalogController> logger) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType<IReadOnlyList<SpaceResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> Search(
         [FromQuery] SpaceSearchQuery query,
         CancellationToken cancellationToken)
     {
+        if (query.IncludeInactive)
+        {
+            if (User.Identity?.IsAuthenticated != true)
+            {
+                return Challenge();
+            }
+
+            var authResult = await authorizationService.AuthorizeAsync(User, null, SmartCampusAuthConstants.PolicyAdmin);
+            if (!authResult.Succeeded)
+            {
+                return Forbid();
+            }
+        }
+
         if (!query.TryNormalize(out var filter, out var errorDetail))
         {
             return Problem(
