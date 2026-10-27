@@ -297,6 +297,17 @@
                 </ul>
               </div>
             }
+
+            <div class="card-footer">
+              <a
+                class="card-action"
+                [href]="spaceAvailabilityHref(space.id)"
+                (click)="openSpaceAvailability($event, space.id)"
+                data-testid="open-availability-link"
+              >
+                Vedi disponibilità del giorno <span aria-hidden="true">→</span>
+              </a>
+            </div>
           </li>
         }
       </ul>

@@ -1,0 +1,184 @@
+<div class="availability-shell">
+  <section class="availability-hero" aria-labelledby="availability-title">
+    <div class="availability-hero-inner">
+      <a
+        class="back-link"
+        href="/spaces"
+        (click)="backToCatalog($event)"
+        data-testid="back-to-catalog-link"
+      >
+        <span aria-hidden="true">←</span> Torna al catalogo spazi
+      </a>
+
+      @if (space(); as s) {
+        <div class="hero-badges">
+          <span class="badge badge-type">{{ typeLabels[s.type] }}</span>
+          <span class="badge badge-mode" [attr.data-mode]="s.mode">{{ modeLabels[s.mode] }}</span>
+          @if (!s.isActive) {
+            <span class="badge badge-inactive">Spazio disattivato</span>
+          }
+        </div>
+        <h1 id="availability-title" data-testid="space-title">{{ s.name }}</h1>
+        <p class="hero-meta">
+          {{ s.building }} · {{ floorLabel(s.floor) }} · <strong>{{ s.capacity }} posti</strong>
+        </p>
+        <p class="hero-hint">{{ modeHints[s.mode] }}</p>
+      } @else {
+        <p class="eyebrow">DISPONIBILITÀ GIORNALIERA</p>
+        <h1 id="availability-title">Dettaglio disponibilità spazio</h1>
+      }
+    </div>
+  </section>
+
+  <section class="availability-body">
+    <div class="date-toolbar" aria-label="Controlli data e aggiornamento">
+      <div class="date-picker-group">
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>Giorno (ora di Roma)</mat-label>
+          <input
+            matInput
+            type="date"
+            [formControl]="dateControl"
+            (change)="onDateInputChange()"
+            data-testid="availability-date-input"
+          />
+        </mat-form-field>
+
+        <div class="day-nav-buttons" role="group" aria-label="Spostamento rapido giorno">
+          <button
+            type="button"
+            class="day-btn"
+            (click)="shiftDay(-1)"
+            [disabled]="loading()"
+            data-testid="prev-day-btn"
+          >
+            ← Giorno prec.
+          </button>
+          <button
+            type="button"
+            class="day-btn"
+            (click)="goToToday()"
+            [disabled]="loading()"
+            data-testid="today-btn"
+          >
+            Oggi
+          </button>
+          <button
+            type="button"
+            class="day-btn"
+            (click)="shiftDay(1)"
+            [disabled]="loading()"
+            data-testid="next-day-btn"
+          >
+            Giorno succ. →
+          </button>
+        </div>
+      </div>
+
+      <div class="refresh-group">
+        @if (lastUpdatedLabel(); as updatedAt) {
+          <span class="updated-note" data-testid="last-updated-label">
+            Aggiornato alle {{ updatedAt }}
+          </span>
+        }
+        <button
+          mat-flat-button
+          class="btn"
+          type="button"
+          (click)="reloadAvailability()"
+          [disabled]="loading()"
+          data-testid="refresh-availability-btn"
+        >
+          {{ loading() ? 'Aggiornamento…' : 'Aggiorna disponibilità' }}
+        </button>
+      </div>
+    </div>
+
+    @if (errorMessage(); as error) {
+      <div class="error-banner" role="alert" data-testid="availability-error">
+        <p>{{ error }}</p>
+        @if (!notFound()) {
+          <button mat-flat-button class="btn" type="button" (click)="reloadAvailability()">
+            Riprova
+          </button>
+        }
+      </div>
+    } @else if (loading() && !availability()) {
+      <div class="loading-box" role="status" data-testid="availability-loading">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <p>Caricamento delle fasce di disponibilità in corso…</p>
+      </div>
+    } @else if (space(); as s) {
+      <div class="space-info-strip">
+        <div>
+          <p class="strip-label">Strumentazione in aula</p>
+          @if (s.equipment.length > 0) {
+            <ul class="tag-list">
+              @for (eq of s.equipment; track eq) {
+                <li class="tag tag-equipment">{{ equipmentLabel(eq) }}</li>
+              }
+            </ul>
+          } @else {
+            <p class="strip-muted">Nessuno strumento fisso in dotazione</p>
+          }
+        </div>
+
+        @if (spaceFeatures(s); as feats) {
+          @if (feats.length > 0) {
+            <div>
+              <p class="strip-label">Caratteristiche</p>
+              <ul class="tag-list">
+                @for (feat of feats; track feat) {
+                  <li class="tag">{{ feat }}</li>
+                }
+              </ul>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="summary-bar" role="status" aria-live="polite" data-testid="timeline-summary">
+        <p>
+          Fasce del <strong>{{ selectedDate() }}</strong> (08:00–23:00 ora di Roma):
+          <strong>{{ bookableSegmentsCount() }}</strong> prenotabili ·
+          <strong>{{ busySegmentsCount() }}</strong> non disponibili
+        </p>
+      </div>
+
+      <ol class="timeline-list" aria-label="Fasce orarie della giornata" data-testid="timeline-list">
+        @for (segment of timeline(); track segment.startIso) {
+          <li
+            class="timeline-item"
+            [attr.data-status]="segment.status"
+            data-testid="timeline-segment"
+          >
+            <div class="segment-time">
+              {{ segment.startTimeRome }} – {{ segment.endTimeRome }}
+            </div>
+
+            <div class="segment-details">
+              <div class="segment-header">
+                <span class="status-pill" [attr.data-status]="segment.status">
+                  {{ statusBadgeLabel(segment.status, s.mode === 'Mixed') }}
+                </span>
+                <span class="segment-summary-text">
+                  {{ segmentSummary(segment, s.mode === 'Mixed') }}
+                </span>
+              </div>
+
+              @if (s.mode === 'Mixed' && segment.status !== 'unavailable' && segment.status !== 'inactive') {
+                <div class="seats-meter" aria-hidden="true">
+                  <div
+                    class="seats-meter-fill"
+                    [style.width.%]="occupancyPercent(segment)"
+                    [attr.data-status]="segment.status"
+                  ></div>
+                </div>
+              }
+            </div>
+          </li>
+        }
+      </ol>
+    }
+  </section>
+</div>
