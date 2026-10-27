@@ -27,8 +27,9 @@ services:
       start_period: 20s
 
   # Spaces
+  # MongoDB 7.0 e non 8: la 8 non parte sui kernel Linux dal 6.19 al 7.0.13 (SERVER-121912, bug #148)
   mongo:
-    image: mongo:8
+    image: mongo:7.0
     container_name: smartcampus-mongo
     restart: unless-stopped
     environment:
