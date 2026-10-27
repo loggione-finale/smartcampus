@@ -56,8 +56,8 @@ public class InvitationsController(
                 detail: "The invitation was issued to another user."),
             AcceptInvitationOutcome.Expired => Problem(
                 statusCode: StatusCodes.Status409Conflict,
-                title: "Invitation expired",
-                detail: "The invitation is no longer pending or its deadline has passed."),
+                title: "Invitation no longer pending",
+                detail: "The invitation was already responded to or its deadline has passed."),
             AcceptInvitationOutcome.PersonConflict => Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Overlapping booking",
