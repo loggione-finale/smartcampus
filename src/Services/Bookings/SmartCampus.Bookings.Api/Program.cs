@@ -1,10 +1,14 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using SmartCampus.Auth;
 using SmartCampus.Bookings.Api.Data;
+using SmartCampus.Bookings.Api.Features.Bookings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddOpenApi();
 
 var connectionString = builder.Configuration.GetConnectionString("Bookings")
@@ -13,6 +17,9 @@ var connectionString = builder.Configuration.GetConnectionString("Bookings")
 builder.Services.AddDbContext<BookingsDbContext>(options =>
     options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure())
         .UseSnakeCaseNamingConvention());
+
+builder.Services.AddSmartCampusAuth(builder.Configuration);
+builder.Services.AddBookings(builder.Configuration);
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<BookingsDbContext>("postgres", failureStatus: HealthStatus.Unhealthy);
@@ -34,7 +41,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "Bookings API v1"));
 }
 
-app.UseAuthorization();
+app.UseSmartCampusAuth();
 app.MapControllers();
 app.MapHealthChecks("/health");
 
