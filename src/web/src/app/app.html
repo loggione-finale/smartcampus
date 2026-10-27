@@ -10,15 +10,15 @@
     <p class="nav-label">Workspace</p>
     <mat-nav-list aria-label="Navigazione principale">
       <a mat-list-item class="nav-item active" href="#overview" aria-current="page">
-        <mat-icon matListItemIcon>dashboard</mat-icon>
+        <span class="nav-icon" aria-hidden="true">OV</span>
         <span matListItemTitle>Panoramica</span>
       </a>
       <a mat-list-item class="nav-item" href="#services">
-        <mat-icon matListItemIcon>hub</mat-icon>
+        <span class="nav-icon" aria-hidden="true">SV</span>
         <span matListItemTitle>Servizi</span>
       </a>
       <a mat-list-item class="nav-item" href="#next">
-        <mat-icon matListItemIcon>rocket_launch</mat-icon>
+        <span class="nav-icon" aria-hidden="true">NP</span>
         <span matListItemTitle>Prossimi passi</span>
       </a>
     </mat-nav-list>
@@ -47,7 +47,7 @@
           <a mat-flat-button class="primary-action" href="#services">Esplora i servizi</a>
         </div>
         <div class="hero-summary" aria-label="Riepilogo ambiente">
-          <mat-icon>calendar_month</mat-icon>
+          <span class="summary-icon" aria-hidden="true">◷</span>
           <div>
             <span class="summary-label">Oggi</span>
             <strong>Il campus è connesso</strong>
@@ -73,7 +73,7 @@
             <mat-card class="service-card">
               <mat-card-header>
                 <div mat-card-avatar class="service-avatar">
-                  <mat-icon>{{ service.icon }}</mat-icon>
+                  <span>{{ service.icon }}</span>
                 </div>
                 <mat-card-title>{{ service.name }}</mat-card-title>
                 <mat-card-subtitle>ASP.NET Core API</mat-card-subtitle>
@@ -84,7 +84,7 @@
               <mat-card-actions>
                 <a mat-button [href]="service.healthUrl" target="_blank" rel="noreferrer">
                   Verifica health
-                  <mat-icon iconPositionEnd>open_in_new</mat-icon>
+                  <span class="external-icon" aria-hidden="true">↗</span>
                 </a>
               </mat-card-actions>
             </mat-card>
@@ -95,7 +95,7 @@
       <section class="next-section" id="next">
         <mat-card class="next-card">
           <mat-card-content>
-            <div class="next-icon"><mat-icon>auto_awesome</mat-icon></div>
+            <div class="next-icon" aria-hidden="true">✦</div>
             <div>
               <p class="eyebrow">PROSSIMI PASSI</p>
               <h2>Una base pronta a crescere.</h2>
@@ -120,7 +120,7 @@
 <!-- * * * * * * * to get started with your project! * * * * * * * -->
 <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
 
-<style>
+<style media="not all">
   :host {
     --bright-blue: oklch(51.01% 0.274 263.83);
     --electric-violet: oklch(53.18% 0.28 296.97);

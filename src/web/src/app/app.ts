@@ -3,7 +3,6 @@ import { RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -21,7 +20,6 @@ type Service = {
     MatButtonModule,
     MatCardModule,
     MatDividerModule,
-    MatIconModule,
     MatListModule,
     MatSidenavModule,
     MatToolbarModule,
@@ -38,19 +36,19 @@ export class App {
       name: 'Spaces',
       description: 'Catalogo di aule, laboratori e sale studio.',
       healthUrl: '/api/spaces/health',
-      icon: 'location_city',
+      icon: 'SP',
     },
     {
       name: 'Bookings',
       description: 'Prenotazioni senza sovrapposizioni.',
       healthUrl: '/api/bookings/health',
-      icon: 'event_available',
+      icon: 'BK',
     },
     {
       name: 'Users',
       description: 'Profili sintetici e ruoli del campus.',
       healthUrl: '/api/users/health',
-      icon: 'people',
+      icon: 'US',
     },
   ];
 }

@@ -13,6 +13,7 @@
   padding: 28px 16px 20px;
   border-right: 1px solid #e4e7ef;
   background: #ffffff;
+  font-family: inherit !important;
 }
 
 .brand {
@@ -67,8 +68,23 @@
   font-weight: 650;
 }
 
-.nav-item mat-icon {
-  color: inherit;
+.nav-icon {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  margin-right: 12px;
+  place-items: center;
+  border-radius: 8px;
+  color: #6375c9;
+  background: #f0f3ff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.nav-item.active .nav-icon {
+  color: #ffffff;
+  background: #2f5bea;
 }
 
 .sidenav-footer {
@@ -120,6 +136,7 @@
   border-bottom: 1px solid #e5e8f0;
   color: #6d7588;
   background: rgba(255, 255, 255, 0.8);
+  font-family: inherit !important;
 }
 
 .topbar-caption {
@@ -138,9 +155,12 @@
 }
 
 main {
+  display: block !important;
+  min-height: 0 !important;
+  position: static !important;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 56px 44px 72px;
+  padding: 56px 44px 72px !important;
 }
 
 .hero {
@@ -198,9 +218,17 @@ h2 {
   box-shadow: 0 12px 30px rgba(47, 91, 234, 0.06);
 }
 
-.hero-summary mat-icon,
-.next-icon mat-icon {
+.summary-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
   color: #2f5bea;
+  background: #edf1ff;
+  font-size: 22px;
+  line-height: 1;
 }
 
 .summary-label {
@@ -251,6 +279,19 @@ h2 {
   border-radius: 14px;
   background: #ffffff;
   box-shadow: 0 8px 22px rgba(35, 45, 75, 0.04);
+  font-family: inherit;
+}
+
+.service-card mat-card-title,
+.service-card mat-card-subtitle,
+.service-card mat-card-actions,
+.next-card {
+  font-family: inherit !important;
+}
+
+.service-card *,
+.next-card * {
+  font-family: inherit !important;
 }
 
 .service-avatar {
@@ -258,6 +299,9 @@ h2 {
   place-items: center;
   color: #2f5bea;
   background: #edf1ff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 .service-card mat-card-content {
@@ -282,9 +326,10 @@ h2 {
   font-weight: 650;
 }
 
-.service-card mat-card-actions mat-icon {
+.external-icon {
   margin-left: 6px;
   font-size: 17px;
+  line-height: 1;
 }
 
 .next-section {
@@ -313,6 +358,9 @@ h2 {
   place-items: center;
   border-radius: 12px;
   background: #ffffff;
+  color: #2f5bea;
+  font-size: 21px;
+  font-weight: 700;
 }
 
 .next-card h2 {
@@ -326,7 +374,7 @@ h2 {
   }
 
   main {
-    padding-inline: 28px;
+    padding-inline: 28px !important;
   }
 
   .hero {
@@ -349,6 +397,6 @@ h2 {
   }
 
   main {
-    padding: 36px 20px 56px;
+    padding: 36px 20px 56px !important;
   }
 }
