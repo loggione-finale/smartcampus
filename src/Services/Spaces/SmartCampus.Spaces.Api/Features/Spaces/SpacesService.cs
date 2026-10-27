@@ -13,10 +13,13 @@ public class SpacesService(ISpacesDbContext dbContext) : ISpacesService
         DateTime toUtc,
         CancellationToken cancellationToken = default)
     {
-        var normalizedId = id.Trim();
+        var normalizedId = Guid.TryParse(id, out var parsedGuid)
+            ? parsedGuid.ToString("D")
+            : id.Trim();
 
+        var filter = Builders<Space>.Filter.Eq(s => s.Id, normalizedId);
         var space = await dbContext.Spaces
-            .Find(s => s.Id == normalizedId)
+            .Find(filter)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (space is null)
@@ -37,7 +40,9 @@ public class SpacesService(ISpacesDbContext dbContext) : ISpacesService
         }
 
         var conflict = space.Unavailabilities?
-            .FirstOrDefault(u => u.Start < toUtc && u.End > fromUtc);
+            .Where(u => u.Start < toUtc && u.End > fromUtc)
+            .OrderBy(u => u.Start)
+            .FirstOrDefault();
 
         if (conflict is not null)
         {

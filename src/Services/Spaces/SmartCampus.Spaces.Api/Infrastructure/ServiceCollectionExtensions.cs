@@ -34,7 +34,15 @@ public static class ServiceCollectionExtensions
             options.SpacesCollectionName = mongoOptions.SpacesCollectionName;
         });
 
-        services.AddSingleton<IMongoClient>(_ => new MongoClient(connectionString));
+        services.AddSingleton<IMongoClient>(_ =>
+        {
+            var settings = MongoClientSettings.FromConnectionString(connectionString);
+            if (!connectionString.Contains("serverSelectionTimeoutMS", StringComparison.OrdinalIgnoreCase))
+            {
+                settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
+            }
+            return new MongoClient(settings);
+        });
         services.AddScoped<ISpacesDbContext, SpacesDbContext>();
         services.AddScoped<IMongoIndexInitializer, MongoIndexInitializer>();
         services.AddHostedService<MongoIndexHostedService>();

@@ -51,7 +51,7 @@ public class SpacesServiceTests
     {
         var space = new Space
         {
-            Id = "space-1",
+            Id = "3f2a9c1e-0000-4000-8000-000000000001",
             Name = "Aula 101",
             Type = SpaceType.Classroom,
             Mode = SpaceMode.Dedicated,
@@ -62,7 +62,7 @@ public class SpacesServiceTests
         SetupSpaceInDb(space);
 
         var result = await _service.GetBookabilityAsync(
-            "space-1",
+            "3F2A9C1E-0000-4000-8000-000000000001",
             DateTime.UtcNow,
             DateTime.UtcNow.AddHours(2));
 
@@ -108,7 +108,7 @@ public class SpacesServiceTests
     }
 
     [Fact]
-    public async Task GetBookabilityAsync_WhenSpaceHasOverlappingUnavailability_ReturnsBookableFalseWithReason()
+    public async Task GetBookabilityAsync_WhenMultipleOverlappingUnavailabilities_ReturnsEarliestReason()
     {
         var space = new Space
         {
@@ -116,11 +116,17 @@ public class SpacesServiceTests
             Name = "Sala Studio Piano Terra",
             Type = SpaceType.StudyRoom,
             Mode = SpaceMode.Mixed,
-            Building = "Edificio C",
+            Building = "Edificio A",
             Capacity = 12,
             IsActive = true,
             Unavailabilities =
             [
+                new Unavailability
+                {
+                    Start = new DateTime(2026, 10, 28, 11, 0, 0, DateTimeKind.Utc),
+                    End = new DateTime(2026, 10, 28, 13, 0, 0, DateTimeKind.Utc),
+                    Reason = "Pulizia straordinaria"
+                },
                 new Unavailability
                 {
                     Start = new DateTime(2026, 10, 28, 8, 0, 0, DateTimeKind.Utc),
@@ -131,7 +137,7 @@ public class SpacesServiceTests
         };
         SetupSpaceInDb(space);
 
-        var from = new DateTime(2026, 10, 28, 10, 0, 0, DateTimeKind.Utc);
+        var from = new DateTime(2026, 10, 28, 9, 0, 0, DateTimeKind.Utc);
         var to = new DateTime(2026, 10, 28, 13, 0, 0, DateTimeKind.Utc);
 
         var result = await _service.GetBookabilityAsync("space-3", from, to);
@@ -142,8 +148,12 @@ public class SpacesServiceTests
         Assert.Equal(SpaceMode.Mixed, result.AccessMode);
     }
 
-    [Fact]
-    public async Task GetBookabilityAsync_WhenUnavailabilityIsAdjacent_ReturnsBookableTrue()
+    [Theory]
+    [InlineData(6, 8)]   // Adjacent before unavailability [08:00, 10:00)
+    [InlineData(10, 12)] // Adjacent after unavailability [08:00, 10:00)
+    [InlineData(14, 16)] // Disjoint after unavailability [08:00, 10:00)
+    public async Task GetBookabilityAsync_WhenUnavailabilityIsAdjacentOrDisjoint_ReturnsBookableTrue(
+        int startHour, int endHour)
     {
         var space = new Space
         {
@@ -166,9 +176,8 @@ public class SpacesServiceTests
         };
         SetupSpaceInDb(space);
 
-        // Requested interval [10:00, 12:00) starts exactly when unavailability ends
-        var from = new DateTime(2026, 10, 28, 10, 0, 0, DateTimeKind.Utc);
-        var to = new DateTime(2026, 10, 28, 12, 0, 0, DateTimeKind.Utc);
+        var from = new DateTime(2026, 10, 28, startHour, 0, 0, DateTimeKind.Utc);
+        var to = new DateTime(2026, 10, 28, endHour, 0, 0, DateTimeKind.Utc);
 
         var result = await _service.GetBookabilityAsync("space-4", from, to);
 

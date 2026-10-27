@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using SmartCampus.Spaces.Api.Domain;
 using SmartCampus.Spaces.Api.Features.Spaces;
 using SmartCampus.Spaces.Api.Features.Spaces.Models;
@@ -48,12 +49,17 @@ public class SpaceBookabilityEndpointIntegrationTests : IClassFixture<WebApplica
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
-    public async Task GetBookable_WhenToIsBeforeOrEqualToFrom_Returns400BadRequest()
+    [Theory]
+    [InlineData("2026-10-28T12:00:00Z", "2026-10-28T10:00:00Z")] // to < from
+    [InlineData("2026-10-28T10:00:00Z", "2026-10-28T10:00:00Z")] // to == from
+    [InlineData("2026-10-28T09:00:00%2B02:00", "2026-10-28T11:00:00%2B02:00")] // non-UTC offset
+    [InlineData("2026-10-28T09:00:00", "2026-10-28T11:00:00")]   // missing explicit UTC offset
+    [InlineData("invalid-date", "2026-10-28T11:00:00Z")]          // malformed date
+    public async Task GetBookable_WhenQueryParametersAreInvalid_Returns400BadRequest(string from, string to)
     {
         var client = CreateTestClient();
 
-        var url = "/spaces/space-123/bookable?from=2026-10-28T12:00:00Z&to=2026-10-28T10:00:00Z";
+        var url = $"/spaces/space-123/bookable?from={from}&to={to}";
         var response = await client.GetAsync(url);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -151,5 +157,24 @@ public class SpaceBookabilityEndpointIntegrationTests : IClassFixture<WebApplica
 
         Assert.False(root.GetProperty("bookable").GetBoolean());
         Assert.Equal("Manutenzione impianto elettrico", root.GetProperty("reason").GetString());
+    }
+
+    [Fact]
+    public async Task GetBookable_WhenDatabaseIsUnreachable_Returns503ServiceUnavailable()
+    {
+        var mockService = Substitute.For<ISpacesService>();
+        mockService.GetBookabilityAsync(
+            Arg.Any<string>(),
+            Arg.Any<DateTime>(),
+            Arg.Any<DateTime>(),
+            Arg.Any<CancellationToken>())
+            .Throws(new TimeoutException("MongoDB server selection timed out."));
+
+        var client = CreateTestClient(mockService);
+
+        var url = "/spaces/space-123/bookable?from=2026-10-28T09:00:00Z&to=2026-10-28T11:00:00Z";
+        var response = await client.GetAsync(url);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
     }
 }
