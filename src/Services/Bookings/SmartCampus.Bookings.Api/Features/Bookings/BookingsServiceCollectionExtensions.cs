@@ -12,6 +12,7 @@ public static class BookingsServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<BookingRequestValidator>();
         services.AddScoped<BookingService>();
+        services.AddScoped<CancelBookingService>();
         services.AddScoped<IPendingClosureChecker, PendingClosureChecker>();
         services.AddHttpClient<ISpacesClient, SpacesClient>(client =>
         {
