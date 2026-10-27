@@ -24,7 +24,7 @@ public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
     }
 
     private static RegisterRequest CreateValidRequest(string? matricola = null, string? email = null) => new(
-        Matricola: matricola ?? $"{Random.Shared.Next(10000000, 99999999)}",
+        Matricola: matricola ?? $"{Random.Shared.NextInt64(1000000000L, 9999999999L)}",
         FirstName: "Marco",
         LastName: "Neri",
         Email: email ?? $"user.{Guid.NewGuid():N}@smartcampus.test",
@@ -97,8 +97,8 @@ public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
     {
         var client = _factory.CreateClient();
         var existingEmail = $"duplicate.{Guid.NewGuid():N}@smartcampus.test";
-        var firstRequest = CreateValidRequest(matricola: "88888881", email: existingEmail);
-        var secondRequest = CreateValidRequest(matricola: "88888882", email: existingEmail);
+        var firstRequest = CreateValidRequest(matricola: "8888888881", email: existingEmail);
+        var secondRequest = CreateValidRequest(matricola: "8888888882", email: existingEmail);
 
         var firstResponse = await client.PostAsJsonAsync("/auth/register", firstRequest);
         Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
@@ -114,7 +114,7 @@ public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
     public async Task Register_WithDuplicateMatricola_Returns409Conflict()
     {
         var client = _factory.CreateClient();
-        var existingMatricola = $"{Random.Shared.Next(10000000, 99999999)}";
+        var existingMatricola = $"{Random.Shared.NextInt64(1000000000L, 9999999999L)}";
         var firstRequest = CreateValidRequest(matricola: existingMatricola, email: $"email1.{Guid.NewGuid():N}@smartcampus.test");
         var secondRequest = CreateValidRequest(matricola: existingMatricola, email: $"email2.{Guid.NewGuid():N}@smartcampus.test");
 
@@ -126,6 +126,22 @@ public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
 
         var rawContent = await secondResponse.Content.ReadAsStringAsync();
         Assert.Contains("Matricola is already registered", rawContent);
+    }
+
+    [Theory]
+    [InlineData("12345678")] // 8 digits (old format)
+    [InlineData("123456789")] // 9 digits
+    [InlineData("12345678901")] // 11 digits
+    public async Task Register_WithNon10DigitMatricola_Returns400BadRequest(string invalidMatricola)
+    {
+        var client = _factory.CreateClient();
+        var request = CreateValidRequest(matricola: invalidMatricola);
+
+        var response = await client.PostAsJsonAsync("/auth/register", request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var rawContent = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Matricola must be exactly 10 digits.", rawContent);
     }
 
     [Fact]

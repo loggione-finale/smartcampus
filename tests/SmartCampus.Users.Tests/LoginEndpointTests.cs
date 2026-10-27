@@ -25,7 +25,7 @@ public class LoginEndpointTests : IClassFixture<UsersApiFactory>
     }
 
     private static RegisterRequest CreateValidRegisterRequest(string? matricola = null, string? email = null, string? password = null) => new(
-        Matricola: matricola ?? $"{Random.Shared.Next(10000000, 99999999)}",
+        Matricola: matricola ?? $"{Random.Shared.NextInt64(1000000000L, 9999999999L)}",
         FirstName: "Giuseppe",
         LastName: "Verdi",
         Email: email ?? $"user.{Guid.NewGuid():N}@smartcampus.test",
@@ -159,6 +159,21 @@ public class LoginEndpointTests : IClassFixture<UsersApiFactory>
         var jwt = tokenHandler.ReadJwtToken(result.Token);
         var roleClaim = jwt.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role || c.Type == "role")?.Value;
         Assert.Equal("Admin", roleClaim);
+    }
+
+    [Fact]
+    public async Task Login_WithSeededAdminMatricola_ReturnsAdminRole()
+    {
+        var client = _factory.CreateClient();
+        var loginRequest = new LoginRequest(Username: "0000000001", Password: "AdminPass123");
+        var response = await client.PostAsJsonAsync("/auth/login", loginRequest);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        Assert.NotNull(result);
+        Assert.Equal("Admin", result.User.Role);
+        Assert.Equal("0000000001", result.User.Matricola);
     }
 
     [Fact]

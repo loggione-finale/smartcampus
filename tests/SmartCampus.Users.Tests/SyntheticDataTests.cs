@@ -49,7 +49,8 @@ public class SyntheticDataTests
         {
             var email = user.GetProperty("email").GetString()!;
             Assert.EndsWith("@smartcampus.test", email);
-            Assert.False(string.IsNullOrWhiteSpace(user.GetProperty("matricola").GetString()));
+            var matricola = user.GetProperty("matricola").GetString()!;
+            Assert.Matches(@"^\d{10}$", matricola);
             Assert.False(string.IsNullOrWhiteSpace(user.GetProperty("demoPassword").GetString()));
             Assert.True(Guid.TryParse(user.GetProperty("id").GetString(), out _));
         }
@@ -155,7 +156,7 @@ public class SyntheticDataTests
 
         var admin = users.Single(u => u.Role == UserRole.Admin);
         Assert.Equal("admin@smartcampus.test", admin.Email);
-        Assert.Equal("00000001", admin.Matricola);
+        Assert.Equal("0000000001", admin.Matricola);
         Assert.Equal(Guid.Parse("b7e1c2d3-0000-4000-8000-000000000001"), admin.Id);
         Assert.Equal(PasswordVerificationResult.Success, passwordHasher.VerifyHashedPassword(admin, admin.PasswordHash, "AdminPass123"));
 
