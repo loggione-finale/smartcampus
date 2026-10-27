@@ -58,6 +58,9 @@ Tutti gli account pre-caricati sono utilizzabili per accedere via frontend o via
 
 ## 3. Casi limite coperti dal dataset sintetico
 
+> [!NOTE]
+> Tutti gli orari indicati negli scenari e nei dataset (es. 09:00–11:00) sono intesi in ora locale di Roma (`Europe/Rome`), coerentemente con la gestione dei fusi orari adottata nel servizio Bookings.
+
 Il dataset include una serie di scenari complessi per validare le regole di business:
 
 | Riferimento | Caso limite / Regola di dominio | Dettagli dello scenario |
