@@ -189,4 +189,69 @@ public class AvailabilityService(BookingsDbContext dbContext, ISpacesClient spac
 
         return mergedSlots;
     }
+
+    public async Task<IReadOnlyList<Guid>> GetAvailableSpacesAsync(
+        IReadOnlyList<Guid> spaceIds,
+        DateTimeOffset start,
+        DateTimeOffset end,
+        CancellationToken cancellationToken)
+    {
+        if (spaceIds.Count == 0)
+        {
+            return [];
+        }
+
+        var distinctIds = spaceIds.Distinct().ToList();
+        var startUtc = start.UtcDateTime;
+        var endUtc = end.UtcDateTime;
+        var requestedPeriod = new NpgsqlRange<DateTime>(startUtc, true, endUtc, false);
+
+        var bookings = await dbContext.Bookings
+            .AsNoTracking()
+            .Include(b => b.Invitations)
+            .Where(b => distinctIds.Contains(b.SpaceId)
+                && b.Status == BookingStatus.Confirmed
+                && b.Period.Overlaps(requestedPeriod))
+            .ToListAsync(cancellationToken);
+
+        var occupiedSpaceIds = new HashSet<Guid>();
+        var bookingsBySpace = bookings.GroupBy(b => b.SpaceId);
+
+        foreach (var spaceGroup in bookingsBySpace)
+        {
+            var spaceId = spaceGroup.Key;
+            var first = spaceGroup.First();
+
+            if (first.SpaceAccessModeSnapshot == SpaceAccessMode.Dedicated)
+            {
+                // Any confirmed overlapping booking makes a dedicated space unavailable
+                occupiedSpaceIds.Add(spaceId);
+            }
+            else
+            {
+                // For mixed spaces, sum occupied seats across active invitations
+                var capacity = first.SpaceCapacitySnapshot;
+                var totalOccupiedSeats = 0;
+
+                foreach (var booking in spaceGroup)
+                {
+                    var activeInvitations = booking.Invitations
+                        .Where(i => (i.Status is InvitationStatus.Invited or InvitationStatus.Accepted)
+                            && i.Period.LowerBound < endUtc && i.Period.UpperBound > startUtc)
+                        .Count();
+
+                    totalOccupiedSeats += activeInvitations > 0 ? activeInvitations : booking.SeatsRequested;
+                }
+
+                if (totalOccupiedSeats >= capacity)
+                {
+                    occupiedSpaceIds.Add(spaceId);
+                }
+            }
+        }
+
+        return distinctIds
+            .Where(id => !occupiedSpaceIds.Contains(id))
+            .ToList();
+    }
 }
