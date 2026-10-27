@@ -19,6 +19,7 @@ public class BookingService(
     private const string PersonOverlapConstraint = "ex_invitations_person_no_overlap";
     private const string ReferenceCodeIndex = "ux_bookings_reference_code";
     private const int MaxReferenceCodeAttempts = 5;
+    private const int RequestedSeats = 1;
 
     public async Task<CreateBookingResult> CreateAsync(
         Guid organizerId, string organizerName, CreateBookingRequest request, CancellationToken cancellationToken)
@@ -60,13 +61,11 @@ public class BookingService(
 
         for (var attempt = 1; ; attempt++)
         {
-            var booking = BuildBooking(organizerId, organizerName, request.SpaceId, space, start, end);
-            dbContext.Bookings.Add(booking);
-
             try
             {
-                await dbContext.SaveChangesAsync(cancellationToken);
-                return CreateBookingResult.Created(booking);
+                return space.AccessMode == SpaceAccessMode.Mixed
+                    ? await InsertInMixedSpaceAsync(organizerId, organizerName, request.SpaceId, space, start, end, cancellationToken)
+                    : await InsertAsync(organizerId, organizerName, request.SpaceId, space, start, end, cancellationToken);
             }
             catch (DbUpdateException exception) when (exception.InnerException is PostgresException postgres)
             {
@@ -90,6 +89,53 @@ public class BookingService(
         }
     }
 
+    private async Task<CreateBookingResult> InsertAsync(
+        Guid organizerId, string organizerName, Guid spaceId, SpaceBookability space,
+        DateTime start, DateTime end, CancellationToken cancellationToken)
+    {
+        var booking = BuildBooking(organizerId, organizerName, spaceId, space, start, end);
+        dbContext.Bookings.Add(booking);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return CreateBookingResult.Created(booking);
+    }
+
+    private Task<CreateBookingResult> InsertInMixedSpaceAsync(
+        Guid organizerId, string organizerName, Guid spaceId, SpaceBookability space,
+        DateTime start, DateTime end, CancellationToken cancellationToken)
+    {
+        var strategy = dbContext.Database.CreateExecutionStrategy();
+
+        return strategy.ExecuteAsync(async () =>
+        {
+            dbContext.ChangeTracker.Clear();
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT pg_advisory_xact_lock(hashtextextended({spaceId.ToString()}, 0))", cancellationToken);
+
+            var period = new NpgsqlRange<DateTime>(start, true, end, false);
+            var occupiedSeats = await dbContext.Invitations
+                .Where(i => i.Booking.SpaceId == spaceId
+                    && i.Booking.Status == BookingStatus.Confirmed
+                    && (i.Status == InvitationStatus.Invited || i.Status == InvitationStatus.Accepted)
+                    && i.Period.Overlaps(period))
+                .CountAsync(cancellationToken);
+
+            var freeSeats = space.Capacity - occupiedSeats;
+            if (freeSeats < RequestedSeats)
+            {
+                return CreateBookingResult.NoSeatsLeft(Math.Max(freeSeats, 0));
+            }
+
+            var booking = BuildBooking(organizerId, organizerName, spaceId, space, start, end);
+            dbContext.Bookings.Add(booking);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return CreateBookingResult.Created(booking);
+        });
+    }
+
     private Booking BuildBooking(
         Guid organizerId, string organizerName, Guid spaceId, SpaceBookability space, DateTime start, DateTime end)
     {
@@ -110,7 +156,7 @@ public class BookingService(
             OrganizerId = organizerId,
             OrganizerNameSnapshot = organizerName,
             Period = period,
-            SeatsRequested = 1,
+            SeatsRequested = RequestedSeats,
             IsGroup = false,
             Status = BookingStatus.Confirmed,
             CreatedAt = now,

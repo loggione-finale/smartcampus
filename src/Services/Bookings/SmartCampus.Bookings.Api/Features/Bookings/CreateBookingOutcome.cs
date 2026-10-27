@@ -9,5 +9,6 @@ public enum CreateBookingOutcome
     SpaceNotBookable,
     SpaceConflict,
     PersonConflict,
+    NoSeatsLeft,
     SpacesUnavailable
 }
