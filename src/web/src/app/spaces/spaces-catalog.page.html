@@ -1,0 +1,305 @@
+<div class="catalog-shell">
+  <section class="catalog-hero" aria-labelledby="catalog-title">
+    <div class="catalog-hero-inner">
+      <a class="back-link" href="/">
+        <span aria-hidden="true">←</span> Torna alla home
+      </a>
+      <p class="eyebrow">CATALOGO DEL CAMPUS</p>
+      <h1 id="catalog-title">Spazi e aule disponibili</h1>
+      <p class="catalog-lead">
+        Cerca tra aule, laboratori e sale studio combinando tipologia, modalità d’uso, capienza e
+        strumenti, oppure individua subito gli spazi liberi in una fascia oraria.
+      </p>
+    </div>
+  </section>
+
+  <section class="catalog-controls" aria-labelledby="filters-title">
+    <form
+      class="filters-panel"
+      [formGroup]="filterForm"
+      (ngSubmit)="applyFilters()"
+      novalidate
+      data-testid="filters-form"
+    >
+      <div class="panel-header">
+        <div>
+          <p class="section-tag">FILTRI COMBINABILI</p>
+          <h2 id="filters-title">Affina la ricerca</h2>
+        </div>
+      </div>
+
+      <div class="filters-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Nome dello spazio</mat-label>
+          <input
+            matInput
+            formControlName="search"
+            placeholder="Es. Aula Magna, Laboratorio..."
+            maxlength="100"
+            data-testid="filter-search"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipologia</mat-label>
+          <mat-select formControlName="type" data-testid="filter-type">
+            <mat-option value="">Tutte le tipologie</mat-option>
+            @for (option of typeOptions; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Modalità d’uso</mat-label>
+          <mat-select formControlName="mode" data-testid="filter-mode">
+            <mat-option value="">Tutte le modalità</mat-option>
+            @for (option of modeOptions; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Capienza minima</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            max="500"
+            inputmode="numeric"
+            formControlName="minCapacity"
+            placeholder="Es. 20"
+            data-testid="filter-min-capacity"
+          />
+          @if (capacityError(); as error) {
+            <mat-error>{{ error }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Strumenti presenti</mat-label>
+          <mat-select formControlName="equipment" multiple data-testid="filter-equipment">
+            @for (item of equipmentOptions; track item.value) {
+              <mat-option [value]="item.value">{{ item.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Edificio</mat-label>
+          <input
+            matInput
+            formControlName="building"
+            placeholder="Es. Edificio A"
+            maxlength="100"
+            data-testid="filter-building"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field-wide">
+          <mat-label>Software installato (laboratori)</mat-label>
+          <input
+            matInput
+            formControlName="software"
+            placeholder="Es. Docker, Blender..."
+            maxlength="100"
+            data-testid="filter-software"
+          />
+        </mat-form-field>
+      </div>
+
+      <div class="slot-box" aria-labelledby="slot-title">
+        <div class="slot-header">
+          <div>
+            <p class="section-tag">DISPONIBILITÀ IN FASCIA ORARIA (ORA DI ROMA)</p>
+            <h3 id="slot-title">Cerca solo le aule libere in un orario</h3>
+          </div>
+          <div class="preset-group" role="group" aria-label="Fasce orarie rapide">
+            @for (preset of timeBandPresets; track preset.label) {
+              <button
+                type="button"
+                class="preset-chip"
+                (click)="selectTimeBandPreset(preset)"
+              >
+                {{ preset.label }}
+              </button>
+            }
+            @if (hasSlotValues()) {
+              <button
+                type="button"
+                class="preset-chip preset-clear"
+                (click)="clearTimeSlot()"
+                data-testid="clear-slot-btn"
+              >
+                Rimuovi fascia
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="slot-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Data</mat-label>
+            <input matInput type="date" formControlName="date" data-testid="filter-date" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Dalle</mat-label>
+            <input matInput type="time" formControlName="startTime" data-testid="filter-start" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Alle</mat-label>
+            <input matInput type="time" formControlName="endTime" data-testid="filter-end" />
+          </mat-form-field>
+        </div>
+
+        @if (slotError(); as validationMessage) {
+          <p class="inline-alert" role="alert" data-testid="slot-error">{{ validationMessage }}</p>
+        }
+      </div>
+
+      <div class="filter-actions">
+        <button
+          mat-flat-button
+          class="btn"
+          type="submit"
+          [disabled]="loading()"
+          data-testid="submit-filters-btn"
+        >
+          {{ loading() ? 'Ricerca in corso…' : 'Cerca spazi' }}
+        </button>
+
+        <button
+          mat-button
+          type="button"
+          class="reset-btn"
+          (click)="resetFilters()"
+          [disabled]="loading()"
+          data-testid="reset-filters-btn"
+        >
+          Azzera filtri
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="catalog-results" aria-labelledby="results-heading">
+    <div class="results-bar">
+      <h2 id="results-heading" aria-live="polite" data-testid="results-count">
+        {{ resultsLabel() }}
+      </h2>
+
+      @if (appliedSlot(); as slot) {
+        <p class="slot-active-pill" data-testid="active-slot-pill">
+          Liberi il {{ slot.date }} · {{ slot.startTime }}–{{ slot.endTime }}
+        </p>
+      }
+    </div>
+
+    @if (errorMessage(); as error) {
+      <div class="error-banner" role="alert" data-testid="error-banner">
+        <p>{{ error }}</p>
+        <button mat-flat-button class="btn" type="button" (click)="applyFilters()">
+          Riprova
+        </button>
+      </div>
+    } @else if (loading()) {
+      <div class="loading-box" role="status" data-testid="loading-state">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <p>Caricamento degli spazi in corso…</p>
+      </div>
+    } @else if (hasLoadedOnce() && spaces().length === 0) {
+      <div class="empty-state" role="status" data-testid="empty-state">
+        <p class="section-tag">NESSUN RISULTATO</p>
+        <h3>Nessuna aula corrisponde ai filtri selezionati.</h3>
+        @if (appliedSlot()) {
+          <p>
+            Nessuno spazio attivo con queste caratteristiche risulta libero nella fascia oraria
+            indicata. Prova a cambiare orario o ad allargare i filtri di ricerca.
+          </p>
+        } @else {
+          <p>
+            Prova a ridurre la capienza minima, cambiare tipologia di spazio o rimuovere alcuni
+            strumenti richiesti.
+          </p>
+        }
+        <button
+          mat-flat-button
+          class="btn"
+          type="button"
+          (click)="resetFilters()"
+          data-testid="empty-reset-btn"
+        >
+          Mostra tutti gli spazi
+        </button>
+      </div>
+    } @else {
+      <ul class="catalog-grid" data-testid="spaces-grid">
+        @for (space of spaces(); track space.id) {
+          <li class="space-card" data-testid="space-card">
+            <div class="card-badges">
+              <span class="badge badge-type">{{ typeLabels[space.type] }}</span>
+              <span class="badge badge-mode" [attr.data-mode]="space.mode">
+                {{ modeLabels[space.mode] }}
+              </span>
+              @if (appliedSlot()) {
+                <span class="badge badge-available">Libero nella fascia</span>
+              }
+            </div>
+
+            <h3 class="card-title">{{ space.name }}</h3>
+
+            <p class="card-location">
+              {{ space.building }} · {{ floorLabel(space.floor) }} ·
+              <strong>{{ space.capacity }} posti</strong>
+            </p>
+
+            <p class="card-mode-hint">{{ modeHints[space.mode] }}</p>
+
+            <div class="card-section">
+              <p class="card-section-label">Strumentazione</p>
+              @if (space.equipment.length > 0) {
+                <ul class="tag-list" aria-label="Strumenti presenti">
+                  @for (eq of space.equipment; track eq) {
+                    <li class="tag tag-equipment">{{ equipmentLabel(eq) }}</li>
+                  }
+                </ul>
+              } @else {
+                <p class="card-muted">Nessuno strumento fisso in dotazione</p>
+              }
+            </div>
+
+            @if (spaceFeatures(space); as features) {
+              @if (features.length > 0) {
+                <div class="card-section">
+                  <p class="card-section-label">Caratteristiche</p>
+                  <ul class="tag-list" aria-label="Caratteristiche dello spazio">
+                    @for (feat of features; track feat) {
+                      <li class="tag">{{ feat }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+            }
+
+            @if (space.unavailabilities.length > 0) {
+              <div class="card-maintenance">
+                <p class="card-section-label">Chiusure programmate</p>
+                <ul>
+                  @for (window of space.unavailabilities; track window.id) {
+                    <li>
+                      <span>{{ formatUnavailabilityWindow(window.start, window.end) }}</span>
+                      — {{ window.reason }}
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>

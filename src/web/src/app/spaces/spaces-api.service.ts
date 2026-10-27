@@ -1,0 +1,154 @@
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
+import {
+  BatchAvailabilityPayload,
+  SpaceDto,
+  SpaceSearchParams,
+  TimeSlotRange,
+  hasOverlappingUnavailability,
+} from './spaces.models';
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_BATCH_AVAILABILITY_IDS = 200;
+
+export class BookingsAvailabilityError extends Error {
+  constructor(public readonly causeError: HttpErrorResponse) {
+    super('Impossibile verificare la disponibilità sul servizio Bookings.');
+    this.name = 'BookingsAvailabilityError';
+  }
+}
+
+@Injectable({
+  providedIn: 'root',
+})
+export class SpacesApiService {
+  private readonly http = inject(HttpClient);
+
+  searchSpaces(params: SpaceSearchParams = {}): Observable<SpaceDto[]> {
+    const httpParams = this.buildHttpParams(params);
+
+    return this.http.get<SpaceDto[]>('/api/spaces', { params: httpParams }).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404 && !this.hasProblemTitle(error)) {
+          return this.http.get<SpaceDto[]>('/api/spaces/spaces', { params: httpParams });
+        }
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  getSpaceById(id: string): Observable<SpaceDto> {
+    const encodedId = encodeURIComponent(id.trim());
+
+    return this.http.get<SpaceDto>(`/api/spaces/${encodedId}`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404 && !this.hasProblemTitle(error)) {
+          return this.http.get<SpaceDto>(`/api/spaces/spaces/${encodedId}`);
+        }
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  getAvailableSpaceIds(spaceIds: string[], startIso: string, endIso: string): Observable<string[]> {
+    const validIds = Array.from(
+      new Set(spaceIds.map((id) => id.trim()).filter((id) => UUID_PATTERN.test(id))),
+    ).slice(0, MAX_BATCH_AVAILABILITY_IDS);
+
+    if (validIds.length === 0) {
+      return of([]);
+    }
+
+    const payload: BatchAvailabilityPayload = {
+      spaceIds: validIds,
+      start: startIso,
+      end: endIso,
+    };
+
+    return this.http.post<string[]>('/api/bookings/availability', payload).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404 && !this.hasProblemTitle(error)) {
+          return this.http.post<string[]>('/api/bookings/bookings/availability', payload);
+        }
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  searchCatalog(params: SpaceSearchParams = {}, slotRange: TimeSlotRange | null = null): Observable<SpaceDto[]> {
+    return this.searchSpaces(params).pipe(
+      switchMap((spaces) => {
+        const activeSpaces = spaces.filter((space) => space.isActive);
+        if (!slotRange) {
+          return of(activeSpaces);
+        }
+
+        const withoutMaintenance = activeSpaces.filter(
+          (space) => !hasOverlappingUnavailability(space, slotRange.startIso, slotRange.endIso),
+        );
+
+        if (withoutMaintenance.length === 0) {
+          return of([]);
+        }
+
+        const candidateIds = withoutMaintenance.map((space) => space.id);
+
+        return this.getAvailableSpaceIds(candidateIds, slotRange.startIso, slotRange.endIso).pipe(
+          map((availableIds) => {
+            const availableSet = new Set(availableIds.map((id) => id.toLowerCase()));
+            return withoutMaintenance.filter((space) => availableSet.has(space.id.toLowerCase()));
+          }),
+          catchError((error: HttpErrorResponse) =>
+            throwError(() => new BookingsAvailabilityError(error)),
+          ),
+        );
+      }),
+    );
+  }
+
+  private buildHttpParams(params: SpaceSearchParams): HttpParams {
+    let httpParams = new HttpParams();
+
+    if (params.type) {
+      httpParams = httpParams.set('type', params.type);
+    }
+
+    if (params.mode) {
+      httpParams = httpParams.set('mode', params.mode);
+    }
+
+    if (typeof params.minCapacity === 'number' && !Number.isNaN(params.minCapacity)) {
+      httpParams = httpParams.set('minCapacity', String(params.minCapacity));
+    }
+
+    if (params.building?.trim()) {
+      httpParams = httpParams.set('building', params.building.trim());
+    }
+
+    if (params.search?.trim()) {
+      httpParams = httpParams.set('search', params.search.trim());
+    }
+
+    if (params.software?.trim()) {
+      httpParams = httpParams.set('software', params.software.trim());
+    }
+
+    for (const item of params.equipment ?? []) {
+      const normalized = item.trim();
+      if (normalized) {
+        httpParams = httpParams.append('equipment', normalized);
+      }
+    }
+
+    return httpParams;
+  }
+
+  private hasProblemTitle(error: HttpErrorResponse): boolean {
+    if (!error.error || typeof error.error !== 'object') {
+      return false;
+    }
+    const payload = error.error as { title?: unknown };
+    return typeof payload.title === 'string' && payload.title.trim().length > 0;
+  }
+}
