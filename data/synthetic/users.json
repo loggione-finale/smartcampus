@@ -1,0 +1,80 @@
+[
+  {
+    "id": "b7e1c2d3-0000-4000-8000-000000000001",
+    "matricola": "00000001",
+    "firstName": "Admin",
+    "lastName": "Campus",
+    "displayName": "Admin Campus",
+    "email": "admin@smartcampus.test",
+    "phoneNumber": "+390801234567",
+    "role": "Admin",
+    "demoPassword": "AdminPass123",
+    "isActive": true,
+    "scenario": "Account personale di campus/amministrazione per la supervisione degli spazi, gestione indisponibilità, approvazione attrezzature e gestione alert."
+  },
+  {
+    "id": "b7e1c2d3-0000-4000-8000-000000000002",
+    "matricola": "10000001",
+    "firstName": "Giulia",
+    "lastName": "Rossi",
+    "displayName": "Giulia Rossi",
+    "email": "giulia.rossi@smartcampus.test",
+    "phoneNumber": "+393331122334",
+    "role": "User",
+    "demoPassword": "Password123",
+    "isActive": true,
+    "scenario": "Studentessa. Organizzatrice di SC-SEED-0001 (Aula 101), del gruppo SC-SEED-0005 (Lab 2) e singola SC-SEED-0013 (Aula 204)."
+  },
+  {
+    "id": "b7e1c2d3-0000-4000-8000-000000000003",
+    "matricola": "10000002",
+    "firstName": "Marco",
+    "lastName": "Bianchi",
+    "displayName": "Marco Bianchi",
+    "email": "marco.bianchi@smartcampus.test",
+    "phoneNumber": "+393332233445",
+    "role": "User",
+    "demoPassword": "Password123",
+    "isActive": true,
+    "scenario": "Studente. Organizzatore prenotazione adiacente SC-SEED-0002, aula mista SC-SEED-0006 e prenotazione passata SC-SEED-0009 con commento regolare."
+  },
+  {
+    "id": "b7e1c2d3-0000-4000-8000-000000000004",
+    "matricola": "10000003",
+    "firstName": "Sara",
+    "lastName": "Conti",
+    "displayName": "Sara Conti",
+    "email": "sara.conti@smartcampus.test",
+    "phoneNumber": "+393333344556",
+    "role": "User",
+    "demoPassword": "Password123",
+    "isActive": true,
+    "scenario": "Studentessa. Prenotazione annullata SC-SEED-0003, aula mista SC-SEED-0007 e passata SC-SEED-0010 con segnalazione guasto all'admin."
+  },
+  {
+    "id": "b7e1c2d3-0000-4000-8000-000000000005",
+    "matricola": "10000004",
+    "firstName": "Luca",
+    "lastName": "Ferrari",
+    "displayName": "Luca Ferrari",
+    "email": "luca.ferrari@smartcampus.test",
+    "phoneNumber": "+393334455667",
+    "role": "User",
+    "demoPassword": "Password123",
+    "isActive": true,
+    "scenario": "Studente. Prenotazione SC-SEED-0004 confermata dopo l'annullamento di Sara e gruppo da 5 posti SC-SEED-0012 che satura Aula 204."
+  },
+  {
+    "id": "b7e1c2d3-0000-4000-8000-000000000006",
+    "matricola": "10000005",
+    "firstName": "Elena",
+    "lastName": "Greco",
+    "displayName": "Elena Greco",
+    "email": "elena.greco@smartcampus.test",
+    "phoneNumber": "+393335566778",
+    "role": "User",
+    "demoPassword": "Password123",
+    "isActive": true,
+    "scenario": "Studentessa con prenotazione terminata SC-SEED-0011 priva di commento finale: serve per dimostrare il blocco delle nuove prenotazioni fino a commento inserito."
+  }
+]

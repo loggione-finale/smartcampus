@@ -43,7 +43,7 @@ public class UsersDbSeeder(
         // 1. Pre-loaded Admin account
         var admin = new UserProfile
         {
-            Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+            Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000001"),
             Matricola = "00000001",
             FirstName = "Admin",
             LastName = "Campus",
@@ -56,51 +56,81 @@ public class UsersDbSeeder(
         admin.PasswordHash = passwordHasher.HashPassword(admin, adminPassword);
         users.Add(admin);
 
-        // 2. Synthetic Student accounts
-        var student1 = new UserProfile
+        // 2. Canonical Synthetic Student accounts (aligned with data/synthetic and Bookings seed)
+        var giulia = new UserProfile
         {
-            Id = Guid.Parse("00000000-0000-0000-0000-000000000011"),
+            Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000002"),
             Matricola = "10000001",
-            FirstName = "Mario",
+            FirstName = "Giulia",
             LastName = "Rossi",
-            DisplayName = "Mario Rossi",
-            Email = "mario.rossi@smartcampus.test",
+            DisplayName = "Giulia Rossi",
+            Email = "giulia.rossi@smartcampus.test",
             PhoneNumber = "+393331122334",
             Role = UserRole.User,
             IsActive = true
         };
-        student1.PasswordHash = passwordHasher.HashPassword(student1, defaultUserPassword);
-        users.Add(student1);
+        giulia.PasswordHash = passwordHasher.HashPassword(giulia, defaultUserPassword);
+        users.Add(giulia);
 
-        var student2 = new UserProfile
+        var marco = new UserProfile
         {
-            Id = Guid.Parse("00000000-0000-0000-0000-000000000012"),
+            Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000003"),
             Matricola = "10000002",
-            FirstName = "Laura",
+            FirstName = "Marco",
             LastName = "Bianchi",
-            DisplayName = "Laura Bianchi",
-            Email = "laura.bianchi@smartcampus.test",
+            DisplayName = "Marco Bianchi",
+            Email = "marco.bianchi@smartcampus.test",
+            PhoneNumber = "+393332233445",
+            Role = UserRole.User,
+            IsActive = true
+        };
+        marco.PasswordHash = passwordHasher.HashPassword(marco, defaultUserPassword);
+        users.Add(marco);
+
+        var sara = new UserProfile
+        {
+            Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000004"),
+            Matricola = "10000003",
+            FirstName = "Sara",
+            LastName = "Conti",
+            DisplayName = "Sara Conti",
+            Email = "sara.conti@smartcampus.test",
+            PhoneNumber = "+393333344556",
+            Role = UserRole.User,
+            IsActive = true
+        };
+        sara.PasswordHash = passwordHasher.HashPassword(sara, defaultUserPassword);
+        users.Add(sara);
+
+        var luca = new UserProfile
+        {
+            Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000005"),
+            Matricola = "10000004",
+            FirstName = "Luca",
+            LastName = "Ferrari",
+            DisplayName = "Luca Ferrari",
+            Email = "luca.ferrari@smartcampus.test",
+            PhoneNumber = "+393334455667",
+            Role = UserRole.User,
+            IsActive = true
+        };
+        luca.PasswordHash = passwordHasher.HashPassword(luca, defaultUserPassword);
+        users.Add(luca);
+
+        var elena = new UserProfile
+        {
+            Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000006"),
+            Matricola = "10000005",
+            FirstName = "Elena",
+            LastName = "Greco",
+            DisplayName = "Elena Greco",
+            Email = "elena.greco@smartcampus.test",
             PhoneNumber = "+393335566778",
             Role = UserRole.User,
             IsActive = true
         };
-        student2.PasswordHash = passwordHasher.HashPassword(student2, defaultUserPassword);
-        users.Add(student2);
-
-        var student3 = new UserProfile
-        {
-            Id = Guid.Parse("00000000-0000-0000-0000-000000000013"),
-            Matricola = "10000003",
-            FirstName = "Giulia",
-            LastName = "Verdi",
-            DisplayName = "Giulia Verdi",
-            Email = "giulia.verdi@smartcampus.test",
-            PhoneNumber = "+393339900112",
-            Role = UserRole.User,
-            IsActive = true
-        };
-        student3.PasswordHash = passwordHasher.HashPassword(student3, defaultUserPassword);
-        users.Add(student3);
+        elena.PasswordHash = passwordHasher.HashPassword(elena, defaultUserPassword);
+        users.Add(elena);
 
         dbContext.UserProfiles.AddRange(users);
         await dbContext.SaveChangesAsync(cancellationToken);
