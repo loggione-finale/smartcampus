@@ -174,7 +174,7 @@ tecniche.
 | R1 | Uno spazio non ha due prenotazioni `Confirmed` sovrapposte | Vincolo `bookings_space_no_overlap` |
 | R2 | Una persona non è in due prenotazioni `Confirmed` sovrapposte | Vincolo `booking_participants_person_no_overlap` |
 | R3 | Una fascia ha fine dopo l'inizio, non è nel passato, è multipla di 15 minuti | Vincolo `bookings_period_valid` + validazione in Bookings |
-| R4 | Durata minima, massima e anticipo massimo | Validazione in Bookings (valori **da chiedere al PO**) |
+| R4 | Durata da 30 minuti a 4 ore (decisione del PO); anticipo massimo non ancora deciso | Validazione in Bookings |
 | R5 | Organizzatore + partecipanti ≤ capienza dello spazio | Bookings, leggendo la capienza da Spaces |
 | R6 | Si prenota solo uno spazio attivo e non indisponibile in quella fascia | Bookings, chiedendo a Spaces |
 | R7 | Un organizzatore ha al massimo 5 prenotazioni di gruppo future | Bookings |
@@ -183,6 +183,7 @@ tecniche.
 | R10 | Senza check-in entro 15 minuti dall'inizio la prenotazione diventa `Released` e lo spazio si libera | Servizio in background di Bookings |
 | R11 | Spazi e profili non si cancellano, si disattivano | Spaces e Users non espongono `DELETE` |
 | R12 | Disattivare uno spazio annulla le sue prenotazioni future (se il PO conferma) | Spaces chiede a Bookings, che annulla in una transazione |
+| R13 | Fasce orarie, ora di Roma: mattina 08:00–14:00, pomeriggio 14:00–19:00, sera 19:00–23:00. Una prenotazione sta dentro una sola fascia; chi prenota ha al massimo **una prenotazione confermata per fascia e per giorno** (richiesta del PO) | Validazione in Bookings + indice univoco parziale su (`organizer_id`, `booking_date`, `time_band`) con `status = 'Confirmed'`: regge anche con richieste simultanee |
 
 ---
 
