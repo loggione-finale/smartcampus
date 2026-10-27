@@ -1,0 +1,26 @@
+{
+  "/api/spaces": {
+    "target": "http://localhost:5101",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/spaces": ""
+    }
+  },
+  "/api/bookings": {
+    "target": "http://localhost:5102",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/bookings": ""
+    }
+  },
+  "/api/users": {
+    "target": "http://localhost:5103",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/users": ""
+    }
+  }
+}
