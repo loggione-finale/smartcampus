@@ -98,7 +98,7 @@ jobs:
       - name: Test
         if: steps.web.outputs.exists == 'true'
         working-directory: src/web
-        run: npm test -- --watch=false
+        run: npm test -- --watch=false --browsers=ChromeHeadless
 
       - name: Dipendenze vulnerabili
         if: steps.web.outputs.exists == 'true'
