@@ -14,4 +14,4 @@ Distinguiamo sempre ciò che è stato provato da ciò che è soltanto ipotizzato
 
 ## Limiti noti
 
-_Nessuno registrato._
+- **Prenotazioni**: la prova di concorrenza (`booking-concurrency.md`, #36) copre solo il livello database, non l'endpoint HTTP; la verifica negativa (senza vincolo o lock la prova fallisce) è solo manuale, e nel caso dell'aula mista il numero esatto di accettate non è deterministico (garantito solo il tetto di capienza).
