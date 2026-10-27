@@ -1,6 +1,90 @@
 [
   {
-    "_id": "3f2a9c1e-7b4d-4e8a-9c1f-2d5e6a7b8c01",
+    "_id": "3f2a9c1e-0000-4000-8000-000000000001",
+    "name": "Aula 101",
+    "type": "Classroom",
+    "mode": "Dedicated",
+    "building": "Edificio A",
+    "floor": 1,
+    "capacity": 30,
+    "isActive": true,
+    "features": {
+      "blackboard": true,
+      "projector": true
+    },
+    "equipment": [
+      "videoprojector"
+    ],
+    "unavailabilities": [],
+    "createdAt": "2026-10-26T08:00:00Z",
+    "updatedAt": "2026-10-26T08:00:00Z"
+  },
+  {
+    "_id": "3f2a9c1e-0000-4000-8000-000000000002",
+    "name": "Laboratorio Informatica 2",
+    "type": "Lab",
+    "mode": "Dedicated",
+    "building": "Edificio B",
+    "floor": 1,
+    "capacity": 24,
+    "isActive": true,
+    "features": {
+      "workstations": 24,
+      "software": [
+        "Visual Studio Code",
+        "Docker",
+        ".NET SDK"
+      ],
+      "projector": true
+    },
+    "equipment": [
+      "videoprojector"
+    ],
+    "unavailabilities": [],
+    "createdAt": "2026-10-26T08:00:00Z",
+    "updatedAt": "2026-10-26T08:00:00Z"
+  },
+  {
+    "_id": "3f2a9c1e-0000-4000-8000-000000000003",
+    "name": "Sala Studio Piano Terra",
+    "type": "StudyRoom",
+    "mode": "Mixed",
+    "building": "Edificio C",
+    "floor": 0,
+    "capacity": 12,
+    "isActive": true,
+    "features": {
+      "powerOutlets": true,
+      "wifiHighSpeed": true,
+      "quietZone": true
+    },
+    "equipment": [],
+    "unavailabilities": [],
+    "createdAt": "2026-10-26T08:00:00Z",
+    "updatedAt": "2026-10-26T08:00:00Z"
+  },
+  {
+    "_id": "3f2a9c1e-0000-4000-8000-000000000004",
+    "name": "Aula 204",
+    "type": "Classroom",
+    "mode": "Mixed",
+    "building": "Edificio A",
+    "floor": 2,
+    "capacity": 6,
+    "isActive": true,
+    "features": {
+      "movableDesks": true,
+      "projector": true
+    },
+    "equipment": [
+      "videoprojector"
+    ],
+    "unavailabilities": [],
+    "createdAt": "2026-10-26T08:00:00Z",
+    "updatedAt": "2026-10-26T08:00:00Z"
+  },
+  {
+    "_id": "3f2a9c1e-0000-4000-8000-000000000005",
     "name": "Aula Magna",
     "type": "Classroom",
     "mode": "Dedicated",
@@ -23,27 +107,7 @@
     "updatedAt": "2026-10-26T08:00:00Z"
   },
   {
-    "_id": "3f2a9c1e-7b4d-4e8a-9c1f-2d5e6a7b8c02",
-    "name": "Aula 101",
-    "type": "Classroom",
-    "mode": "Dedicated",
-    "building": "Edificio A",
-    "floor": 1,
-    "capacity": 40,
-    "isActive": true,
-    "features": {
-      "blackboard": true,
-      "projector": true
-    },
-    "equipment": [
-      "videoprojector"
-    ],
-    "unavailabilities": [],
-    "createdAt": "2026-10-26T08:00:00Z",
-    "updatedAt": "2026-10-26T08:00:00Z"
-  },
-  {
-    "_id": "3f2a9c1e-7b4d-4e8a-9c1f-2d5e6a7b8c03",
+    "_id": "3f2a9c1e-0000-4000-8000-000000000006",
     "name": "Aula Mista Seminari",
     "type": "Classroom",
     "mode": "Mixed",
@@ -64,32 +128,7 @@
     "updatedAt": "2026-10-26T08:00:00Z"
   },
   {
-    "_id": "3f2a9c1e-7b4d-4e8a-9c1f-2d5e6a7b8c04",
-    "name": "Laboratorio Informatica 1",
-    "type": "Lab",
-    "mode": "Dedicated",
-    "building": "Edificio B",
-    "floor": 1,
-    "capacity": 25,
-    "isActive": true,
-    "features": {
-      "workstations": 25,
-      "software": [
-        "Visual Studio Code",
-        "Docker",
-        ".NET SDK"
-      ],
-      "projector": true
-    },
-    "equipment": [
-      "videoprojector"
-    ],
-    "unavailabilities": [],
-    "createdAt": "2026-10-26T08:00:00Z",
-    "updatedAt": "2026-10-26T08:00:00Z"
-  },
-  {
-    "_id": "3f2a9c1e-7b4d-4e8a-9c1f-2d5e6a7b8c05",
+    "_id": "3f2a9c1e-0000-4000-8000-000000000007",
     "name": "Laboratorio Multimediale",
     "type": "Lab",
     "mode": "Dedicated",
@@ -115,46 +154,7 @@
     "updatedAt": "2026-10-26T08:00:00Z"
   },
   {
-    "_id": "3f2a9c1e-7b4d-4e8a-9c1f-2d5e6a7b8c06",
-    "name": "Sala Studio Silenziosa",
-    "type": "StudyRoom",
-    "mode": "Mixed",
-    "building": "Edificio C",
-    "floor": 0,
-    "capacity": 50,
-    "isActive": true,
-    "features": {
-      "powerOutlets": true,
-      "wifiHighSpeed": true,
-      "quietZone": true
-    },
-    "equipment": [],
-    "unavailabilities": [],
-    "createdAt": "2026-10-26T08:00:00Z",
-    "updatedAt": "2026-10-26T08:00:00Z"
-  },
-  {
-    "_id": "3f2a9c1e-7b4d-4e8a-9c1f-2d5e6a7b8c07",
-    "name": "Sala Studio Gruppi",
-    "type": "StudyRoom",
-    "mode": "Mixed",
-    "building": "Edificio C",
-    "floor": 1,
-    "capacity": 20,
-    "isActive": true,
-    "features": {
-      "powerOutlets": true,
-      "whiteboard": true
-    },
-    "equipment": [
-      "interactive-whiteboard"
-    ],
-    "unavailabilities": [],
-    "createdAt": "2026-10-26T08:00:00Z",
-    "updatedAt": "2026-10-26T08:00:00Z"
-  },
-  {
-    "_id": "3f2a9c1e-7b4d-4e8a-9c1f-2d5e6a7b8c08",
+    "_id": "3f2a9c1e-0000-4000-8000-000000000008",
     "name": "Aula 205 (Manutenzione)",
     "type": "Classroom",
     "mode": "Dedicated",
