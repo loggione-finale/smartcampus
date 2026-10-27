@@ -290,7 +290,8 @@ public class AvailabilityEndpointTests(BookingsApiFactory factory) : IClassFixtu
                     {
                         Id = Guid.NewGuid(),
                         BookingId = bookingId,
-                        Email = "organizer@smartcampus.test",
+                        UserId = Guid.NewGuid(),
+                        Email = $"avail-org-{Guid.NewGuid():N}@smartcampus.test",
                         Role = ParticipantRole.Organizer,
                         Status = InvitationStatus.Accepted,
                         Period = period,
@@ -301,7 +302,8 @@ public class AvailabilityEndpointTests(BookingsApiFactory factory) : IClassFixtu
                     {
                         Id = Guid.NewGuid(),
                         BookingId = bookingId,
-                        Email = "participant@smartcampus.test",
+                        UserId = Guid.NewGuid(),
+                        Email = $"avail-part-{Guid.NewGuid():N}@smartcampus.test",
                         Role = ParticipantRole.Participant,
                         Status = InvitationStatus.Invited, // Pending invitation!
                         Period = period,
