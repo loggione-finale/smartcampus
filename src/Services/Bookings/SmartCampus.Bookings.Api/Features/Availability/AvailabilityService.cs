@@ -206,19 +206,52 @@ public class AvailabilityService(BookingsDbContext dbContext, ISpacesClient spac
         var endUtc = end.UtcDateTime;
         var requestedPeriod = new NpgsqlRange<DateTime>(startUtc, true, endUtc, false);
 
-        var occupiedSpaceIds = await dbContext.Bookings
+        var bookings = await dbContext.Bookings
             .AsNoTracking()
+            .Include(b => b.Invitations)
             .Where(b => distinctIds.Contains(b.SpaceId)
                 && b.Status == BookingStatus.Confirmed
                 && b.Period.Overlaps(requestedPeriod))
-            .Select(b => b.SpaceId)
-            .Distinct()
             .ToListAsync(cancellationToken);
 
-        var occupiedSet = occupiedSpaceIds.ToHashSet();
+        var occupiedSpaceIds = new HashSet<Guid>();
+        var bookingsBySpace = bookings.GroupBy(b => b.SpaceId);
+
+        foreach (var spaceGroup in bookingsBySpace)
+        {
+            var spaceId = spaceGroup.Key;
+            var first = spaceGroup.First();
+
+            if (first.SpaceAccessModeSnapshot == SpaceAccessMode.Dedicated)
+            {
+                // Any confirmed overlapping booking makes a dedicated space unavailable
+                occupiedSpaceIds.Add(spaceId);
+            }
+            else
+            {
+                // For mixed spaces, sum occupied seats across active invitations
+                var capacity = first.SpaceCapacitySnapshot;
+                var totalOccupiedSeats = 0;
+
+                foreach (var booking in spaceGroup)
+                {
+                    var activeInvitations = booking.Invitations
+                        .Where(i => (i.Status is InvitationStatus.Invited or InvitationStatus.Accepted)
+                            && i.Period.LowerBound < endUtc && i.Period.UpperBound > startUtc)
+                        .Count();
+
+                    totalOccupiedSeats += activeInvitations > 0 ? activeInvitations : booking.SeatsRequested;
+                }
+
+                if (totalOccupiedSeats >= capacity)
+                {
+                    occupiedSpaceIds.Add(spaceId);
+                }
+            }
+        }
 
         return distinctIds
-            .Where(id => !occupiedSet.Contains(id))
+            .Where(id => !occupiedSpaceIds.Contains(id))
             .ToList();
     }
 }

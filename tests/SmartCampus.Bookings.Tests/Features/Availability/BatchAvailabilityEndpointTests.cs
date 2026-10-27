@@ -359,4 +359,63 @@ public class BatchAvailabilityEndpointTests(BookingsApiFactory factory) : IClass
         Assert.Single(availableIds);
         Assert.Equal(spaceId, availableIds[0]);
     }
+
+    [Fact]
+    public async Task Mixed_space_with_free_seats_is_included_in_available_spaces()
+    {
+        var mixedSpace = CreateSpace(SpaceAccessMode.Mixed, 10);
+        var user = factory.CreateAuthenticatedClient(Guid.NewGuid());
+
+        var slotStart = TestSlots.Next(hour: 10);
+        var slotEnd = slotStart.AddHours(2);
+
+        // 1 booking of 1 seat out of 10 capacity
+        await CreateBookingAsync(user, mixedSpace, slotStart, slotEnd);
+
+        var client = factory.CreateClient();
+        var payload = new
+        {
+            spaceIds = new[] { mixedSpace },
+            start = slotStart,
+            end = slotEnd
+        };
+
+        var response = await client.PostAsJsonAsync("/bookings/availability", payload);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var availableIds = await response.Content.ReadFromJsonAsync<List<Guid>>(JsonOptions);
+        Assert.NotNull(availableIds);
+        Assert.Single(availableIds);
+        Assert.Equal(mixedSpace, availableIds[0]);
+    }
+
+    [Fact]
+    public async Task Mixed_space_at_full_capacity_is_excluded_from_available_spaces()
+    {
+        var mixedSpace = CreateSpace(SpaceAccessMode.Mixed, 2);
+        var user1 = factory.CreateAuthenticatedClient(Guid.NewGuid());
+        var user2 = factory.CreateAuthenticatedClient(Guid.NewGuid());
+
+        var slotStart = TestSlots.Next(hour: 10);
+        var slotEnd = slotStart.AddHours(2);
+
+        // 2 bookings of 1 seat each = 2/2 seats occupied
+        await CreateBookingAsync(user1, mixedSpace, slotStart, slotEnd);
+        await CreateBookingAsync(user2, mixedSpace, slotStart, slotEnd);
+
+        var client = factory.CreateClient();
+        var payload = new
+        {
+            spaceIds = new[] { mixedSpace },
+            start = slotStart,
+            end = slotEnd
+        };
+
+        var response = await client.PostAsJsonAsync("/bookings/availability", payload);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var availableIds = await response.Content.ReadFromJsonAsync<List<Guid>>(JsonOptions);
+        Assert.NotNull(availableIds);
+        Assert.Empty(availableIds);
+    }
 }
