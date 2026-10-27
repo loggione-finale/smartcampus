@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Un nuovo push sulla stessa PR annulla il controllo vecchio ancora in corso
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (.NET)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DOTNET_NOLOGO: true
+      # Password di database usa e getta, che esistono solo durante il controllo: non sono segreti
+      POSTGRES_ADMIN_PASSWORD: ci_admin
+      BOOKINGS_DB_PASSWORD: ci_bookings
+      USERS_DB_PASSWORD: ci_users
+      MONGO_ADMIN_PASSWORD: ci_admin
+      SPACES_DB_PASSWORD: ci_spaces
+      # Stringhe di connessione che i test di integrazione leggono dalla configurazione
+      ConnectionStrings__BookingsTest: Host=localhost;Port=5432;Database=bookings_test;Username=bookings_app;Password=ci_bookings
+      ConnectionStrings__UsersTest: Host=localhost;Port=5432;Database=users_test;Username=users_app;Password=ci_users
+      ConnectionStrings__SpacesTest: mongodb://spaces_app:ci_spaces@localhost:27017/spaces_test?authSource=spaces
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Avvia i database (stesso docker-compose dello sviluppo locale)
+        run: docker compose up -d --wait
+
+      - name: Ripristino dei pacchetti
+        run: dotnet restore SmartCampus.slnx
+
+      - name: Build
+        run: dotnet build SmartCampus.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test SmartCampus.slnx --no-build --configuration Release --logger trx --results-directory TestResults
+
+      - name: Dipendenze vulnerabili
+        run: |
+          dotnet list SmartCampus.slnx package --vulnerable --include-transitive | tee vulnerable.txt
+          ! grep -q "has the following vulnerable packages" vulnerable.txt
+
+      - name: Salva i risultati dei test
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-results
+          path: TestResults
+
+      - name: Log dei database, solo se qualcosa fallisce
+        if: failure()
+        run: docker compose logs
+
+  frontend:
+    name: Frontend (Angular)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      # Finché il progetto Angular (#19) non esiste, il job passa senza fare nulla
+      - name: Esiste il progetto Angular?
+        id: web
+        run: echo "exists=$([ -f src/web/package.json ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v5
+        if: steps.web.outputs.exists == 'true'
+        with:
+          node-version-file: src/web/.nvmrc
+          cache: npm
+          cache-dependency-path: src/web/package-lock.json
+
+      - name: Installazione
+        if: steps.web.outputs.exists == 'true'
+        working-directory: src/web
+        run: npm ci
+
+      - name: Build
+        if: steps.web.outputs.exists == 'true'
+        working-directory: src/web
+        run: npm run build
+
+      - name: Test
+        if: steps.web.outputs.exists == 'true'
+        working-directory: src/web
+        run: npm test -- --watch=false
+
+      - name: Dipendenze vulnerabili
+        if: steps.web.outputs.exists == 'true'
+        working-directory: src/web
+        run: npm audit --audit-level=high
