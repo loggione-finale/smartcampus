@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { BookingsAvailabilityError, SpacesApiService } from './spaces-api.service';
 import {
@@ -48,6 +49,7 @@ type TimeBandPreset = {
 export class SpacesCatalogPage implements OnInit {
   private readonly api = inject(SpacesApiService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   private activeRequest: Subscription | null = null;
@@ -206,6 +208,25 @@ export class SpacesCatalogPage implements OnInit {
     const endTime = utcIsoToRomeTime(endIso);
     const day = startIso.slice(0, 10);
     return startTime && endTime ? `${day} · ${startTime}–${endTime}` : day;
+  }
+
+  protected spaceAvailabilityHref(spaceId: string): string {
+    const chosenDate = this.appliedSlot()?.date || this.filterForm.controls.date.value.trim();
+    const encodedId = encodeURIComponent(spaceId);
+    return chosenDate
+      ? `/spaces/${encodedId}?date=${encodeURIComponent(chosenDate)}`
+      : `/spaces/${encodedId}`;
+  }
+
+  protected openSpaceAvailability(event: MouseEvent, spaceId: string): void {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    event.preventDefault();
+    const chosenDate = this.appliedSlot()?.date || this.filterForm.controls.date.value.trim();
+    void this.router.navigate(['/spaces', spaceId], {
+      queryParams: chosenDate ? { date: chosenDate } : {},
+    });
   }
 
   private resolveSlotRange(

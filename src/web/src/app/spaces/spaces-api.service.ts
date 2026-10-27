@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
 import {
   BatchAvailabilityPayload,
+  SpaceAvailabilityDto,
   SpaceDto,
   SpaceSearchParams,
   TimeSlotRange,
@@ -24,27 +25,33 @@ export class BookingsAvailabilityError extends Error {
 })
 export class SpacesApiService {
   private readonly http = inject(HttpClient);
+  private bookingsAvailabilityBase:
+    | '/api/bookings/bookings/availability'
+    | '/api/bookings/availability' = '/api/bookings/bookings/availability';
 
   searchSpaces(params: SpaceSearchParams = {}): Observable<SpaceDto[]> {
     const httpParams = this.buildHttpParams(params);
-
-    return this.http.get<SpaceDto[]>('/api/spaces', { params: httpParams }).pipe(
-      catchError((error: HttpErrorResponse) => {
-        if (error.status === 404 && !this.hasProblemTitle(error)) {
-          return this.http.get<SpaceDto[]>('/api/spaces/spaces', { params: httpParams });
-        }
-        return throwError(() => error);
-      }),
-    );
+    return this.http.get<SpaceDto[]>('/api/spaces/spaces', { params: httpParams });
   }
 
   getSpaceById(id: string): Observable<SpaceDto> {
     const encodedId = encodeURIComponent(id.trim());
+    return this.http.get<SpaceDto>(`/api/spaces/spaces/${encodedId}`);
+  }
 
-    return this.http.get<SpaceDto>(`/api/spaces/${encodedId}`).pipe(
+  getSpaceDailyAvailability(spaceId: string, date: string): Observable<SpaceAvailabilityDto> {
+    const encodedId = encodeURIComponent(spaceId.trim());
+    const httpParams = new HttpParams().set('date', date.trim());
+    const primaryBase = this.bookingsAvailabilityBase;
+
+    return this.http.get<SpaceAvailabilityDto>(`${primaryBase}/${encodedId}`, { params: httpParams }).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 404 && !this.hasProblemTitle(error)) {
-          return this.http.get<SpaceDto>(`/api/spaces/spaces/${encodedId}`);
+          const alternateBase = this.alternateBookingsBase(primaryBase);
+          this.bookingsAvailabilityBase = alternateBase;
+          return this.http.get<SpaceAvailabilityDto>(`${alternateBase}/${encodedId}`, {
+            params: httpParams,
+          });
         }
         return throwError(() => error);
       }),
@@ -66,17 +73,24 @@ export class SpacesApiService {
       end: endIso,
     };
 
-    return this.http.post<string[]>('/api/bookings/availability', payload).pipe(
+    const primaryBase = this.bookingsAvailabilityBase;
+
+    return this.http.post<string[]>(primaryBase, payload).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 404 && !this.hasProblemTitle(error)) {
-          return this.http.post<string[]>('/api/bookings/bookings/availability', payload);
+          const alternateBase = this.alternateBookingsBase(primaryBase);
+          this.bookingsAvailabilityBase = alternateBase;
+          return this.http.post<string[]>(alternateBase, payload);
         }
         return throwError(() => error);
       }),
     );
   }
 
-  searchCatalog(params: SpaceSearchParams = {}, slotRange: TimeSlotRange | null = null): Observable<SpaceDto[]> {
+  searchCatalog(
+    params: SpaceSearchParams = {},
+    slotRange: TimeSlotRange | null = null,
+  ): Observable<SpaceDto[]> {
     return this.searchSpaces(params).pipe(
       switchMap((spaces) => {
         const activeSpaces = spaces.filter((space) => space.isActive);
@@ -105,6 +119,14 @@ export class SpacesApiService {
         );
       }),
     );
+  }
+
+  private alternateBookingsBase(
+    current: '/api/bookings/bookings/availability' | '/api/bookings/availability',
+  ): '/api/bookings/bookings/availability' | '/api/bookings/availability' {
+    return current === '/api/bookings/bookings/availability'
+      ? '/api/bookings/availability'
+      : '/api/bookings/bookings/availability';
   }
 
   private buildHttpParams(params: SpaceSearchParams): HttpParams {

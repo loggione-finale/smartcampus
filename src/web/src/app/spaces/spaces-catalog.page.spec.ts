@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { SpacesCatalogPage } from './spaces-catalog.page';
 import {
   SpaceDto,
@@ -98,7 +99,7 @@ describe('SpacesCatalogPage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SpacesCatalogPage],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
 
     httpTesting = TestBed.inject(HttpTestingController);
@@ -109,10 +110,10 @@ describe('SpacesCatalogPage', () => {
     httpTesting.verify();
   });
 
-  it('loads and displays active spaces with Italian labels on initialization', () => {
+  it('loads and displays active spaces with Italian labels and links to daily availability', () => {
     fixture.detectChanges();
 
-    const req = httpTesting.expectOne('/api/spaces');
+    const req = httpTesting.expectOne('/api/spaces/spaces');
     expect(req.request.method).toBe('GET');
     req.flush(SAMPLE_SPACES);
     fixture.detectChanges();
@@ -128,29 +129,16 @@ describe('SpacesCatalogPage', () => {
     expect(host.textContent).toContain('Uso misto');
     expect(host.textContent).toContain('Videoproiettore');
     expect(host.textContent).toContain('24 postazioni PC');
+
+    const firstLink = host.querySelector(
+      '[data-testid="open-availability-link"]',
+    ) as HTMLAnchorElement | null;
+    expect(firstLink?.getAttribute('href')).toBe('/spaces/3f2a9c1e-0000-4000-8000-000000000001');
   });
 
-  it('falls back transparently to /api/spaces/spaces when dev proxy strips /api/spaces', () => {
+  it('sends combined filter query parameters to GET /api/spaces/spaces', () => {
     fixture.detectChanges();
-
-    const primaryReq = httpTesting.expectOne('/api/spaces');
-    primaryReq.flush(null, { status: 404, statusText: 'Not Found' });
-
-    const fallbackReq = httpTesting.expectOne('/api/spaces/spaces');
-    expect(fallbackReq.request.method).toBe('GET');
-    fallbackReq.flush([SAMPLE_SPACES[0]]);
-    fixture.detectChanges();
-
-    const cards = (fixture.nativeElement as HTMLElement).querySelectorAll(
-      '[data-testid="space-card"]',
-    );
-    expect(cards.length).toBe(1);
-    expect(cards[0].textContent).toContain('Aula 101');
-  });
-
-  it('sends combined filter query parameters to GET /api/spaces', () => {
-    fixture.detectChanges();
-    httpTesting.expectOne('/api/spaces').flush(SAMPLE_SPACES);
+    httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
     fixture.detectChanges();
 
     const component = fixture.componentInstance as unknown as {
@@ -170,7 +158,7 @@ describe('SpacesCatalogPage', () => {
 
     component.applyFilters();
 
-    const filteredReq = httpTesting.expectOne((request) => request.url === '/api/spaces');
+    const filteredReq = httpTesting.expectOne((request) => request.url === '/api/spaces/spaces');
     expect(filteredReq.request.params.get('search')).toBe('Informatica');
     expect(filteredReq.request.params.get('type')).toBe('Lab');
     expect(filteredReq.request.params.get('mode')).toBe('Dedicated');
@@ -194,7 +182,7 @@ describe('SpacesCatalogPage', () => {
 
   it('composes Spaces + Bookings availability and excludes spaces under maintenance in that slot', () => {
     fixture.detectChanges();
-    httpTesting.expectOne('/api/spaces').flush(SAMPLE_SPACES);
+    httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
     fixture.detectChanges();
 
     const component = fixture.componentInstance as unknown as {
@@ -202,8 +190,6 @@ describe('SpacesCatalogPage', () => {
       applyFilters(): void;
     };
 
-    // 2026-10-28 09:00-11:00 in Europe/Rome (CET, UTC+1) -> 08:00Z-10:00Z
-    // SAMPLE_SPACES[2] has maintenance 08:00Z-12:00Z, so only [0] and [1] are queried on Bookings
     component.filterForm.patchValue({
       date: '2026-10-28',
       startTime: '09:00',
@@ -212,10 +198,10 @@ describe('SpacesCatalogPage', () => {
 
     component.applyFilters();
 
-    const spacesReq = httpTesting.expectOne('/api/spaces');
+    const spacesReq = httpTesting.expectOne('/api/spaces/spaces');
     spacesReq.flush(SAMPLE_SPACES);
 
-    const availabilityReq = httpTesting.expectOne('/api/bookings/availability');
+    const availabilityReq = httpTesting.expectOne('/api/bookings/bookings/availability');
     expect(availabilityReq.request.method).toBe('POST');
     expect(availabilityReq.request.body).toEqual({
       spaceIds: [
@@ -226,7 +212,6 @@ describe('SpacesCatalogPage', () => {
       end: '2026-10-28T10:00:00.000Z',
     });
 
-    // Bookings reports only Laboratorio Informatica 2 as free
     availabilityReq.flush(['3f2a9c1e-0000-4000-8000-000000000002']);
     fixture.detectChanges();
 
@@ -235,14 +220,18 @@ describe('SpacesCatalogPage', () => {
     expect(cards.length).toBe(1);
     expect(cards[0].textContent).toContain('Laboratorio Informatica 2');
     expect(cards[0].textContent).toContain('Libero nella fascia');
-    expect(host.querySelector('[data-testid="active-slot-pill"]')?.textContent).toContain(
-      '2026-10-28 · 09:00–11:00',
+
+    const detailLink = cards[0].querySelector(
+      '[data-testid="open-availability-link"]',
+    ) as HTMLAnchorElement | null;
+    expect(detailLink?.getAttribute('href')).toBe(
+      '/spaces/3f2a9c1e-0000-4000-8000-000000000002?date=2026-10-28',
     );
   });
 
   it('validates invalid or incomplete time slot before calling backend APIs', () => {
     fixture.detectChanges();
-    httpTesting.expectOne('/api/spaces').flush(SAMPLE_SPACES);
+    httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
     fixture.detectChanges();
 
     const component = fixture.componentInstance as unknown as {
@@ -259,8 +248,8 @@ describe('SpacesCatalogPage', () => {
     component.applyFilters();
     fixture.detectChanges();
 
-    httpTesting.expectNone('/api/spaces');
-    httpTesting.expectNone('/api/bookings/availability');
+    httpTesting.expectNone('/api/spaces/spaces');
+    httpTesting.expectNone('/api/bookings/bookings/availability');
 
     const alert = (fixture.nativeElement as HTMLElement).querySelector(
       '[data-testid="slot-error"]',
@@ -272,7 +261,7 @@ describe('SpacesCatalogPage', () => {
 
   it('shows a clear empty-state message when no space matches and allows resetting filters', () => {
     fixture.detectChanges();
-    httpTesting.expectOne('/api/spaces').flush(SAMPLE_SPACES);
+    httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
     fixture.detectChanges();
 
     const component = fixture.componentInstance as unknown as {
@@ -284,7 +273,7 @@ describe('SpacesCatalogPage', () => {
     component.applyFilters();
 
     const emptyReq = httpTesting.expectOne(
-      (req) => req.url === '/api/spaces' && req.params.get('minCapacity') === '400',
+      (req) => req.url === '/api/spaces/spaces' && req.params.get('minCapacity') === '400',
     );
     emptyReq.flush([]);
     fixture.detectChanges();
@@ -298,7 +287,7 @@ describe('SpacesCatalogPage', () => {
     resetBtn.click();
 
     const reloadReq = httpTesting.expectOne(
-      (req) => req.url === '/api/spaces' && req.params.keys().length === 0,
+      (req) => req.url === '/api/spaces/spaces' && req.params.keys().length === 0,
     );
     reloadReq.flush(SAMPLE_SPACES);
     fixture.detectChanges();
@@ -309,7 +298,7 @@ describe('SpacesCatalogPage', () => {
   it('displays clear Italian alerts when Spaces or Bookings services return 503', () => {
     fixture.detectChanges();
 
-    const initialReq = httpTesting.expectOne('/api/spaces');
+    const initialReq = httpTesting.expectOne('/api/spaces/spaces');
     initialReq.flush(
       { title: 'Spaces database unavailable' },
       { status: 503, statusText: 'Service Unavailable' },
@@ -333,9 +322,9 @@ describe('SpacesCatalogPage', () => {
     });
     component.applyFilters();
 
-    httpTesting.expectOne('/api/spaces').flush([SAMPLE_SPACES[0]]);
+    httpTesting.expectOne('/api/spaces/spaces').flush([SAMPLE_SPACES[0]]);
     httpTesting
-      .expectOne('/api/bookings/availability')
+      .expectOne('/api/bookings/bookings/availability')
       .flush({ title: 'Bookings unavailable' }, { status: 503, statusText: 'Service Unavailable' });
     fixture.detectChanges();
 

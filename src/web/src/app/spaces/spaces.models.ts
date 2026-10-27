@@ -48,6 +48,36 @@ export interface TimeSlotRange {
   endIso: string;
 }
 
+export interface AvailabilitySlotDto {
+  start: string;
+  end: string;
+  occupiedSeats: number;
+  freeSeats: number;
+  isAvailable: boolean;
+}
+
+export interface SpaceAvailabilityDto {
+  spaceId: string;
+  date: string;
+  accessMode: SpaceMode;
+  capacity: number;
+  slots: AvailabilitySlotDto[];
+}
+
+export type TimelineSegmentStatus = 'free' | 'partial' | 'occupied' | 'unavailable' | 'inactive';
+
+export interface DailyTimelineSegment {
+  startIso: string;
+  endIso: string;
+  startTimeRome: string;
+  endTimeRome: string;
+  status: TimelineSegmentStatus;
+  occupiedSeats: number;
+  freeSeats: number;
+  capacity: number;
+  reason?: string;
+}
+
 export const SPACE_TYPE_OPTIONS: ReadonlyArray<{ value: SpaceType; label: string }> = [
   { value: 'Classroom', label: 'Aula' },
   { value: 'Lab', label: 'Laboratorio' },
@@ -281,4 +311,181 @@ export function hasOverlappingUnavailability(
     const windowEnd = Date.parse(window.end);
     return !Number.isNaN(windowStart) && !Number.isNaN(windowEnd) && windowStart < endMs && windowEnd > startMs;
   });
+}
+
+/**
+ * Adds or subtracts calendar days from a YYYY-MM-DD date string.
+ */
+export function shiftIsoDate(dateString: string, deltaDays: number): string {
+  const match = DATE_PATTERN.exec(dateString.trim());
+  if (!match) {
+    return todayInRome();
+  }
+
+  const utcDate = new Date(
+    Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]) + deltaDays),
+  );
+  const year = utcDate.getUTCFullYear();
+  const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(utcDate.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Builds a continuous daily timeline (08:00-23:00 Europe/Rome) showing free, partially occupied,
+ * fully occupied, maintenance-unavailable, or inactive intervals for a space on a chosen day.
+ */
+export function buildDailyTimeline(
+  space: SpaceDto,
+  availability: SpaceAvailabilityDto,
+  date: string,
+): DailyTimelineSegment[] {
+  const dayOpenIso = romeLocalToUtcIso(date, '08:00');
+  const dayCloseIso = romeLocalToUtcIso(date, '23:00');
+  if (!dayOpenIso || !dayCloseIso) {
+    return [];
+  }
+
+  const dayOpenMs = Date.parse(dayOpenIso);
+  const dayCloseMs = Date.parse(dayCloseIso);
+  const capacity = availability.capacity > 0 ? availability.capacity : space.capacity;
+
+  if (!space.isActive) {
+    return [
+      {
+        startIso: dayOpenIso,
+        endIso: dayCloseIso,
+        startTimeRome: '08:00',
+        endTimeRome: '23:00',
+        status: 'inactive',
+        occupiedSeats: capacity,
+        freeSeats: 0,
+        capacity,
+        reason: 'Spazio disattivato e non prenotabile.',
+      },
+    ];
+  }
+
+  const clampedUnavailabilities = (space.unavailabilities ?? [])
+    .map((u) => ({
+      startMs: Math.max(dayOpenMs, Date.parse(u.start)),
+      endMs: Math.min(dayCloseMs, Date.parse(u.end)),
+      reason: u.reason,
+    }))
+    .filter((u) => !Number.isNaN(u.startMs) && !Number.isNaN(u.endMs) && u.startMs < u.endMs);
+
+  const rawSlots = availability.slots ?? [];
+  const isSyntheticFullDayBlock =
+    rawSlots.length === 1 &&
+    !rawSlots[0].isAvailable &&
+    Date.parse(rawSlots[0].end) - Date.parse(rawSlots[0].start) >= 24 * 3_600_000 &&
+    clampedUnavailabilities.length > 0;
+
+  const clampedBookingSlots = (isSyntheticFullDayBlock ? [] : rawSlots)
+    .map((s) => ({
+      startMs: Math.max(dayOpenMs, Date.parse(s.start)),
+      endMs: Math.min(dayCloseMs, Date.parse(s.end)),
+      occupiedSeats: s.occupiedSeats,
+      freeSeats: s.freeSeats,
+      isAvailable: s.isAvailable,
+    }))
+    .filter((s) => !Number.isNaN(s.startMs) && !Number.isNaN(s.endMs) && s.startMs < s.endMs);
+
+  const boundarySet = new Set<number>([dayOpenMs, dayCloseMs]);
+  for (const u of clampedUnavailabilities) {
+    boundarySet.add(u.startMs);
+    boundarySet.add(u.endMs);
+  }
+  for (const s of clampedBookingSlots) {
+    boundarySet.add(s.startMs);
+    boundarySet.add(s.endMs);
+  }
+
+  const boundaries = Array.from(boundarySet).sort((a, b) => a - b);
+  const rawSegments: DailyTimelineSegment[] = [];
+
+  for (let i = 0; i < boundaries.length - 1; i++) {
+    const segStart = boundaries[i];
+    const segEnd = boundaries[i + 1];
+    if (segStart >= segEnd) {
+      continue;
+    }
+
+    const startIso = new Date(segStart).toISOString();
+    const endIso = new Date(segEnd).toISOString();
+    const startTimeRome = utcIsoToRomeTime(startIso);
+    const endTimeRome = utcIsoToRomeTime(endIso);
+
+    const activeUnavail = clampedUnavailabilities.find(
+      (u) => u.startMs <= segStart && u.endMs >= segEnd,
+    );
+    if (activeUnavail) {
+      rawSegments.push({
+        startIso,
+        endIso,
+        startTimeRome,
+        endTimeRome,
+        status: 'unavailable',
+        occupiedSeats: capacity,
+        freeSeats: 0,
+        capacity,
+        reason: activeUnavail.reason,
+      });
+      continue;
+    }
+
+    const activeSlot = clampedBookingSlots.find((s) => s.startMs <= segStart && s.endMs >= segEnd);
+    if (activeSlot) {
+      const isDedicated = availability.accessMode === 'Dedicated';
+      const freeSeats = isDedicated ? 0 : Math.max(0, activeSlot.freeSeats);
+      const occupiedSeats = isDedicated
+        ? capacity
+        : Math.min(capacity, Math.max(0, activeSlot.occupiedSeats));
+      const status: TimelineSegmentStatus =
+        isDedicated || freeSeats === 0 || !activeSlot.isAvailable ? 'occupied' : 'partial';
+
+      rawSegments.push({
+        startIso,
+        endIso,
+        startTimeRome,
+        endTimeRome,
+        status,
+        occupiedSeats,
+        freeSeats,
+        capacity,
+      });
+      continue;
+    }
+
+    rawSegments.push({
+      startIso,
+      endIso,
+      startTimeRome,
+      endTimeRome,
+      status: 'free',
+      occupiedSeats: 0,
+      freeSeats: capacity,
+      capacity,
+    });
+  }
+
+  const merged: DailyTimelineSegment[] = [];
+  for (const seg of rawSegments) {
+    const prev = merged[merged.length - 1];
+    if (
+      prev &&
+      prev.endIso === seg.startIso &&
+      prev.status === seg.status &&
+      prev.occupiedSeats === seg.occupiedSeats &&
+      prev.freeSeats === seg.freeSeats &&
+      prev.reason === seg.reason
+    ) {
+      prev.endIso = seg.endIso;
+      prev.endTimeRome = seg.endTimeRome;
+    } else {
+      merged.push({ ...seg });
+    }
+  }
+
+  return merged;
 }

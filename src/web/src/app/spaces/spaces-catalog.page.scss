@@ -359,7 +359,6 @@
 }
 
 .card-maintenance {
-  margin-top: auto;
   padding: 10px 12px;
   font-size: 14px;
   background: #fff6e0;
@@ -367,6 +366,29 @@
 
   ul {
     padding-left: 16px;
+  }
+}
+
+.card-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(5, 0, 53, 0.08);
+}
+
+.card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--night);
+  text-decoration: underline 2px;
+  text-underline-offset: 5px;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--brand);
   }
 }
 
