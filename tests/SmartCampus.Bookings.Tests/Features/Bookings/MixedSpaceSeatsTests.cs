@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
 using SmartCampus.Bookings.Api.Features.Bookings;
 using SmartCampus.Bookings.Tests.Support;
@@ -84,8 +87,23 @@ public class MixedSpaceSeatsTests(BookingsApiFactory factory) : IClassFixture<Bo
         var responses = await Task.WhenAll(Enumerable.Range(0, requests).Select(_ =>
             factory.CreateAuthenticatedClient(Guid.NewGuid()).PostAsJsonAsync("/bookings", Request(spaceId, start))));
 
-        Assert.Equal(capacity, responses.Count(r => r.StatusCode == HttpStatusCode.Created));
+        var created = responses.Count(r => r.StatusCode == HttpStatusCode.Created);
+        var seatsInDatabase = await CountOccupiedSeatsAsync(spaceId);
+
+        Assert.True(seatsInDatabase <= capacity, $"The database holds {seatsInDatabase} occupied seats for a capacity of {capacity}.");
+        Assert.True(created == seatsInDatabase, $"{created} requests were accepted but the database holds {seatsInDatabase} occupied seats: rows were removed during the test.");
+        Assert.Equal(capacity, created);
         Assert.Equal(requests - capacity, responses.Count(r => r.StatusCode == HttpStatusCode.Conflict));
+    }
+
+    private async Task<int> CountOccupiedSeatsAsync(Guid spaceId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+        return await dbContext.Invitations.CountAsync(i =>
+            i.Booking.SpaceId == spaceId
+            && i.Booking.Status == BookingStatus.Confirmed
+            && (i.Status == InvitationStatus.Invited || i.Status == InvitationStatus.Accepted));
     }
 
     [Fact]
