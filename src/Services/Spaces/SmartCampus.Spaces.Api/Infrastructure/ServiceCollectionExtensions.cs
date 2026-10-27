@@ -36,6 +36,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISpacesDbContext, SpacesDbContext>();
         services.AddScoped<IMongoIndexInitializer, MongoIndexInitializer>();
         services.AddHostedService<MongoIndexHostedService>();
+        services.AddScoped<SmartCampus.Spaces.Api.Infrastructure.Data.ISpacesDataSeeder, SmartCampus.Spaces.Api.Infrastructure.Data.SpacesDataSeeder>();
+        services.AddHostedService<SmartCampus.Spaces.Api.Infrastructure.Data.SpacesDataSeederHostedService>();
 
         services.AddHealthChecks()
             .AddCheck<MongoHealthCheck>("mongodb", tags: ["db", "ready"]);
