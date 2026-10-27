@@ -5,7 +5,7 @@ namespace SmartCampus.Users.Tests;
 public class RegistrationValidationTests
 {
     private static RegisterRequest CreateValidRequest() => new(
-        Matricola: "12345678",
+        Matricola: "1234567890",
         FirstName: "Mario",
         LastName: "Rossi",
         Email: "mario.rossi@smartcampus.test",
@@ -32,20 +32,28 @@ public class RegistrationValidationTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("12345")] // 5 digits - too short
+    [InlineData("123456")] // 6 digits - now invalid (must be 10)
+    [InlineData("12345678")] // 8 digits - now invalid (must be 10)
+    [InlineData("123456789")] // 9 digits - too short
     [InlineData("12345678901")] // 11 digits - too long
-    [InlineData("12345a")] // contains letter
-    [InlineData("123-456")] // contains hyphen
+    [InlineData("123456789a")] // contains letter
+    [InlineData("1234567 89")] // contains space
+    [InlineData("123-456789")] // contains hyphen
     public void Validate_WithInvalidMatricola_ReturnsError(string matricola)
     {
         var request = CreateValidRequest() with { Matricola = matricola };
         var errors = RegisterValidator.Validate(request);
         Assert.True(errors.ContainsKey(nameof(request.Matricola)));
+        if (!string.IsNullOrWhiteSpace(matricola))
+        {
+            Assert.Contains("Matricola must be exactly 10 digits.", errors[nameof(request.Matricola)]);
+        }
     }
 
     [Theory]
-    [InlineData("123456")] // 6 digits min
-    [InlineData("12345678")] // 8 digits
-    [InlineData("1234567890")] // 10 digits max
+    [InlineData("1000000001")] // 10 digits
+    [InlineData("0000000001")] // 10 digits with leading zeros
+    [InlineData("1234567890")] // 10 digits
     public void Validate_WithValidMatricola_Passes(string matricola)
     {
         var request = CreateValidRequest() with { Matricola = matricola };

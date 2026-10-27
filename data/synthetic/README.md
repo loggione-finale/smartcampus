@@ -19,12 +19,12 @@ Poiché i tre microservizi (`Spaces`, `Bookings`, `Users`) hanno ciascuno il pro
 
 | Nome | Identificativo UUID | Matricola | Email | Ruolo |
 |---|---|---|---|---|
-| **Admin Campus** | `b7e1c2d3-0000-4000-8000-000000000001` | `00000001` | `admin@smartcampus.test` | `Admin` |
-| **Giulia Rossi** | `b7e1c2d3-0000-4000-8000-000000000002` | `10000001` | `giulia.rossi@smartcampus.test` | `User` (Studente) |
-| **Marco Bianchi** | `b7e1c2d3-0000-4000-8000-000000000003` | `10000002` | `marco.bianchi@smartcampus.test` | `User` (Studente) |
-| **Sara Conti** | `b7e1c2d3-0000-4000-8000-000000000004` | `10000003` | `sara.conti@smartcampus.test` | `User` (Studente) |
-| **Luca Ferrari** | `b7e1c2d3-0000-4000-8000-000000000005` | `10000004` | `luca.ferrari@smartcampus.test` | `User` (Studente) |
-| **Elena Greco** | `b7e1c2d3-0000-4000-8000-000000000006` | `10000005` | `elena.greco@smartcampus.test` | `User` (Studente) |
+| **Admin Campus** | `b7e1c2d3-0000-4000-8000-000000000001` | `0000000001` | `admin@smartcampus.test` | `Admin` |
+| **Giulia Rossi** | `b7e1c2d3-0000-4000-8000-000000000002` | `1000000001` | `giulia.rossi@smartcampus.test` | `User` (Studente) |
+| **Marco Bianchi** | `b7e1c2d3-0000-4000-8000-000000000003` | `1000000002` | `marco.bianchi@smartcampus.test` | `User` (Studente) |
+| **Sara Conti** | `b7e1c2d3-0000-4000-8000-000000000004` | `1000000003` | `sara.conti@smartcampus.test` | `User` (Studente) |
+| **Luca Ferrari** | `b7e1c2d3-0000-4000-8000-000000000005` | `1000000004` | `luca.ferrari@smartcampus.test` | `User` (Studente) |
+| **Elena Greco** | `b7e1c2d3-0000-4000-8000-000000000006` | `1000000005` | `elena.greco@smartcampus.test` | `User` (Studente) |
 
 ### Spazi del campus (`spaces.json`)
 
@@ -47,12 +47,12 @@ Tutti gli account pre-caricati sono utilizzabili per accedere via frontend o via
 
 | Email | Matricola | Password Demo | Ruolo | Scenario di test |
 |---|---|---|---|---|
-| `admin@smartcampus.test` | `00000001` | `AdminPass123` | `Admin` | Accesso alle viste riservate admin, gestione segnalazioni e approvazione attrezzature. |
-| `giulia.rossi@smartcampus.test` | `10000001` | `Password123` | `User` | Organizzatrice di prenotazione singola, di gruppo e in aula mista. |
-| `marco.bianchi@smartcampus.test` | `10000002` | `Password123` | `User` | Utente con prenotazione adiacente e storico concluso con commento positivo. |
-| `sara.conti@smartcampus.test` | `10000003` | `Password123` | `User` | Utente con prenotazione annullata e storico concluso con problema segnalato. |
-| `luca.ferrari@smartcampus.test` | `10000004` | `Password123` | `User` | Organizzatore di gruppo che satura la capienza di Aula 204. |
-| `elena.greco@smartcampus.test` | `10000005` | `Password123` | `User` | **Blocco commento finale:** ha la prenotazione terminata `SC-SEED-0011` non commentata; non può creare prenotazioni finché non inserisce il commento. |
+| `admin@smartcampus.test` | `0000000001` | `AdminPass123` | `Admin` | Accesso alle viste riservate admin, gestione segnalazioni e approvazione attrezzature. |
+| `giulia.rossi@smartcampus.test` | `1000000001` | `Password123` | `User` | Organizzatrice di prenotazione singola, di gruppo e in aula mista. |
+| `marco.bianchi@smartcampus.test` | `1000000002` | `Password123` | `User` | Utente con prenotazione adiacente e storico concluso con commento positivo. |
+| `sara.conti@smartcampus.test` | `1000000003` | `Password123` | `User` | Utente con prenotazione annullata e storico concluso con problema segnalato. |
+| `luca.ferrari@smartcampus.test` | `1000000004` | `Password123` | `User` | Organizzatore di gruppo che satura la capienza di Aula 204. |
+| `elena.greco@smartcampus.test` | `1000000005` | `Password123` | `User` | **Blocco commento finale:** ha la prenotazione terminata `SC-SEED-0011` non commentata; non può creare prenotazioni finché non inserisce il commento. |
 
 ---
 
