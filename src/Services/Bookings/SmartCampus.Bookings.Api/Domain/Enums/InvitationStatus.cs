@@ -5,5 +5,6 @@ public enum InvitationStatus
     Invited,
     Accepted,
     Expired,
-    Left
+    Left,
+    Cancelled
 }
