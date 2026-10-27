@@ -16,10 +16,12 @@ public sealed class SpaceCatalogService(ISpacesDbContext dbContext) : ISpaceCata
         ArgumentNullException.ThrowIfNull(filter);
 
         var builder = Builders<Space>.Filter;
-        var filters = new List<FilterDefinition<Space>>
+        var filters = new List<FilterDefinition<Space>>();
+
+        if (!filter.IncludeInactive)
         {
-            builder.Eq(s => s.IsActive, true)
-        };
+            filters.Add(builder.Eq(s => s.IsActive, true));
+        }
 
         if (filter.Type.HasValue)
         {
@@ -60,7 +62,12 @@ public sealed class SpaceCatalogService(ISpacesDbContext dbContext) : ISpaceCata
             filters.Add(builder.Regex(s => s.Name, new BsonRegularExpression(escapedSearch, "i")));
         }
 
-        var combinedFilter = filters.Count == 1 ? filters[0] : builder.And(filters);
+        var combinedFilter = filters.Count switch
+        {
+            0 => FilterDefinition<Space>.Empty,
+            1 => filters[0],
+            _ => builder.And(filters)
+        };
         var sort = Builders<Space>.Sort
             .Ascending(s => s.Building)
             .Ascending(s => s.Floor)

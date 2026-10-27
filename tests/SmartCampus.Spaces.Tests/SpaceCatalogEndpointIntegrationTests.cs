@@ -226,5 +226,7 @@ public class SpaceCatalogEndpointIntegrationTests : IClassFixture<WebApplication
         Assert.True(paths.TryGetProperty("/spaces", out _));
         Assert.True(paths.TryGetProperty("/spaces/{id}", out _));
         Assert.True(paths.TryGetProperty("/spaces/{id}/bookable", out _));
+        Assert.True(paths.TryGetProperty("/spaces/{id}/deactivate", out _));
+        Assert.True(paths.TryGetProperty("/spaces/{id}/activate", out _));
     }
 }
