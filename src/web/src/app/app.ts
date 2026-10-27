@@ -179,7 +179,7 @@ export class App {
     if (control.hasError('email')) return 'Inserisci un indirizzo email valido.';
     if (control.hasError('pattern')) {
       const messages: Partial<Record<RegistrationField, string>> = {
-        matricola: 'La matricola deve contenere esattamente 10 cifre.',
+        matricola: 'La matricola ha 10 cifre.',
         firstName: 'Usa lettere, spazi, apostrofi o trattini.',
         lastName: 'Usa lettere, spazi, apostrofi o trattini.',
         phoneNumber: 'Usa il formato italiano, ad esempio +393331234567.',
