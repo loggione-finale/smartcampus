@@ -189,4 +189,36 @@ public class AvailabilityService(BookingsDbContext dbContext, ISpacesClient spac
 
         return mergedSlots;
     }
+
+    public async Task<IReadOnlyList<Guid>> GetAvailableSpacesAsync(
+        IReadOnlyList<Guid> spaceIds,
+        DateTimeOffset start,
+        DateTimeOffset end,
+        CancellationToken cancellationToken)
+    {
+        if (spaceIds.Count == 0)
+        {
+            return [];
+        }
+
+        var distinctIds = spaceIds.Distinct().ToList();
+        var startUtc = start.UtcDateTime;
+        var endUtc = end.UtcDateTime;
+        var requestedPeriod = new NpgsqlRange<DateTime>(startUtc, true, endUtc, false);
+
+        var occupiedSpaceIds = await dbContext.Bookings
+            .AsNoTracking()
+            .Where(b => distinctIds.Contains(b.SpaceId)
+                && b.Status == BookingStatus.Confirmed
+                && b.Period.Overlaps(requestedPeriod))
+            .Select(b => b.SpaceId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var occupiedSet = occupiedSpaceIds.ToHashSet();
+
+        return distinctIds
+            .Where(id => !occupiedSet.Contains(id))
+            .ToList();
+    }
 }
