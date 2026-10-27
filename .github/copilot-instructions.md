@@ -15,6 +15,8 @@ PR. I ruoli e i loro permessi sono in `docs/agents/`: segui la scheda del ruolo 
 ## Cosa non fare mai
 
 - Leggere, stampare o chiedere il contenuto di `.env`, password, token o stringhe di connessione.
+- Leggere le variabili d'ambiente (`env`, `printenv`, `$env:`) o eseguire i test che usano i database: li esegue
+  la persona fuori da VS Code e ti passa l'output.
 - Fare push su `main`, merge, approvare o chiudere PR, chiudere o cancellare issue.
 - Modificare `.github/workflows/`, `.github/CODEOWNERS`, branch protection, `docker-compose.yml` o migrazioni già
   fuse, salvo che la scheda del ruolo lo preveda esplicitamente.

@@ -6,7 +6,8 @@ Closes #
 
 ## Come l'ho verificato
 
-<!-- Comandi eseguiti e risultati osservati, non solo "funziona". -->
+<!-- Comandi eseguiti e risultati osservati, non solo "funziona".
+     Il job "Controllo PR" avvisa se manca questa sezione o una voce spuntata. -->
 
 - [ ] `dotnet build` senza errori
 - [ ] `dotnet test` eseguito, test passati

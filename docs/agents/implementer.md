@@ -32,7 +32,7 @@ Segue lo Spec-Driven Development delle slide 52-54. Ogni task ha una cartella
 |---|---|
 | Lavorare in una copia del repository **senza `.env`** (`git worktree add`) | Toccare file fuori da quelli elencati in `tasks.md` |
 | Creare e modificare i file elencati in `tasks.md` | Fare push su `main`, merge o approvare PR |
-| Eseguire build e test (`dotnet`, `npm`) | Modificare CI, CODEOWNERS, branch protection, `docker-compose.yml` o migrazioni già fuse |
+| Eseguire build e i test che non usano i database; per gli altri, chiedere alla persona o usare la CI | Modificare CI, CODEOWNERS, branch protection, `docker-compose.yml` o migrazioni già fuse |
 | Fare commit sul proprio branch | Aggiungere pacchetti senza che la persona lo approvi |
 
 ## Prompt
@@ -42,7 +42,8 @@ Sei l'agente di implementazione di SmartCampus. Lavori nella copia del repositor
 <branch>. Non c'è un file .env e non devi cercarne.
 Task: issue #<N>. Leggi docs/agents/changes/<cartella-del-task>/ (proposal.md, spec.md, tasks.md): sono
 approvati. Tocca solo i file elencati in tasks.md.
-Esegui un task alla volta. Dopo ogni task esegui i test pertinenti e riporta il comando e l'esito.
+Esegui un task alla volta. Dopo ogni task esegui la build e i test che non usano i database; per i test sui
+database chiedi alla persona di eseguirli e di passarti l'output. Riporta sempre comando ed esito.
 Ogni scenario WHEN/THEN di spec.md deve diventare un test. Per ogni test nuovo, mostra che fallisce se inserisci
 il difetto che deve trovare, poi togli il difetto.
 Fermati e chiedi se: un requisito è ambiguo, serve toccare un file non elencato, serve un pacchetto nuovo, lo
