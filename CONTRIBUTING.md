@@ -16,7 +16,8 @@ Queste regole valgono per tutti i membri del team, owner compresi.
    git pull
    git switch -c feature/42-room-search
    ```
-3. **Lavora con commit piccoli** e fai push del branch.
+3. **Lavora con commit piccoli** e fai push del branch. Ogni messaggio di commit include il
+   numero della issue in fondo, preceduto dal cancelletto (vedi sezione 3).
 4. **Apri una pull request verso `main`** e collega la issue scrivendo `Closes #42` nella descrizione.
 5. **Chiedi la review** a un altro membro del team.
 6. **Dopo l'approvazione**, l'autore fa il merge con **Squash and merge**.
@@ -50,11 +51,15 @@ Con lo squash, **il titolo della PR diventa il messaggio del commit su `main`**:
 Usiamo il formato [Conventional Commits](https://www.conventionalcommits.org/it/):
 
 ```
-feat: search free rooms by time slot
-fix: prevent double booking of the same room
-docs: add Definition of Done
-test: synthetic data for overlapping bookings
+feat: search free rooms by time slot #35
+fix: prevent double booking of the same room #57
+docs: add Definition of Done #138
+test: synthetic data for overlapping bookings #128
 ```
+
+Il **numero della issue va sempre in fondo al titolo, preceduto dal cancelletto** (esempi sopra).
+Il riferimento `Closes #N` nella descrizione della PR fa sì che il merge chiuda
+automaticamente la issue.
 
 ## 4. Pull request
 
@@ -80,12 +85,15 @@ test: synthetic data for overlapping bookings
 
 - Si usa **solo Squash and merge** (le altre modalità sono disattivate).
 - Il merge lo fa l'autore, dopo l'approvazione.
-- Il branch remoto viene cancellato automaticamente; cancella anche quello locale:
+- Il branch remoto viene cancellato automaticamente. Pulisci anche la copia locale:
   ```bash
   git switch main
   git pull
-  git branch -d feature/42-room-search
+  git fetch --prune
+  git branch -D feature/42-room-search
   ```
+  `git branch -d` non basta: con lo squash il commit locale non risulta "merged" e Git si rifiuta
+  di cancellarlo. Serve `-D` (o cancella il branch dalla UI di GitHub).
 - Se GitHub segnala conflitti, aggiorna il branch con `main` prima del merge.
 
 ## 7. Definition of Done
