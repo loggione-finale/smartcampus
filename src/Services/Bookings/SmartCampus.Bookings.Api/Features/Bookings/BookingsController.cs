@@ -1,14 +1,36 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartCampus.Bookings.Api.Domain;
+using SmartCampus.Bookings.Api.Features.Bookings.MyBookings;
 
 namespace SmartCampus.Bookings.Api.Features.Bookings;
 
 [ApiController]
 [Authorize]
 [Route("bookings")]
-public class BookingsController(BookingService bookingService, CancelBookingService cancelBookingService) : ControllerBase
+public class BookingsController(
+    BookingService bookingService,
+    CancelBookingService cancelBookingService,
+    MyBookingsService myBookingsService) : ControllerBase
 {
+    [HttpGet("mine")]
+    [ProducesResponseType<List<MyBookingResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Mine(CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var email = User.FindFirstValue(ClaimTypes.Email);
+
+        var bookings = await myBookingsService.GetMineAsync(userId, email, cancellationToken);
+
+        return Ok(bookings);
+    }
+
     [HttpPost]
     [ProducesResponseType<BookingResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Create(CreateBookingRequest request, CancellationToken cancellationToken)
