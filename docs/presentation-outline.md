@@ -4,6 +4,8 @@
 > scrive e le verifica chi è responsabile di quell'area: si presenta solo ciò che è stato provato davvero.
 > Le slide chiedono che ogni componente sappia spiegare il proprio contributo: ognuno rilegge e fa proprio il suo pezzo.
 
+Le slide corrispondenti sono in [presentation-slides.pptx](presentation-slides.pptx), con le note per chi parla in ogni slide.
+
 ## Scaletta
 
 | # | Minuti | Tema | Cosa si dice | Chi |
