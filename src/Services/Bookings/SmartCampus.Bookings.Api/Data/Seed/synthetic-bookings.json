@@ -1,0 +1,108 @@
+{
+  "users": [
+    { "key": "admin", "id": "b7e1c2d3-0000-4000-8000-000000000001", "displayName": "Admin Campus", "email": "admin@smartcampus.test" },
+    { "key": "giulia", "id": "b7e1c2d3-0000-4000-8000-000000000002", "displayName": "Giulia Rossi", "email": "giulia.rossi@smartcampus.test" },
+    { "key": "marco", "id": "b7e1c2d3-0000-4000-8000-000000000003", "displayName": "Marco Bianchi", "email": "marco.bianchi@smartcampus.test" },
+    { "key": "sara", "id": "b7e1c2d3-0000-4000-8000-000000000004", "displayName": "Sara Conti", "email": "sara.conti@smartcampus.test" },
+    { "key": "luca", "id": "b7e1c2d3-0000-4000-8000-000000000005", "displayName": "Luca Ferrari", "email": "luca.ferrari@smartcampus.test" },
+    { "key": "elena", "id": "b7e1c2d3-0000-4000-8000-000000000006", "displayName": "Elena Greco", "email": "elena.greco@smartcampus.test" }
+  ],
+  "spaces": [
+    { "key": "aula101", "id": "3f2a9c1e-0000-4000-8000-000000000001", "name": "Aula 101", "type": "Classroom", "building": "Edificio A", "accessMode": "Dedicated", "capacity": 30 },
+    { "key": "lab2", "id": "3f2a9c1e-0000-4000-8000-000000000002", "name": "Laboratorio Informatica 2", "type": "Lab", "building": "Edificio B", "accessMode": "Dedicated", "capacity": 24 },
+    { "key": "studio", "id": "3f2a9c1e-0000-4000-8000-000000000003", "name": "Sala Studio Piano Terra", "type": "StudyRoom", "building": "Edificio A", "accessMode": "Mixed", "capacity": 12 },
+    { "key": "aula204", "id": "3f2a9c1e-0000-4000-8000-000000000004", "name": "Aula 204", "type": "Classroom", "building": "Edificio A", "accessMode": "Mixed", "capacity": 6 }
+  ],
+  "bookings": [
+    {
+      "referenceCode": "SC-SEED-0001", "space": "aula101", "organizer": "giulia",
+      "daysFromToday": 3, "startTime": "09:00", "durationMinutes": 120,
+      "status": "Confirmed", "seatsRequested": 1, "isGroup": false
+    },
+    {
+      "referenceCode": "SC-SEED-0002", "space": "aula101", "organizer": "marco",
+      "daysFromToday": 3, "startTime": "11:00", "durationMinutes": 120,
+      "status": "Confirmed", "seatsRequested": 1, "isGroup": false
+    },
+    {
+      "referenceCode": "SC-SEED-0003", "space": "aula101", "organizer": "sara",
+      "daysFromToday": 4, "startTime": "09:00", "durationMinutes": 60,
+      "status": "Cancelled", "seatsRequested": 1, "isGroup": false,
+      "cancellationReason": "Lezione spostata"
+    },
+    {
+      "referenceCode": "SC-SEED-0004", "space": "aula101", "organizer": "luca",
+      "daysFromToday": 4, "startTime": "09:00", "durationMinutes": 60,
+      "status": "Confirmed", "seatsRequested": 1, "isGroup": false
+    },
+    {
+      "referenceCode": "SC-SEED-0005", "space": "lab2", "organizer": "giulia",
+      "daysFromToday": 5, "startTime": "14:00", "durationMinutes": 120,
+      "status": "Confirmed", "seatsRequested": 4, "isGroup": true,
+      "invitations": [
+        { "user": "marco", "status": "Accepted", "role": "Participant" },
+        { "user": "sara", "status": "Invited", "role": "Participant" },
+        { "email": "ospite.esterno@smartcampus.test", "status": "Invited", "role": "Participant" },
+        { "user": "elena", "status": "Left", "role": "Participant" },
+        { "email": "ex.invitato@smartcampus.test", "status": "Expired", "role": "Participant" }
+      ],
+      "equipmentRequests": [
+        { "equipmentType": "Videoproiettore", "notes": "Serve anche un adattatore HDMI", "status": "Pending" }
+      ],
+      "alerts": [
+        { "kind": "EquipmentRequest", "message": "Richiesta di strumenti per SC-SEED-0005: Videoproiettore", "status": "Open" }
+      ]
+    },
+    {
+      "referenceCode": "SC-SEED-0006", "space": "studio", "organizer": "marco",
+      "daysFromToday": 2, "startTime": "10:00", "durationMinutes": 180,
+      "status": "Confirmed", "seatsRequested": 1, "isGroup": false
+    },
+    {
+      "referenceCode": "SC-SEED-0007", "space": "studio", "organizer": "sara",
+      "daysFromToday": 2, "startTime": "10:00", "durationMinutes": 180,
+      "status": "Confirmed", "seatsRequested": 1, "isGroup": false
+    },
+    {
+      "referenceCode": "SC-SEED-0008", "space": "studio", "organizer": "luca",
+      "daysFromToday": 2, "startTime": "11:00", "durationMinutes": 120,
+      "status": "Confirmed", "seatsRequested": 1, "isGroup": false
+    },
+    {
+      "referenceCode": "SC-SEED-0009", "space": "aula101", "organizer": "marco",
+      "daysFromToday": -7, "startTime": "10:00", "durationMinutes": 120,
+      "status": "Closed", "seatsRequested": 1, "isGroup": false,
+      "closingComment": { "spaceUsed": true, "attendeesCount": 18, "issuesReported": false, "comment": "Lezione svolta regolarmente, aula in ordine." }
+    },
+    {
+      "referenceCode": "SC-SEED-0010", "space": "lab2", "organizer": "sara",
+      "daysFromToday": -3, "startTime": "15:00", "durationMinutes": 60,
+      "status": "Closed", "seatsRequested": 1, "isGroup": false,
+      "closingComment": { "spaceUsed": true, "attendeesCount": 9, "issuesReported": true, "comment": "Due postazioni non si accendevano, segnalato il guasto." },
+      "alerts": [
+        { "kind": "ReportedIssue", "message": "Problema segnalato nel commento di SC-SEED-0010", "status": "Open" }
+      ]
+    },
+    {
+      "referenceCode": "SC-SEED-0011", "space": "aula101", "organizer": "elena",
+      "daysFromToday": -1, "startTime": "09:00", "durationMinutes": 60,
+      "status": "Confirmed", "seatsRequested": 1, "isGroup": false
+    },
+    {
+      "referenceCode": "SC-SEED-0012", "space": "aula204", "organizer": "luca",
+      "daysFromToday": 6, "startTime": "16:00", "durationMinutes": 120,
+      "status": "Confirmed", "seatsRequested": 5, "isGroup": true,
+      "invitations": [
+        { "user": "marco", "status": "Accepted", "role": "Participant" },
+        { "user": "sara", "status": "Accepted", "role": "Participant" },
+        { "user": "elena", "status": "Invited", "role": "Participant" },
+        { "email": "nuovo.studente@smartcampus.test", "status": "Invited", "role": "Participant" }
+      ]
+    },
+    {
+      "referenceCode": "SC-SEED-0013", "space": "aula204", "organizer": "giulia",
+      "daysFromToday": 6, "startTime": "16:00", "durationMinutes": 120,
+      "status": "Confirmed", "seatsRequested": 1, "isGroup": false
+    }
+  ]
+}
