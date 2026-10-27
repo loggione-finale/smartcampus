@@ -11,16 +11,17 @@ public class MyInvitationsService(BookingsDbContext dbContext, TimeProvider time
     {
         var invitations = await dbContext.Invitations
             .AsNoTracking()
-            .Where(i => i.UserId == userId
-                || (i.UserId == null && email != null && i.Email == email))
+            .Where(i => (i.UserId == userId
+                    || (i.UserId == null && email != null
+                        && email.ToLower() == i.Email!.ToLower()))
+                && i.Role == ParticipantRole.Participant)
             .OrderBy(i => i.Period.LowerBound)
             .ToListAsync(cancellationToken);
 
         // Pending invitations stay visible after the deadline so the user can
-        // see they were excluded; anything already responded disappears.
+        // see they were excluded; declined, cancelled and left ones disappear.
         return invitations
-            .Where(i => i.Status is InvitationStatus.Invited or InvitationStatus.Accepted
-                || i.RespondedAt is not null)
+            .Where(i => i.Status is InvitationStatus.Invited or InvitationStatus.Accepted)
             .Select(InvitationResponse.From)
             .ToList();
     }
