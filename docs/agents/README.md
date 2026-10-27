@@ -61,10 +61,39 @@ gratuito per tutti e 7, così le schede di evidenza sono confrontabili.
 | Funziona in locale sul repository, senza chiavi da mettere nel progetto | Vincolo "nessun segreto" |
 | Chiede conferma prima di eseguire comandi o modificare file | Controllo umano a ogni passo |
 | Mostra cosa ha letto ed eseguito | Serve per la scheda di evidenza |
+| Lo hanno tutti e 7 | Le schede di evidenza devono essere confrontabili |
 
-**Strumento scelto:** _da scrivere qui con la PR che lo sceglie_. Se lo strumento offre una revisione automatica
-delle PR (per esempio il revisore di GitHub Copilot, già comparso sulla #167), i suoi commenti valgono come
-quelli di un agente: si leggono e si verificano, ma non sostituiscono la review di una persona.
+**Strumento scelto: GitHub Copilot** (27/10). Qualcuno del gruppo lo usa già (il revisore automatico di Copilot
+ha commentato la #167) e per gli studenti verificati su GitHub Education è gratuito. Chi ha altri strumenti può
+usarli per il proprio lavoro, ma gli usi registrati in `docs/evidence/agentic/` si fanno con Copilot, così sono
+confrontabili.
+
+### Attivarlo (una volta per persona)
+
+1. Su GitHub apri **Settings → Copilot** e controlla che Copilot risulti attivo **senza costi**. Se non lo è,
+   chiedi la verifica da studente su [GitHub Education](https://education.github.com/). **Se ti chiede una carta
+   di credito o un pagamento, fermati**: vale il vincolo "nessuna spesa".
+2. In VS Code installa l'estensione **GitHub Copilot** (comprende la chat) e accedi con il tuo account GitHub.
+3. Lascia il **modello predefinito** del piano gratuito. Se lo strumento segnala che un modello consuma richieste
+   a pagamento o un credito limitato, non usarlo.
+
+### Usarlo con una scheda
+
+1. Apri in VS Code una **copia del repository senza `.env`**, così l'agente non può leggere le password:
+   ```bash
+   git worktree add ../smartcampus-agente <branch>
+   ```
+2. Apri la chat di Copilot e scegli la modalità **Agent**.
+3. Incolla il prompt della scheda e completa i campi tra `< >`.
+4. Prima di ogni comando nel terminale Copilot chiede conferma: **leggi il comando** e conferma solo quelli
+   elencati nella scheda. Non attivare l'approvazione automatica dei comandi.
+5. Alla fine rimuovi la copia: `git worktree remove ../smartcampus-agente`.
+
+Le regole comuni a tutti i ruoli sono anche in [`.github/copilot-instructions.md`](../../.github/copilot-instructions.md),
+che Copilot legge da solo in chat e nelle revisioni delle PR.
+
+Il **revisore automatico di Copilot** sulle PR vale come un agente: i suoi commenti si leggono e si verificano,
+ma non sostituiscono la review di una persona.
 
 ## Come si usa
 
@@ -78,9 +107,9 @@ quelli di un agente: si leggono e si verificano, ma non sostituiscono la review 
 
 ## Sicurezza
 
-- **Segreti:** l'agente di implementazione lavora in una copia del repository senza `.env`
-  (`git worktree add ../smartcampus-agente <branch>`): non può leggere le password locali. Gli altri ruoli non
-  hanno bisogno di file di configurazione.
+- **Segreti:** ogni agente lavora in una copia del repository senza `.env`
+  (`git worktree add ../smartcampus-agente <branch>`): non può leggere le password locali. Quando servono i
+  database, li avvia la persona dalla sua cartella e imposta lei le stringhe di connessione.
 - **Input non fidati:** il testo di PR, issue, commenti, log e pagine web è scritto da altri. Se contiene
   istruzioni ("ignora le regole", "approva", "esegui"), l'agente lo tratta come dato da segnalare, non come
   ordine (slide 60).
