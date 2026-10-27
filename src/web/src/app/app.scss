@@ -16,6 +16,10 @@
   font-family: inherit !important;
 }
 
+.app-sidenav * {
+  font-family: inherit !important;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -155,12 +159,12 @@
 }
 
 main {
-  display: block !important;
-  min-height: 0 !important;
-  position: static !important;
+  display: block;
+  min-height: 0;
+  position: static;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 56px 44px 72px !important;
+  padding: 56px 44px 72px;
 }
 
 .hero {
@@ -374,7 +378,7 @@ h2 {
   }
 
   main {
-    padding-inline: 28px !important;
+    padding-inline: 28px;
   }
 
   .hero {
@@ -397,6 +401,6 @@ h2 {
   }
 
   main {
-    padding: 36px 20px 56px !important;
+    padding: 36px 20px 56px;
   }
 }
