@@ -40,7 +40,7 @@ frontend Angular + Angular Material.
 | `docs/decisions/` | Decisioni architetturali e tecniche motivate (ADR) |
 | `docs/evidence/` | Prove eseguite, esiti osservati e limiti noti |
 | `docs/definition-of-done.md` | Definition of Done del gruppo |
-| `.github/` | Template di issue e pull request, CODEOWNERS |
+| `.github/` | Template di issue e pull request, CODEOWNERS, workflow CI |
 
 Il backlog vive nelle **Issue** e nel progetto **Loggione Roadmap** dell'organizzazione.
 
