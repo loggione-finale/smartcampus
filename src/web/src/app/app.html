@@ -47,13 +47,76 @@
         </p>
       </div>
 
-      <a class="hero-cta" href="#spazi">
+      <a class="hero-cta" href="#prenota">
         Trova uno spazio
         <svg viewBox="0 0 34 30" aria-hidden="true">
           <path d="M2 2l13 13L2 28M17 2l13 13-13 13" />
         </svg>
       </a>
     </div>
+  </section>
+
+  <section class="booking" id="prenota" aria-labelledby="booking-title">
+    <div class="booking-intro" data-reveal>
+      <p class="eyebrow">Una fascia, un posto per te</p>
+      <h2 id="booking-title">Prenota senza sorprese.</h2>
+      <p>Scegli lo spazio e la fascia oraria. Il sistema controlla sovrapposizioni, disponibilità e commenti finali prima di confermare.</p>
+      <p class="booking-note">Gli orari sono interpretati nel fuso del dispositivo e inviati al servizio in UTC.</p>
+    </div>
+
+    <form class="booking-form" [formGroup]="bookingForm" (ngSubmit)="submitBooking()" novalidate data-reveal>
+      <mat-form-field appearance="outline">
+        <mat-label>Spazio</mat-label>
+        <mat-select formControlName="spaceId" (selectionChange)="bookingForm.controls.equipment.setValue([])">
+          @for (space of bookingSpaces; track space.id) {
+            <mat-option [value]="space.id">{{ space.name }} · {{ space.detail }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="participant-field">
+        <mat-label>Email dei partecipanti</mat-label>
+        <mat-chip-grid #participantGrid aria-label="Email dei partecipanti">
+          @for (email of participantEmails(); track email) {
+            <mat-chip-row (removed)="removeParticipant(email)">
+              {{ email }}
+              <button matChipRemove type="button" [attr.aria-label]="'Rimuovi ' + email"><mat-icon>cancel</mat-icon></button>
+            </mat-chip-row>
+          }
+          <input placeholder="Aggiungi un indirizzo email" [matChipInputFor]="participantGrid"
+            [matChipInputSeparatorKeyCodes]="participantSeparators" [matChipInputAddOnBlur]="true"
+            (matChipInputTokenEnd)="addParticipant($event)" />
+        </mat-chip-grid>
+        <mat-hint>Aggiungi gli invitati uno alla volta. Il responsabile non va inserito.</mat-hint>
+        @if (participantError()) { <mat-error>{{ participantError() }}</mat-error> }
+      </mat-form-field>
+
+      @if (participantEmails().length > 0) {
+        <mat-form-field appearance="outline" class="equipment-field">
+          <mat-label>Strumenti richiesti</mat-label>
+          <mat-select formControlName="equipment" multiple>
+            @for (equipment of equipmentForSelectedSpace(); track equipment.name) {
+              <mat-option [value]="equipment.name">{{ equipment.name }}{{ equipment.available ? ' · già presente' : ' · da preparare' }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>Disponibile solo per le prenotazioni di gruppo.</mat-hint>
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>Data</mat-label>
+        <input matInput type="date" formControlName="date" [min]="minimumBookingDate" />
+      </mat-form-field>
+      <div class="booking-times">
+        <mat-form-field appearance="outline"><mat-label>Inizio</mat-label><input matInput type="time" step="900" formControlName="start" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Fine</mat-label><input matInput type="time" step="900" formControlName="end" /></mat-form-field>
+      </div>
+      <button mat-flat-button class="booking-submit" type="submit" [disabled]="bookingState() === 'submitting'">
+        {{ bookingState() === 'submitting' ? 'Invio in corso…' : 'Conferma prenotazione' }}
+      </button>
+      @if (bookingState() === 'success') { <p class="booking-feedback success" role="status">{{ bookingMessage() }} <strong>Codice: {{ bookingReference() }}</strong></p> }
+      @if (bookingState() === 'error') { <p class="booking-feedback error" role="alert">{{ bookingMessage() }}</p> }
+    </form>
   </section>
 
   <section class="registration" id="registrazione" aria-labelledby="registration-title">
@@ -188,7 +251,7 @@
               <li>{{ fact }}</li>
             }
           </ul>
-          <a class="text-link" href="#contatti">
+          <a class="text-link" href="#prenota">
             Prenota <span class="arrow-icon" aria-hidden="true">↗</span>
           </a>
         </li>

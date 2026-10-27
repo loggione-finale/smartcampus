@@ -18,6 +18,7 @@ type RegistrationTestApp = {
 
 describe('App', () => {
   let httpTesting: HttpTestingController;
+  let fetchSpy: jasmine.Spy;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -25,7 +26,7 @@ describe('App', () => {
       providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
     httpTesting = TestBed.inject(HttpTestingController);
-    spyOn(window, 'fetch').and.returnValue(Promise.resolve(new Response(null, { status: 200 })));
+    fetchSpy = spyOn(window, 'fetch').and.returnValue(Promise.resolve(new Response(null, { status: 200 })));
   });
 
   afterEach(() => {
@@ -92,5 +93,79 @@ describe('App', () => {
 
     expect(fixture.nativeElement.textContent).toContain('Email is already registered.');
     expect(fixture.nativeElement.textContent).toContain('Esiste già un account');
+  });
+
+  it('does not submit an incomplete booking form', async () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as any;
+    app.bookingForm.controls.date.setValue('');
+
+    await app.submitBooking();
+
+    expect(app.bookingState()).toBe('error');
+    expect(fetchSpy.calls.all().some((call) => call.args[0] === '/api/bookings')).toBeFalse();
+  });
+
+  it('shows the conflict returned by Bookings', async () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as any;
+    fetchSpy.and.returnValue(Promise.resolve(new Response(JSON.stringify({ title: 'Space already booked' }), { status: 409 })));
+
+    await app.submitBooking();
+
+    expect(app.bookingState()).toBe('error');
+    expect(app.bookingMessage()).toContain('già occupata');
+  });
+
+  it('shows the reference code after a successful booking', async () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as any;
+    fetchSpy.and.returnValue(Promise.resolve(new Response(JSON.stringify({ referenceCode: 'SC-261027-ABCD' }), { status: 201 })));
+
+    await app.submitBooking();
+
+    expect(app.bookingState()).toBe('success');
+    expect(app.bookingReference()).toBe('SC-261027-ABCD');
+  });
+
+  it('validates participant emails and exposes equipment only for groups', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as any;
+    fixture.detectChanges();
+
+    const chipInput = { clear: jasmine.createSpy('clear') };
+    app.addParticipant({ value: 'group@example.test', chipInput } as any);
+    fixture.detectChanges();
+
+    expect(app.participantEmails()).toEqual(['group@example.test']);
+    expect(fixture.nativeElement.querySelector('.equipment-field')).not.toBeNull();
+
+    app.addParticipant({ value: 'group@example.test', chipInput } as any);
+    expect(app.participantError()).toContain('già stata aggiunta');
+
+    app.removeParticipant('group@example.test');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.equipment-field')).toBeNull();
+  });
+
+  it('sends participants and requested equipment with a group booking', async () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as any;
+    fetchSpy.and.returnValue(Promise.resolve(new Response(null, { status: 201 })));
+    app.addParticipant({ value: 'group@example.test', chipInput: { clear() {} } } as any);
+    app.bookingForm.controls.equipment.setValue(['Videoproiettore']);
+
+    await app.submitBooking();
+
+    const bookingCall = fetchSpy.calls.all().find((call) => call.args[0] === '/api/bookings');
+    expect(bookingCall).toBeDefined();
+    if (!bookingCall) return;
+    const request = bookingCall.args[1] as RequestInit;
+    expect(JSON.parse(request.body as string)).toEqual(
+      jasmine.objectContaining({
+        participantEmails: ['group@example.test'],
+        equipmentRequests: ['Videoproiettore'],
+      }),
+    );
   });
 });
