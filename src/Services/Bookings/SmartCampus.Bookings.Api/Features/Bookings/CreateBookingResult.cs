@@ -56,4 +56,7 @@ public class CreateBookingResult
 
     public static CreateBookingResult SpacesUnavailable() =>
         new() { Outcome = CreateBookingOutcome.SpacesUnavailable, Detail = "The Spaces service is not reachable. Try again later." };
+
+    public static CreateBookingResult UsersUnavailable() =>
+        new() { Outcome = CreateBookingOutcome.UsersUnavailable, Detail = "The Users service is not reachable. Try again later." };
 }
