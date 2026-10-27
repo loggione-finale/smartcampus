@@ -15,16 +15,25 @@ public record BookingResponse(
     BookingStatus Status,
     DateTime CreatedAt)
 {
-    public static BookingResponse From(Booking booking) => new(
-        booking.Id,
-        booking.ReferenceCode,
-        booking.SpaceId,
-        booking.SpaceNameSnapshot,
-        booking.SpaceTypeSnapshot,
-        booking.SpaceBuildingSnapshot,
-        booking.OrganizerId,
-        booking.Period.LowerBound,
-        booking.Period.UpperBound,
-        booking.Status,
-        booking.CreatedAt);
+    public static BookingResponse From(Booking booking, DateTime? now = null)
+    {
+        var status = booking.Status;
+        if (status == BookingStatus.Confirmed && now.HasValue && booking.Period.UpperBound <= now.Value && booking.ClosingComment == null)
+        {
+            status = BookingStatus.AwaitingComment;
+        }
+
+        return new(
+            booking.Id,
+            booking.ReferenceCode,
+            booking.SpaceId,
+            booking.SpaceNameSnapshot,
+            booking.SpaceTypeSnapshot,
+            booking.SpaceBuildingSnapshot,
+            booking.OrganizerId,
+            booking.Period.LowerBound,
+            booking.Period.UpperBound,
+            status,
+            booking.CreatedAt);
+    }
 }

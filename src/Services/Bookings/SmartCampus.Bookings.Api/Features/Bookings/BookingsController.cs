@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartCampus.Bookings.Api.Domain;
+using SmartCampus.Bookings.Api.Features.Bookings.Closure;
 using SmartCampus.Bookings.Api.Features.Bookings.MyBookings;
 
 namespace SmartCampus.Bookings.Api.Features.Bookings;
@@ -12,7 +13,8 @@ namespace SmartCampus.Bookings.Api.Features.Bookings;
 public class BookingsController(
     BookingService bookingService,
     CancelBookingService cancelBookingService,
-    MyBookingsService myBookingsService) : ControllerBase
+    MyBookingsService myBookingsService,
+    IClosingCommentService closingCommentService) : ControllerBase
 {
     [HttpGet("mine")]
     [ProducesResponseType<List<MyBookingResponse>>(StatusCodes.Status200OK)]
@@ -27,21 +29,26 @@ public class BookingsController(
         var email = User.FindFirstValue(ClaimTypes.Email);
 
         var bookings = await myBookingsService.GetMineAsync(userId, email, cancellationToken);
-
         return Ok(bookings);
     }
 
     [HttpPost]
     [ProducesResponseType<BookingResponse>(StatusCodes.Status201Created)]
-    public async Task<IActionResult> Create(CreateBookingRequest request, CancellationToken cancellationToken)
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> Create(
+        CreateBookingRequest request, CancellationToken cancellationToken)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userIdClaim, out var organizerId))
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var organizerId))
         {
             return Unauthorized();
         }
 
-        var organizerName = User.FindFirstValue(ClaimTypes.Email) ?? userIdClaim;
+        var organizerName = User.FindFirstValue(ClaimTypes.Name)
+            ?? User.FindFirstValue(ClaimTypes.Email)
+            ?? organizerId.ToString();
 
         var result = await bookingService.CreateAsync(organizerId, organizerName, request, cancellationToken);
 
@@ -103,6 +110,48 @@ public class BookingsController(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Booking already ended",
                 detail: "A booking that has ended cannot be cancelled."),
+            _ => throw new InvalidOperationException($"Unhandled outcome {result.Outcome}.")
+        };
+    }
+
+    [HttpPost("{code}/closing-comment")]
+    [ProducesResponseType<ClosingCommentResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> SubmitClosingComment(
+        string code,
+        SubmitClosingCommentRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await closingCommentService.SubmitAsync(code, userId, request, cancellationToken);
+
+        return result.Outcome switch
+        {
+            ClosingCommentOutcome.Success => Ok(ClosingCommentResponse.From(result.Comment!, result.Booking!)),
+            ClosingCommentOutcome.NotFound => Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Booking not found",
+                detail: result.Detail),
+            ClosingCommentOutcome.NotEnded => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Booking has not ended yet",
+                detail: result.Detail),
+            ClosingCommentOutcome.AlreadyCancelled => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Booking already cancelled",
+                detail: result.Detail),
+            ClosingCommentOutcome.AlreadyClosed => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Closing comment already submitted",
+                detail: result.Detail),
+            ClosingCommentOutcome.Invalid => ValidationProblem(
+                new ValidationProblemDetails(result.ValidationErrors!.ToDictionary(e => e.Key, e => e.Value))),
             _ => throw new InvalidOperationException($"Unhandled outcome {result.Outcome}.")
         };
     }

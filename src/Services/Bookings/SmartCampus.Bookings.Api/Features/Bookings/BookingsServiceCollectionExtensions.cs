@@ -1,3 +1,4 @@
+using SmartCampus.Bookings.Api.Features.Admin;
 using SmartCampus.Bookings.Api.Features.Availability;
 using SmartCampus.Bookings.Api.Features.Bookings.Closure;
 using SmartCampus.Bookings.Api.Features.Bookings.MyBookings;
@@ -18,6 +19,9 @@ public static class BookingsServiceCollectionExtensions
         services.AddScoped<AvailabilityService>();
         services.AddScoped<MyBookingsService>();
         services.AddScoped<IPendingClosureChecker, PendingClosureChecker>();
+        services.AddScoped<IAdminAlerts, AdminAlertsService>();
+        services.AddSingleton<ClosingCommentValidator>();
+        services.AddScoped<IClosingCommentService, ClosingCommentService>();
         services.AddHttpClient<ISpacesClient, SpacesClient>(client =>
         {
             client.BaseAddress = new Uri(spacesOptions.BaseUrl.TrimEnd('/') + "/");

@@ -12,7 +12,7 @@ public class PendingClosureChecker(BookingsDbContext dbContext, TimeProvider tim
 
         return await dbContext.Bookings
             .Where(b => b.OrganizerId == userId
-                && b.Status == BookingStatus.Confirmed
+                && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingComment)
                 && b.Period.UpperBound <= now
                 && b.ClosingComment == null)
             .OrderBy(b => b.Period.UpperBound)
