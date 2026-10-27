@@ -21,6 +21,15 @@ richieste locali ai tre servizi:
 
 Per esempio, `/api/spaces/health` viene inoltrato a `http://localhost:5101/health`.
 
+## Registrazione
+
+La pagina di registrazione è disponibile nella sezione `#registrazione` e invia i dati a
+`POST /api/users/auth/register`. Le regole client rispecchiano quelle del servizio Users; gli errori
+di validazione (`400`) e i duplicati (`409`) vengono mostrati sul campo interessato.
+
+Per simulare un accesso da invito usa `http://localhost:4200/?invite=demo#registrazione`: dopo una
+registrazione riuscita viene mostrata la conferma dell’invito.
+
 ## Generazione del codice
 
 Per generare un nuovo componente:
