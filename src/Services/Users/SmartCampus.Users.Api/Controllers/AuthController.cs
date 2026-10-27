@@ -77,7 +77,8 @@ public class AuthController(UsersDbContext dbContext, IPasswordHasher<UserProfil
         dbContext.UserProfiles.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        logger.LogInformation("User {UserId} with matricola {Matricola} successfully registered", user.Id, user.Matricola);
+        var logSafeMatricola = user.Matricola.Replace("\r", string.Empty).Replace("\n", string.Empty);
+        logger.LogInformation("User {UserId} with matricola {Matricola} successfully registered", user.Id, logSafeMatricola);
 
         var response = UserResponse.FromEntity(user);
         return CreatedAtAction(nameof(UsersController.GetById), "Users", new { id = user.Id }, response);
