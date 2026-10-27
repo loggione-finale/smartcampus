@@ -84,8 +84,7 @@ public class SpacesController(ISpacesService spacesService, ILogger<SpacesContro
         }
         catch (Exception ex) when (ex is MongoException or TimeoutException)
         {
-            var safeId = id.Replace("\r", string.Empty).Replace("\n", string.Empty);
-            logger.LogWarning(ex, "Could not verify bookability for space '{SpaceId}': MongoDB is unreachable.", safeId);
+            logger.LogWarning(ex, "Could not verify space bookability: MongoDB is unreachable.");
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
             {
                 Title = "Service Unavailable",

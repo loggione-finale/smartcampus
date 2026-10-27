@@ -34,6 +34,7 @@ public class Space
     public bool IsActive { get; set; } = true;
 
     [BsonElement("features")]
+    [BsonSerializer(typeof(SpaceFeaturesBsonSerializer))]
     public Dictionary<string, object> Features { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     [BsonElement("equipment")]

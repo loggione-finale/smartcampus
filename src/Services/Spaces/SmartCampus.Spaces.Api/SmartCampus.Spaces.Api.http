@@ -3,6 +3,18 @@
 ### Health check
 GET {{SmartCampus.Spaces.Api_HostAddress}}/health
 
+### Ricerca catalogo spazi (tutti gli spazi attivi)
+GET {{SmartCampus.Spaces.Api_HostAddress}}/spaces
+Accept: application/json
+
+### Ricerca catalogo con filtri combinati (tipo, modalità, capienza minima, strumenti, software)
+GET {{SmartCampus.Spaces.Api_HostAddress}}/spaces?type=Lab&mode=Dedicated&minCapacity=20&equipment=videoprojector&software=Docker
+Accept: application/json
+
+### Dettaglio singolo spazio per ID
+GET {{SmartCampus.Spaces.Api_HostAddress}}/spaces/3f2a9c1e-0000-4000-8000-000000000002
+Accept: application/json
+
 ### Verifica prenotabilità spazio (Aula 101 - disponibile)
 GET {{SmartCampus.Spaces.Api_HostAddress}}/spaces/3f2a9c1e-0000-4000-8000-000000000001/bookable?from=2026-10-28T09:00:00Z&to=2026-10-28T11:00:00Z
 Accept: application/json
