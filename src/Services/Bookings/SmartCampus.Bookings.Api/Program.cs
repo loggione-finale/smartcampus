@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using SmartCampus.Auth;
 using SmartCampus.Bookings.Api.Data;
+using SmartCampus.Bookings.Api.Data.Seed;
 using SmartCampus.Bookings.Api.Features.Bookings;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,7 @@ builder.Services.AddDbContext<BookingsDbContext>(options =>
 
 builder.Services.AddSmartCampusAuth(builder.Configuration);
 builder.Services.AddBookings(builder.Configuration);
+builder.Services.AddScoped<BookingsSeeder>();
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<BookingsDbContext>("postgres", failureStatus: HealthStatus.Unhealthy);
@@ -32,6 +34,11 @@ using (var scope = app.Services.CreateScope())
     if (dbContext.Database.IsRelational())
     {
         dbContext.Database.Migrate();
+
+        if (app.Environment.IsDevelopment())
+        {
+            await scope.ServiceProvider.GetRequiredService<BookingsSeeder>().SeedIfEmptyAsync();
+        }
     }
 }
 
