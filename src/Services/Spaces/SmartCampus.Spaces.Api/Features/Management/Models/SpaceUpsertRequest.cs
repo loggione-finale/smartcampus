@@ -2,6 +2,7 @@ using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using SmartCampus.Spaces.Api.Domain;
+using SmartCampus.Spaces.Api.Features.Equipment.Models;
 
 namespace SmartCampus.Spaces.Api.Features.Management.Models;
 
@@ -126,46 +127,12 @@ public abstract class SpaceUpsertRequestBase
     private static bool TryNormalizeEquipment(
         List<string>? rawEquipment,
         out List<string> normalized,
-        out string? errorDetail)
-    {
-        normalized = [];
-        errorDetail = null;
-
-        if (rawEquipment is null || rawEquipment.Count == 0)
-        {
-            return true;
-        }
-
-        if (rawEquipment.Count > MaxEquipmentCount)
-        {
-            errorDetail = $"Cannot specify more than {MaxEquipmentCount} equipment items.";
-            return false;
-        }
-
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var raw in rawEquipment)
-        {
-            if (string.IsNullOrWhiteSpace(raw))
-            {
-                errorDetail = "Equipment items cannot be empty or whitespace.";
-                return false;
-            }
-
-            var trimmed = raw.Trim();
-            if (trimmed.Length > MaxEquipmentLength)
-            {
-                errorDetail = $"Each equipment item cannot exceed {MaxEquipmentLength} characters.";
-                return false;
-            }
-
-            if (seen.Add(trimmed))
-            {
-                normalized.Add(trimmed);
-            }
-        }
-
-        return true;
-    }
+        out string? errorDetail) =>
+        EquipmentCatalog.TryNormalizeEquipmentList(
+            rawEquipment,
+            allowNullAsEmpty: true,
+            out normalized,
+            out errorDetail);
 
     private static bool TryNormalizeFeatures(
         Dictionary<string, object?>? rawFeatures,
