@@ -8,6 +8,7 @@ public class CreateBookingResult
     public Booking? Booking { get; private init; }
     public string? Detail { get; private init; }
     public string? PendingReferenceCode { get; private init; }
+    public int? FreeSeats { get; private init; }
     public IReadOnlyDictionary<string, string[]>? ValidationErrors { get; private init; }
 
     public static CreateBookingResult Created(Booking booking) =>
@@ -35,6 +36,16 @@ public class CreateBookingResult
 
     public static CreateBookingResult PersonConflict() =>
         new() { Outcome = CreateBookingOutcome.PersonConflict, Detail = "You already have a booking in that time slot." };
+
+    public static CreateBookingResult NoSeatsLeft(int freeSeats) =>
+        new()
+        {
+            Outcome = CreateBookingOutcome.NoSeatsLeft,
+            FreeSeats = freeSeats,
+            Detail = freeSeats == 0
+                ? "No seats are left in that time slot."
+                : $"Only {freeSeats} seats are left in that time slot."
+        };
 
     public static CreateBookingResult SpacesUnavailable() =>
         new() { Outcome = CreateBookingOutcome.SpacesUnavailable, Detail = "The Spaces service is not reachable. Try again later." };
