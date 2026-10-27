@@ -1,5 +1,6 @@
 using SmartCampus.Bookings.Api.Features.Availability;
 using SmartCampus.Bookings.Api.Features.Bookings.Closure;
+using SmartCampus.Bookings.Api.Features.Bookings.MyBookings;
 using SmartCampus.Bookings.Api.Features.Bookings.Spaces;
 
 namespace SmartCampus.Bookings.Api.Features.Bookings;
@@ -15,6 +16,7 @@ public static class BookingsServiceCollectionExtensions
         services.AddScoped<BookingService>();
         services.AddScoped<CancelBookingService>();
         services.AddScoped<AvailabilityService>();
+        services.AddScoped<MyBookingsService>();
         services.AddScoped<IPendingClosureChecker, PendingClosureChecker>();
         services.AddHttpClient<ISpacesClient, SpacesClient>(client =>
         {
