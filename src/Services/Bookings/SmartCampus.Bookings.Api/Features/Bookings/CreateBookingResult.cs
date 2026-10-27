@@ -37,6 +37,13 @@ public class CreateBookingResult
     public static CreateBookingResult PersonConflict() =>
         new() { Outcome = CreateBookingOutcome.PersonConflict, Detail = "You already have a booking in that time slot." };
 
+    public static CreateBookingResult TimeBandAlreadyUsed() =>
+        new()
+        {
+            Outcome = CreateBookingOutcome.TimeBandAlreadyUsed,
+            Detail = "You already have a booking in that time band on that day."
+        };
+
     public static CreateBookingResult NoSeatsLeft(int freeSeats) =>
         new()
         {

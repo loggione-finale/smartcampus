@@ -15,6 +15,8 @@ public class Booking
     public Guid OrganizerId { get; set; }
     public string OrganizerNameSnapshot { get; set; } = null!;
     public NpgsqlRange<DateTime> Period { get; set; }
+    public DateOnly BookingDate { get; set; }
+    public TimeBand TimeBand { get; set; }
     public int SeatsRequested { get; set; }
     public bool IsGroup { get; set; }
     public BookingStatus Status { get; set; }

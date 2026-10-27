@@ -1,8 +1,12 @@
+using SmartCampus.Bookings.Api.Domain;
+
 namespace SmartCampus.Bookings.Api.Features.Bookings;
 
 public class BookingRequestValidator(TimeProvider timeProvider)
 {
     public static readonly TimeSpan SlotLength = TimeSpan.FromMinutes(15);
+    public static readonly TimeSpan MinimumDuration = TimeSpan.FromMinutes(30);
+    public static readonly TimeSpan MaximumDuration = TimeSpan.FromHours(4);
 
     public IReadOnlyDictionary<string, string[]> Validate(CreateBookingRequest request)
     {
@@ -29,6 +33,24 @@ public class BookingRequestValidator(TimeProvider timeProvider)
         if (request.Start <= timeProvider.GetUtcNow())
         {
             errors[nameof(request.Start)] = ["The start must be in the future."];
+        }
+
+        if (errors.ContainsKey(nameof(request.End)))
+        {
+            return errors;
+        }
+
+        var duration = request.End - request.Start;
+        if (duration < MinimumDuration || duration > MaximumDuration)
+        {
+            errors[nameof(request.End)] = ["The duration must be between 30 minutes and 4 hours."];
+        }
+        else if (!BookingTimeBands.TryResolve(request.Start.UtcDateTime, request.End.UtcDateTime, out _, out _))
+        {
+            errors[nameof(request.Start)] =
+            [
+                "A booking must fit in a single time band (Europe/Rome): morning 08:00-14:00, afternoon 14:00-19:00, evening 19:00-23:00."
+            ];
         }
 
         return errors;

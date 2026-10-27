@@ -27,6 +27,8 @@ public static class BookingTestData
             OrganizerId = organizerId ?? Guid.NewGuid(),
             OrganizerNameSnapshot = "organizer@smartcampus.test",
             Period = period,
+            BookingDate = DateOnly.FromDateTime(start),
+            TimeBand = TimeBand.Morning,
             SeatsRequested = 1,
             Status = status,
             CreatedAt = DateTime.UtcNow,

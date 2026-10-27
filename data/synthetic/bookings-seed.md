@@ -4,8 +4,10 @@ Il file `src/Services/Bookings/SmartCampus.Bookings.Api/Data/Seed/synthetic-book
 prenotazioni inventati. All'avvio in ambiente `Development` il servizio Bookings li carica se la tabella
 `bookings` è vuota; un secondo avvio non duplica nulla. Tutto avviene in una sola transazione.
 
-Le date sono relative a oggi (`daysFromToday`, orari in UTC): i casi restano sempre gli stessi, ma "passato" e
+Le date sono relative a oggi (`daysFromToday`, orari in ora di Roma): i casi restano sempre gli stessi, ma "passato" e
 "futuro" restano veri nel tempo.
+
+Ogni prenotazione sta dentro una sola fascia (mattina 08:00-14:00, pomeriggio 14:00-19:00, sera 19:00-23:00), dura da 30 minuti a 4 ore e ogni responsabile ne ha al massimo una per fascia e per giorno: il seed rispetta le stesse regole dell'API.
 
 ## Identificativi condivisi
 
