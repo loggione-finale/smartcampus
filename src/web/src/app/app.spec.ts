@@ -1,7 +1,20 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { FormControl, FormGroup } from '@angular/forms';
 import { App } from './app';
+
+type RegistrationTestApp = {
+  registrationForm: FormGroup<{
+    matricola: FormControl<string>;
+    firstName: FormControl<string>;
+    lastName: FormControl<string>;
+    email: FormControl<string>;
+    phoneNumber: FormControl<string>;
+    password: FormControl<string>;
+  }>;
+  submitRegistration(): void;
+};
 
 describe('App', () => {
   let httpTesting: HttpTestingController;
@@ -36,10 +49,10 @@ describe('App', () => {
 
   it('keeps the registration form invalid until all server rules are met', () => {
     const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance as any;
+    const app = fixture.componentInstance as unknown as RegistrationTestApp;
     fixture.detectChanges();
 
-    (app as any).registrationForm.patchValue({
+    app.registrationForm.patchValue({
       matricola: '123',
       firstName: 'A',
       lastName: '',
@@ -47,20 +60,20 @@ describe('App', () => {
       phoneNumber: '3331234567',
       password: 'short',
     });
-    (app as any).submitRegistration();
+    app.submitRegistration();
     fixture.detectChanges();
 
-    expect((app as any).registrationForm.invalid).toBeTrue();
+    expect(app.registrationForm.invalid).toBeTrue();
     expect(fixture.nativeElement.querySelectorAll('mat-error').length).toBeGreaterThan(0);
   });
 
   it('shows a duplicate email response on the email field', () => {
     const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance as any;
+    const app = fixture.componentInstance as unknown as RegistrationTestApp;
     fixture.detectChanges();
 
     app.registrationForm.setValue({
-      matricola: '123456',
+      matricola: '1234567890',
       firstName: 'Mario',
       lastName: 'Rossi',
       email: 'mario@example.test',

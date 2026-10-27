@@ -10,12 +10,12 @@
   </nav>
 
   <button mat-icon-button class="menu-btn" [matMenuTriggerFor]="menu" aria-label="Apri il menu">
-    <span class="menu-symbol" aria-hidden="true">☰</span>
+    <mat-icon>menu</mat-icon>
   </button>
   <mat-menu #menu="matMenu" class="sc-menu" xPosition="before">
     @for (link of navLinks; track link.href) {
       <a mat-menu-item [href]="link.href">
-        <span class="nav-symbol" aria-hidden="true">{{ link.symbol }}</span>
+        <mat-icon>{{ link.icon }}</mat-icon>
         <span>{{ link.label }}</span>
       </a>
     }
@@ -66,8 +66,8 @@
         <span class="confirmation-icon" aria-hidden="true">✓</span>
         @if (result === 'invite') {
           <p class="eyebrow">INVITO RICEVUTO</p>
-          <h2 id="registration-title">Account creato. Ora puoi confermare l’invito.</h2>
-          <p>La registrazione è completa: il prossimo passo è confermare lo spazio condiviso con te.</p>
+          <h2 id="registration-title">Account creato. Invito pronto per il prossimo passaggio.</h2>
+          <p>Il token dell’invito è stato inviato insieme ai dati di registrazione.</p>
           <a mat-flat-button class="btn" href="#spazi">Vai agli spazi</a>
         } @else {
           <p class="eyebrow">REGISTRAZIONE COMPLETATA</p>
@@ -98,7 +98,7 @@
           <mat-form-field appearance="outline">
             <mat-label>Matricola</mat-label>
             <input matInput formControlName="matricola" inputmode="numeric" autocomplete="username" />
-            <mat-hint>Da 6 a 10 cifre</mat-hint>
+            <mat-hint>Esattamente 10 cifre</mat-hint>
             @if (fieldError('matricola'); as error) { <mat-error>{{ error }}</mat-error> }
           </mat-form-field>
 
@@ -219,7 +219,7 @@
     <ul class="service-list">
       @for (service of services(); track service.name) {
         <li class="service" data-reveal>
-          <span class="service-icon" aria-hidden="true">{{ service.symbol }}</span>
+          <mat-icon class="service-icon" aria-hidden="true">{{ service.icon }}</mat-icon>
           <h3>{{ service.name }}</h3>
           <p>{{ service.summary }}</p>
           <ul>

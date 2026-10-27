@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -14,7 +15,7 @@ type Service = {
   summary: string;
   features: string[];
   healthUrl: string;
-  symbol: string;
+  icon: string;
   health: Health;
 };
 
@@ -35,13 +36,17 @@ type RegisterRequest = {
   email: string;
   phoneNumber: string;
   password: string;
+  inviteToken?: string;
 };
+
+type RegistrationField = Exclude<keyof RegisterRequest, 'inviteToken'>;
 
 @Component({
   selector: 'app-root',
   imports: [
     MatButtonModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     MatMenuModule,
     ReactiveFormsModule,
@@ -56,11 +61,11 @@ export class App {
   private readonly http = inject(HttpClient);
 
   protected readonly navLinks = [
-    { label: 'Come funziona', href: '#come-funziona', symbol: '↓' },
-    { label: 'Spazi', href: '#spazi', symbol: '□' },
-    { label: 'Servizi', href: '#servizi', symbol: '◇' },
-    { label: 'Registrati', href: '#registrazione', symbol: '+' },
-    { label: 'Contatti', href: '#contatti', symbol: '@' },
+    { label: 'Come funziona', href: '#come-funziona', icon: 'route' },
+    { label: 'Spazi', href: '#spazi', icon: 'meeting_room' },
+    { label: 'Servizi', href: '#servizi', icon: 'hub' },
+    { label: 'Registrati', href: '#registrazione', icon: 'person_add' },
+    { label: 'Contatti', href: '#contatti', icon: 'mail' },
   ];
 
   protected readonly heroWords = ['Cerca.', 'Prenota.', 'Studia.'];
@@ -109,7 +114,7 @@ export class App {
       summary: 'Il catalogo del campus.',
       features: ['Aule e laboratori', 'Sale studio', 'Posti e attrezzature'],
       healthUrl: '/api/spaces/health',
-      symbol: '□',
+      icon: 'meeting_room',
       health: 'checking',
     },
     {
@@ -117,7 +122,7 @@ export class App {
       summary: 'Le prenotazioni, senza conflitti.',
       features: ['Fasce orarie', 'Controllo sovrapposizioni', 'Storico prenotazioni'],
       healthUrl: '/api/bookings/health',
-      symbol: '◷',
+      icon: 'event_available',
       health: 'checking',
     },
     {
@@ -125,7 +130,7 @@ export class App {
       summary: 'Chi entra e con quale ruolo.',
       features: ['Profili sintetici', 'Studenti e docenti', 'Ruoli del campus'],
       healthUrl: '/api/users/health',
-      symbol: '◇',
+      icon: 'badge',
       health: 'checking',
     },
   ]);
@@ -144,14 +149,14 @@ export class App {
   protected readonly serverErrors = signal<Record<string, string[]>>({});
 
   protected readonly registrationForm = this.formBuilder.nonNullable.group({
-    matricola: ['', [Validators.required, Validators.pattern(/^\d{6,10}$/)]],
+    matricola: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
     firstName: [
       '',
-      [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(/^[\p{L}][\p{L} '\u2019-]*$/u)],
+      [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(/^[\p{L}][\p{L} '-]*$/u)],
     ],
     lastName: [
       '',
-      [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(/^[\p{L}][\p{L} '\u2019-]*$/u)],
+      [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(/^[\p{L}][\p{L} '-]*$/u)],
     ],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(254)]],
     phoneNumber: ['', [Validators.required, Validators.pattern(/^\+39\d{9,10}$/)]],
@@ -166,15 +171,15 @@ export class App {
     });
   }
 
-  protected fieldError(field: keyof RegisterRequest): string | null {
+  protected fieldError(field: RegistrationField): string | null {
     const control = this.registrationForm.controls[field];
     if (control.hasError('required')) return 'Campo obbligatorio.';
     if (control.hasError('minlength')) return `Inserisci almeno ${control.getError('minlength').requiredLength} caratteri.`;
     if (control.hasError('maxlength')) return `Puoi inserire al massimo ${control.getError('maxlength').requiredLength} caratteri.`;
     if (control.hasError('email')) return 'Inserisci un indirizzo email valido.';
     if (control.hasError('pattern')) {
-      const messages: Partial<Record<keyof RegisterRequest, string>> = {
-        matricola: 'Usa solo cifre, da 6 a 10 caratteri.',
+      const messages: Partial<Record<RegistrationField, string>> = {
+        matricola: 'La matricola deve contenere esattamente 10 cifre.',
         firstName: 'Usa lettere, spazi, apostrofi o trattini.',
         lastName: 'Usa lettere, spazi, apostrofi o trattini.',
         phoneNumber: 'Usa il formato italiano, ad esempio +393331234567.',
@@ -195,9 +200,11 @@ export class App {
     }
 
     this.registrationSubmitting.set(true);
-    const request = this.registrationForm.getRawValue() as RegisterRequest;
+    const request: RegisterRequest = this.registrationForm.getRawValue();
+    const inviteToken = this.inviteToken();
+    const requestWithInvite = inviteToken ? { ...request, inviteToken } : request;
 
-    this.http.post('/api/users/auth/register', request).subscribe({
+    this.http.post('/api/users/auth/register', requestWithInvite).subscribe({
       next: () => {
         this.registrationSubmitting.set(false);
         const result = this.inviteToken() ? 'invite' : 'created';
