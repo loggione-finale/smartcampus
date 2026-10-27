@@ -134,7 +134,7 @@ stateDiagram-v2
 
 | Campo | Regola proposta |
 |---|---|
-| Matricola | Obbligatoria, unica, da 6 a 10 cifre (**formato da confermare con il PO**) |
+| Matricola | Obbligatoria, unica, **esattamente 10 cifre** (decisione del PO) |
 | Nome, cognome | Obbligatori, da 2 a 50 caratteri; lettere (anche accentate), spazio, apostrofo, trattino |
 | Email | Obbligatoria, unica, formato valido, massimo 254 caratteri, salvata in minuscolo |
 | Telefono | Obbligatorio, formato italiano `+39` seguito da 9 o 10 cifre |
@@ -161,6 +161,7 @@ stateDiagram-v2
 | P11 | Dopo l'ora di fine, il responsabile **deve** inserire il commento: spazio usato sì/no, persone presenti, problemi riscontrati, commento (da 10 a 500 caratteri). Finché manca, una nuova prenotazione riceve `409` con il codice della prenotazione da commentare |
 | P12 | L'admin può **annullare** una prenotazione indicando un motivo: tutti i partecipanti ricevono una mail. L'admin non può crearne |
 | P13 | Ogni nuova prenotazione genera un **avviso** per l'admin; strumenti mancanti, manutenzione e problemi segnalati nei commenti generano un'**eccezione** da gestire |
+| P14 | Durata da 30 minuti a 4 ore. Fasce (ora di Roma): mattina 08:00–14:00, pomeriggio 14:00–19:00, sera 19:00–23:00; una prenotazione sta dentro una sola fascia e chi prenota ne ha al massimo **una per fascia e per giorno**. Il limite vale per il responsabile, non per i partecipanti (richiesta del PO, vedi [po-decisions.md](po-decisions.md)) |
 
 ### Email (tutte come file `.eml`)
 
