@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using SmartCampus.Spaces.Api.Domain;
+using SmartCampus.Spaces.Api.Features.Equipment.Models;
 
 namespace SmartCampus.Spaces.Api.Features.Catalog.Models;
 
@@ -162,9 +163,14 @@ public sealed class SpaceSearchQuery
                     return false;
                 }
 
-                if (seen.Add(part))
+                var normalizedPart = string.Equals(paramName, "equipment", StringComparison.Ordinal)
+                    && EquipmentCatalog.TryNormalizeCode(part, out var canonicalEquipmentCode)
+                    ? canonicalEquipmentCode
+                    : part;
+
+                if (seen.Add(normalizedPart))
                 {
-                    items.Add(part);
+                    items.Add(normalizedPart);
                 }
 
                 if (items.Count > MaxListFilterItems)

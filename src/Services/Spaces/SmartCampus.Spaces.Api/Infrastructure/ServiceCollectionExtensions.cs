@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using SmartCampus.Spaces.Api.Features.Catalog;
+using SmartCampus.Spaces.Api.Features.Equipment;
 using SmartCampus.Spaces.Api.Features.Management;
 using SmartCampus.Spaces.Api.Features.Spaces;
 using SmartCampus.Spaces.Api.Features.Unavailabilities;
@@ -53,6 +54,7 @@ public static class ServiceCollectionExtensions
         services.AddHostedService<SpacesDataSeederHostedService>();
         services.AddScoped<ISpacesService, SpacesService>();
         services.AddScoped<ISpaceCatalogService, SpaceCatalogService>();
+        services.AddScoped<ISpaceEquipmentService, SpaceEquipmentService>();
         services.AddScoped<ISpaceManagementService, SpaceManagementService>();
         services.AddScoped<ISpaceUnavailabilityService, SpaceUnavailabilityService>();
 
