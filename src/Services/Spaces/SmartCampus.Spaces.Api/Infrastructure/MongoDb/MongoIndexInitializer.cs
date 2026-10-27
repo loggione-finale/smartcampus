@@ -56,7 +56,7 @@ public class MongoIndexInitializer : IMongoIndexInitializer
             await collection.Indexes.CreateManyAsync(indexModels, cancellationToken);
             _logger.LogInformation("MongoDB indexes initialized successfully.");
         }
-        catch (MongoException ex)
+        catch (Exception ex) when (ex is MongoException or TimeoutException)
         {
             _logger.LogWarning(ex, "Could not initialize MongoDB indexes. Database might be unreachable or starting up.");
         }

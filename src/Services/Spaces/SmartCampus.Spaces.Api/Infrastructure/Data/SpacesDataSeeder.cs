@@ -65,7 +65,7 @@ public class SpacesDataSeeder : ISpacesDataSeeder
                 _logger.LogInformation("Successfully seeded {Count} spaces from '{FilePath}'.", spaces.Count, filePath);
             }
         }
-        catch (MongoException ex)
+        catch (Exception ex) when (ex is MongoException or TimeoutException)
         {
             _logger.LogWarning(ex, "Could not seed Spaces synthetic data: MongoDB unreachable or connection failed.");
         }

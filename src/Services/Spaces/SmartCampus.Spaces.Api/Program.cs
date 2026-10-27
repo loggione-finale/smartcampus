@@ -1,8 +1,13 @@
+using System.Text.Json.Serialization;
 using SmartCampus.Spaces.Api.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddOpenApi();
 builder.Services.AddSpacesMongoDb(builder.Configuration);
 

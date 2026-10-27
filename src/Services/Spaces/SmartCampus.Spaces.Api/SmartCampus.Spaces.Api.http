@@ -1,1 +1,12 @@
 @SmartCampus.Spaces.Api_HostAddress = http://localhost:5101
+
+### Health check
+GET {{SmartCampus.Spaces.Api_HostAddress}}/health
+
+### Verifica prenotabilità spazio (Aula 101 - disponibile)
+GET {{SmartCampus.Spaces.Api_HostAddress}}/spaces/3f2a9c1e-0000-4000-8000-000000000001/bookable?from=2026-10-28T09:00:00Z&to=2026-10-28T11:00:00Z
+Accept: application/json
+
+### Verifica prenotabilità spazio con manutenzione (Aula 205)
+GET {{SmartCampus.Spaces.Api_HostAddress}}/spaces/3f2a9c1e-0000-4000-8000-000000000008/bookable?from=2026-10-28T09:00:00Z&to=2026-10-28T11:00:00Z
+Accept: application/json
