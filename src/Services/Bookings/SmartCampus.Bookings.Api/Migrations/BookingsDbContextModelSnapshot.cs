@@ -91,6 +91,10 @@ namespace SmartCampus.Bookings.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateOnly>("BookingDate")
+                        .HasColumnType("date")
+                        .HasColumnName("booking_date");
+
                     b.Property<string>("CancellationReason")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -176,6 +180,12 @@ namespace SmartCampus.Bookings.Api.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("status");
 
+                    b.Property<string>("TimeBand")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("time_band");
+
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -196,6 +206,11 @@ namespace SmartCampus.Bookings.Api.Migrations
                         .HasDatabaseName("ix_bookings_space_period");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SpaceId", "Period"), "gist");
+
+                    b.HasIndex("OrganizerId", "BookingDate", "TimeBand")
+                        .IsUnique()
+                        .HasDatabaseName("ux_bookings_organizer_date_band")
+                        .HasFilter("status = 'Confirmed'");
 
                     b.ToTable("bookings", null, t =>
                         {

@@ -18,6 +18,7 @@ public class BookingService(
     private const string SpaceOverlapConstraint = "ex_bookings_dedicated_space_no_overlap";
     private const string PersonOverlapConstraint = "ex_invitations_person_no_overlap";
     private const string ReferenceCodeIndex = "ux_bookings_reference_code";
+    private const string OrganizerBandIndex = "ux_bookings_organizer_date_band";
     private const int MaxReferenceCodeAttempts = 5;
     private const int RequestedSeats = 1;
 
@@ -81,6 +82,11 @@ public class BookingService(
                     return CreateBookingResult.PersonConflict();
                 }
 
+                if (postgres.ConstraintName == OrganizerBandIndex)
+                {
+                    return CreateBookingResult.TimeBandAlreadyUsed();
+                }
+
                 if (postgres.ConstraintName != ReferenceCodeIndex || attempt >= MaxReferenceCodeAttempts)
                 {
                     throw;
@@ -142,6 +148,7 @@ public class BookingService(
         var now = timeProvider.GetUtcNow().UtcDateTime;
         var period = new NpgsqlRange<DateTime>(start, true, end, false);
         var bookingId = Guid.NewGuid();
+        BookingTimeBands.TryResolve(start, end, out var bookingDate, out var timeBand);
 
         return new Booking
         {
@@ -156,6 +163,8 @@ public class BookingService(
             OrganizerId = organizerId,
             OrganizerNameSnapshot = organizerName,
             Period = period,
+            BookingDate = bookingDate,
+            TimeBand = timeBand,
             SeatsRequested = RequestedSeats,
             IsGroup = false,
             Status = BookingStatus.Confirmed,

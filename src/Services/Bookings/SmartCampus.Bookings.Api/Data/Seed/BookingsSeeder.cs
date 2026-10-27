@@ -70,10 +70,15 @@ public class BookingsSeeder(BookingsDbContext dbContext, TimeProvider timeProvid
     {
         var space = spaces[entry.Space];
         var organizer = users[entry.Organizer];
-        var start = DateTime.SpecifyKind(
-            today.AddDays(entry.DaysFromToday) + TimeOnly.ParseExact(entry.StartTime, "HH:mm", CultureInfo.InvariantCulture).ToTimeSpan(),
-            DateTimeKind.Utc);
+        var localStart = today.AddDays(entry.DaysFromToday)
+            + TimeOnly.ParseExact(entry.StartTime, "HH:mm", CultureInfo.InvariantCulture).ToTimeSpan();
+        var start = BookingTimeBands.FromCampusTime(localStart);
         var end = start.AddMinutes(entry.DurationMinutes);
+        if (!BookingTimeBands.TryResolve(start, end, out var bookingDate, out var timeBand))
+        {
+            throw new InvalidOperationException($"Seed booking {entry.ReferenceCode} does not fit in a single time band.");
+        }
+
         var period = new NpgsqlRange<DateTime>(start, true, end, false);
         var createdAt = start.AddDays(-2);
         var cancelled = entry.Status == BookingStatus.Cancelled;
@@ -92,6 +97,8 @@ public class BookingsSeeder(BookingsDbContext dbContext, TimeProvider timeProvid
             OrganizerId = organizer.Id,
             OrganizerNameSnapshot = organizer.DisplayName,
             Period = period,
+            BookingDate = bookingDate,
+            TimeBand = timeBand,
             SeatsRequested = entry.SeatsRequested,
             IsGroup = entry.IsGroup,
             Status = entry.Status,

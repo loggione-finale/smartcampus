@@ -64,6 +64,8 @@ public class BookingsController(
                 statusCode: StatusCodes.Status409Conflict, title: "Space already booked", detail: result.Detail),
             CreateBookingOutcome.PersonConflict => Problem(
                 statusCode: StatusCodes.Status409Conflict, title: "Overlapping booking", detail: result.Detail),
+            CreateBookingOutcome.TimeBandAlreadyUsed => Problem(
+                statusCode: StatusCodes.Status409Conflict, title: "Time band already used", detail: result.Detail),
             CreateBookingOutcome.NoSeatsLeft => Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Not enough seats",

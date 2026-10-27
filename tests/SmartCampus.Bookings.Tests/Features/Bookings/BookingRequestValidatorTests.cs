@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Time.Testing;
+using SmartCampus.Bookings.Api.Domain;
 using SmartCampus.Bookings.Api.Features.Bookings;
 
 namespace SmartCampus.Bookings.Tests.Features.Bookings;
@@ -68,5 +69,30 @@ public class BookingRequestValidatorTests
         var request = new CreateBookingRequest(Guid.Empty, Now.AddHours(2), Now.AddHours(3));
 
         Assert.Contains(nameof(CreateBookingRequest.SpaceId), _validator.Validate(request).Keys);
+    }
+
+    private static DateTimeOffset RomeToday(int hour, int minute = 0)
+    {
+        var local = new DateTime(2026, 11, 3, hour, minute, 0);
+        return new DateTimeOffset(BookingTimeBands.FromCampusTime(local), TimeSpan.Zero);
+    }
+
+    [Theory]
+    [InlineData(9, 0, 9, 30, true)]
+    [InlineData(8, 0, 12, 0, true)]
+    [InlineData(9, 0, 9, 15, false)]
+    [InlineData(9, 0, 13, 15, false)]
+    [InlineData(13, 30, 14, 0, true)]
+    [InlineData(14, 0, 15, 0, true)]
+    [InlineData(22, 0, 23, 0, true)]
+    [InlineData(13, 0, 15, 0, false)]
+    [InlineData(18, 30, 19, 30, false)]
+    [InlineData(7, 0, 8, 0, false)]
+    [InlineData(22, 30, 23, 30, false)]
+    public void Applies_the_duration_limits_and_the_time_bands(int fromHour, int fromMinute, int toHour, int toMinute, bool valid)
+    {
+        var request = new CreateBookingRequest(SpaceId, RomeToday(fromHour, fromMinute), RomeToday(toHour, toMinute));
+
+        Assert.Equal(valid, _validator.Validate(request).Count == 0);
     }
 }
