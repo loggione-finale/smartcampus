@@ -29,6 +29,8 @@ jobs:
       SPACES_DB_PASSWORD: ci_spaces
       # Stringhe di connessione che i test di integrazione leggono dalla configurazione
       ConnectionStrings__BookingsTest: Host=localhost;Port=5432;Database=bookings_test;Username=bookings_app;Password=ci_bookings
+      # I test di concorrenza di Bookings (#35) leggono direttamente questa variabile d'ambiente
+      BOOKINGS_TEST_CONNECTION_STRING: Host=localhost;Port=5432;Database=bookings_test;Username=bookings_app;Password=ci_bookings
       ConnectionStrings__UsersTest: Host=localhost;Port=5432;Database=users_test;Username=users_app;Password=ci_users
       ConnectionStrings__SpacesTest: mongodb://spaces_app:ci_spaces@localhost:27017/spaces_test?authSource=spaces
     steps:
