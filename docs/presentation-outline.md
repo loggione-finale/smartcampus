@@ -41,7 +41,7 @@ Interfaccia provata su due sistemi operativi e su uno smartphone, con esito regi
 | Prova | Esito | Dove |
 |---|---|---|
 | Concorrenza sul database: 16 richieste simultanee, una sola accettata sull'aula dedicata, capienza mai superata sull'aula mista | Superata il 27/10/2026 | [booking-concurrency.md](evidence/booking-concurrency.md) |
-| Concorrenza via HTTP sull'aula mista: 30 richieste simultanee su 5 posti, 5 accettate e 25 rifiutate; senza il lock il test fallisce (30 accettate, verifica manuale) | Superata | test `MixedSpaceSeatsTests` (PR #133) |
+| Concorrenza via HTTP sull'aula mista: 30 richieste simultanee su 5 posti. In locale 5 accettate e 25 rifiutate (30 esecuzioni su 30); senza il lock il test fallisce (30 accettate, verifica manuale) | Superata in locale; in CI un fallimento (11 accettate su 5 posti), indagine in #142 | test `MixedSpaceSeatsTests` (PR #133) |
 | Vincoli di esclusione su spazi e persone, anche a livello di database | Superata | test in `tests/SmartCampus.Bookings.Tests` (PR #136, #137) |
 | Orari in UTC e in Europe/Rome nelle notti del cambio ora legale | Superata | test `TimeZoneTests` (PR #135) |
 | Seed idempotente: due avvii consecutivi non duplicano i dati | Provata a mano e con test | PR #143 |
@@ -51,7 +51,7 @@ Interfaccia provata su due sistemi operativi e su uno smartphone, con esito regi
 
 - **I dati sintetici verificano il prototipo ma non dimostrano benefici reali per il campus.** Nessun dato personale reale.
 - La prova di concorrenza riguarda un solo servizio e un solo database PostgreSQL; con più istanze andrebbe ripetuta.
-- Nell'aula mista il numero esatto di richieste accettate può variare tra esecuzioni: è garantito solo il tetto di capienza.
+- Aula mista: in CI un'esecuzione del test di concorrenza ha accettato 11 prenotazioni su 5 posti (#142). Finché il difetto non è chiarito, la capienza con richieste simultanee non è dimostrata in modo affidabile; il numero esatto di richieste accettate può inoltre variare tra esecuzioni.
 - Le email sono file `.eml` in una cartella locale, non messaggi reali **[da confermare: Notifications]**.
 - Il token JWT non contiene il nome dell'utente: nei dati delle prenotazioni si salva l'email.
 - Le prenotazioni già terminate non si possono annullare (scelta del gruppo, da confermare con il PO).
