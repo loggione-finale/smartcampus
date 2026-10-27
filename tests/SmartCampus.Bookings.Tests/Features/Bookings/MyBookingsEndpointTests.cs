@@ -109,7 +109,7 @@ public class MyBookingsEndpointTests(BookingsApiFactory factory) : IClassFixture
     [Fact]
     public async Task An_anonymous_invitation_is_matched_by_email()
     {
-        var email = "late-registered@smartcampus.test";
+        var email = $"late-registered-{Guid.NewGuid():N}@smartcampus.test";
         var client = factory.CreateAuthenticatedClient(Guid.NewGuid(), email);
         using (var scope = factory.Services.CreateScope())
         {
