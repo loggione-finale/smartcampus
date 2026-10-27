@@ -112,7 +112,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
     }
 
     [Fact]
-    public async Task Returns_409_when_the_organizer_has_an_overlapping_booking()
+    public async Task Returns_409_when_the_organizer_books_twice_in_the_same_time_band()
     {
         var start = TestSlots.Next();
         var client = factory.CreateAuthenticatedClient(Guid.NewGuid());
@@ -122,7 +122,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(JsonOptions);
-        Assert.Equal("Overlapping booking", problem!.Title);
+        Assert.Equal("Time band already used", problem!.Title);
     }
 
     [Fact]
@@ -203,6 +203,8 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
             OrganizerId = organizerId,
             OrganizerNameSnapshot = "student@smartcampus.test",
             Period = new NpgsqlRange<DateTime>(end.AddHours(-2), true, end, false),
+            BookingDate = DateOnly.FromDateTime(end),
+            TimeBand = TimeBand.Morning,
             SeatsRequested = 1,
             Status = BookingStatus.Confirmed,
             CreatedAt = DateTime.UtcNow.AddDays(-2),

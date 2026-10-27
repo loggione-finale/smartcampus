@@ -1,11 +1,35 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { FormControl, FormGroup } from '@angular/forms';
 import { App } from './app';
 
+type RegistrationTestApp = {
+  registrationForm: FormGroup<{
+    matricola: FormControl<string>;
+    firstName: FormControl<string>;
+    lastName: FormControl<string>;
+    email: FormControl<string>;
+    phoneNumber: FormControl<string>;
+    password: FormControl<string>;
+  }>;
+  submitRegistration(): void;
+};
+
 describe('App', () => {
+  let httpTesting: HttpTestingController;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
+    httpTesting = TestBed.inject(HttpTestingController);
+    spyOn(window, 'fetch').and.returnValue(Promise.resolve(new Response(null, { status: 200 })));
+  });
+
+  afterEach(() => {
+    httpTesting.verify();
   });
 
   it('should create the app', () => {
@@ -23,41 +47,50 @@ describe('App', () => {
     expect(compiled.querySelectorAll('.service').length).toBe(3);
   });
 
-  it('does not submit an incomplete booking form', async () => {
+  it('keeps the registration form invalid until all server rules are met', () => {
     const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance as App & { bookingForm: any; bookingState: any; submitBooking: () => Promise<void> };
-    app.bookingForm.controls.date.setValue('');
-    const fetchSpy = spyOn(window, 'fetch');
+    const app = fixture.componentInstance as unknown as RegistrationTestApp;
+    fixture.detectChanges();
 
-    await app.submitBooking();
+    app.registrationForm.patchValue({
+      matricola: '123',
+      firstName: 'A',
+      lastName: '',
+      email: 'not-an-email',
+      phoneNumber: '3331234567',
+      password: 'short',
+    });
+    app.submitRegistration();
+    fixture.detectChanges();
 
-    expect(app.bookingState()).toBe('error');
-    expect(fetchSpy).not.toHaveBeenCalledWith('/api/bookings', jasmine.anything());
+    expect(app.registrationForm.invalid).toBeTrue();
+    expect(fixture.nativeElement.querySelectorAll('mat-error').length).toBeGreaterThan(0);
   });
 
-  it('shows the conflict returned by Bookings', async () => {
+  it('shows a duplicate email response on the email field', () => {
     const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance as App & { bookingState: any; bookingMessage: any; submitBooking: () => Promise<void> };
-    spyOn(window, 'fetch').and.returnValue(
-      Promise.resolve(new Response(JSON.stringify({ title: 'Space already booked' }), { status: 409 })),
+    const app = fixture.componentInstance as unknown as RegistrationTestApp;
+    fixture.detectChanges();
+
+    app.registrationForm.setValue({
+      matricola: '1234567890',
+      firstName: 'Mario',
+      lastName: 'Rossi',
+      email: 'mario@example.test',
+      phoneNumber: '+393331234567',
+      password: 'Password123',
+    });
+    app.submitRegistration();
+
+    const request = httpTesting.expectOne('/api/users/auth/register');
+    expect(request.request.method).toBe('POST');
+    request.flush(
+      { detail: 'Email is already registered.' },
+      { status: 409, statusText: 'Conflict' },
     );
+    fixture.detectChanges();
 
-    await app.submitBooking();
-
-    expect(app.bookingState()).toBe('error');
-    expect(app.bookingMessage()).toContain('già occupata');
-  });
-
-  it('shows the reference code after a successful booking', async () => {
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance as App & { bookingState: any; bookingReference: any; submitBooking: () => Promise<void> };
-    spyOn(window, 'fetch').and.returnValue(
-      Promise.resolve(new Response(JSON.stringify({ referenceCode: 'SC-261027-ABCD' }), { status: 201 })),
-    );
-
-    await app.submitBooking();
-
-    expect(app.bookingState()).toBe('success');
-    expect(app.bookingReference()).toBe('SC-261027-ABCD');
+    expect(fixture.nativeElement.textContent).toContain('Email is already registered.');
+    expect(fixture.nativeElement.textContent).toContain('Esiste già un account');
   });
 });

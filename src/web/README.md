@@ -21,16 +21,14 @@ richieste locali ai tre servizi:
 
 Per esempio, `/api/spaces/health` viene inoltrato a `http://localhost:5101/health`.
 
-## Prenotare uno spazio
+## Registrazione
 
-La form è disponibile nella sezione `#prenota` della home. Seleziona uno spazio, una data futura e
-una fascia oraria a intervalli di 15 minuti, poi invia la prenotazione. Il frontend inoltra la richiesta
-a `POST /api/bookings`, mostra il codice di riferimento quando la prenotazione è confermata e traduce
-in messaggi comprensibili i conflitti di spazio/persona, la capienza esaurita e il commento finale pendente.
+La pagina di registrazione è disponibile nella sezione `#registrazione` e invia i dati a
+`POST /api/users/auth/register`. Le regole client rispecchiano quelle del servizio Users; gli errori
+di validazione (`400`) e i duplicati (`409`) vengono mostrati sul campo interessato.
 
-La creazione richiede un utente autenticato; senza token il servizio risponde `401` e la form indica di
-effettuare l'accesso. La gestione degli invitati e delle richieste di strumenti appartiene alle rispettive
-task successive.
+Per simulare un accesso da invito usa `http://localhost:4200/?invite=demo#registrazione`: dopo una
+registrazione riuscita viene mostrata la conferma dell’invito.
 
 ## Generazione del codice
 

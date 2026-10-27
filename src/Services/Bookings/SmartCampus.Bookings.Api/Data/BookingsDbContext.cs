@@ -32,12 +32,17 @@ public class BookingsDbContext(DbContextOptions<BookingsDbContext> options) : Db
             entity.Property(x => x.Period).HasColumnType("tstzrange");
             entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
             entity.Property(x => x.SpaceAccessModeSnapshot).HasConversion<string>().HasMaxLength(20);
+            entity.Property(x => x.TimeBand).HasConversion<string>().HasMaxLength(20);
             entity.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
             entity.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
             entity.Property(x => x.CancellationReason).HasMaxLength(500);
 
             entity.HasIndex(x => x.ReferenceCode).IsUnique().HasDatabaseName("ux_bookings_reference_code");
             entity.HasIndex(x => x.OrganizerId).HasDatabaseName("ix_bookings_organizer");
+            entity.HasIndex(x => new { x.OrganizerId, x.BookingDate, x.TimeBand })
+                .IsUnique()
+                .HasFilter("status = 'Confirmed'")
+                .HasDatabaseName("ux_bookings_organizer_date_band");
             entity.HasIndex(x => new { x.SpaceId, x.Period }).HasMethod("gist").HasDatabaseName("ix_bookings_space_period");
         });
 

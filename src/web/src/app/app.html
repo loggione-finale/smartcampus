@@ -47,7 +47,7 @@
         </p>
       </div>
 
-      <a class="hero-cta" href="#prenota">
+      <a class="hero-cta" href="#spazi">
         Trova uno spazio
         <svg viewBox="0 0 34 30" aria-hidden="true">
           <path d="M2 2l13 13L2 28M17 2l13 13-13 13" />
@@ -56,69 +56,93 @@
     </div>
   </section>
 
-  <section class="booking" id="prenota" aria-labelledby="booking-title">
-    <div class="booking-intro" data-reveal>
-      <p class="eyebrow">Una fascia, un posto per te</p>
-      <h2 id="booking-title">Prenota senza sorprese.</h2>
-      <p>
-        Scegli lo spazio e la fascia oraria. Il sistema controlla sovrapposizioni, disponibilità e
-        commenti finali prima di confermare.
-      </p>
-      <p class="booking-note">Gli orari sono interpretati nel fuso del dispositivo e inviati al servizio in UTC.</p>
-    </div>
-
-    <form class="booking-form" [formGroup]="bookingForm" (ngSubmit)="submitBooking()" novalidate data-reveal>
-      <mat-form-field appearance="outline">
-        <mat-label>Spazio</mat-label>
-        <mat-select formControlName="spaceId">
-          @for (space of bookingSpaces; track space.id) {
-            <mat-option [value]="space.id">{{ space.name }} · {{ space.detail }}</mat-option>
-          }
-        </mat-select>
-        @if (bookingForm.controls.spaceId.invalid && bookingForm.controls.spaceId.touched) {
-          <mat-error>{{ fieldError('spaceId') }}</mat-error>
+  <section class="registration" id="registrazione" aria-labelledby="registration-title">
+    @if (registrationResult(); as result) {
+      <div
+        class="registration-confirmation"
+        [id]="result === 'invite' ? 'conferma-invito' : 'conferma-registrazione'"
+        role="status"
+      >
+        <span class="confirmation-icon" aria-hidden="true">✓</span>
+        @if (result === 'invite') {
+          <p class="eyebrow">INVITO RICEVUTO</p>
+          <h2 id="registration-title">Account creato. Invito pronto per il prossimo passaggio.</h2>
+          <p>Il token dell’invito è stato inviato insieme ai dati di registrazione.</p>
+          <a mat-flat-button class="btn" href="#spazi">Vai agli spazi</a>
+        } @else {
+          <p class="eyebrow">REGISTRAZIONE COMPLETATA</p>
+          <h2 id="registration-title">Benvenuto in SmartCampus.</h2>
+          <p>Il tuo account è stato creato. Ora puoi cercare uno spazio e preparare la tua giornata.</p>
+          <a mat-flat-button class="btn" href="#spazi">Esplora gli spazi</a>
         }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Data</mat-label>
-        <input matInput type="date" formControlName="date" [min]="minimumBookingDate" />
-        @if (bookingForm.controls.date.invalid && bookingForm.controls.date.touched) {
-          <mat-error>{{ fieldError('date') }}</mat-error>
-        }
-      </mat-form-field>
-
-      <div class="booking-times">
-        <mat-form-field appearance="outline">
-          <mat-label>Inizio</mat-label>
-          <input matInput type="time" step="900" formControlName="start" />
-          @if (bookingForm.controls.start.invalid && bookingForm.controls.start.touched) {
-            <mat-error>{{ fieldError('start') }}</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Fine</mat-label>
-          <input matInput type="time" step="900" formControlName="end" />
-          @if (bookingForm.controls.end.invalid && bookingForm.controls.end.touched) {
-            <mat-error>{{ fieldError('end') }}</mat-error>
-          }
-        </mat-form-field>
+        <button mat-button type="button" class="text-button" (click)="resetRegistration()">
+          Registra un altro account
+        </button>
+      </div>
+    } @else {
+      <div class="registration-heading">
+        <p class="eyebrow">NUOVO ACCOUNT</p>
+        <h2 id="registration-title">Registrati e trova il tuo spazio.</h2>
+        <p>
+          Crea il tuo profilo studente. Usiamo gli stessi controlli del servizio Users per darti un feedback
+          chiaro già mentre compili.
+        </p>
       </div>
 
-      <button mat-flat-button class="booking-submit" type="submit" [disabled]="bookingState() === 'submitting'">
-        {{ bookingState() === 'submitting' ? 'Invio in corso…' : 'Conferma prenotazione' }}
-      </button>
+      <form class="registration-form" [formGroup]="registrationForm" (ngSubmit)="submitRegistration()" novalidate>
+        @if (registrationError(); as error) {
+          <p class="form-alert" role="alert">{{ error }}</p>
+        }
 
-      @if (bookingState() === 'success') {
-        <p class="booking-feedback success" role="status">
-          {{ bookingMessage() }}
-          @if (bookingReference()) { <strong>Codice: {{ bookingReference() }}</strong> }
-        </p>
-      } @else if (bookingState() === 'error') {
-        <p class="booking-feedback error" role="alert">{{ bookingMessage() }}</p>
-      }
-    </form>
+        <div class="registration-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Matricola</mat-label>
+            <input matInput formControlName="matricola" inputmode="numeric" autocomplete="username" />
+            <mat-hint>Esattamente 10 cifre</mat-hint>
+            @if (fieldError('matricola'); as error) { <mat-error>{{ error }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Nome</mat-label>
+            <input matInput formControlName="firstName" autocomplete="given-name" />
+            @if (fieldError('firstName'); as error) { <mat-error>{{ error }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Cognome</mat-label>
+            <input matInput formControlName="lastName" autocomplete="family-name" />
+            @if (fieldError('lastName'); as error) { <mat-error>{{ error }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" autocomplete="email" />
+            @if (fieldError('email'); as error) { <mat-error>{{ error }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Telefono</mat-label>
+            <input matInput type="tel" formControlName="phoneNumber" autocomplete="tel" />
+            <mat-hint>Formato: +39 seguito da 9 o 10 cifre</mat-hint>
+            @if (fieldError('phoneNumber'); as error) { <mat-error>{{ error }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput type="password" formControlName="password" autocomplete="new-password" />
+            <mat-hint>Almeno 10 caratteri, una lettera e una cifra</mat-hint>
+            @if (fieldError('password'); as error) { <mat-error>{{ error }}</mat-error> }
+          </mat-form-field>
+        </div>
+
+        <div class="registration-actions">
+          <button mat-flat-button class="btn" type="submit" [disabled]="registrationSubmitting()">
+            {{ registrationSubmitting() ? 'Registrazione in corso…' : 'Crea account' }}
+          </button>
+          <span class="form-note">L’account viene creato con ruolo User.</span>
+        </div>
+      </form>
+    }
   </section>
 
   <section class="intro" id="come-funziona" aria-labelledby="intro-title">
@@ -164,8 +188,8 @@
               <li>{{ fact }}</li>
             }
           </ul>
-          <a class="text-link" href="#prenota">
-            Prenota <mat-icon aria-hidden="true">north_east</mat-icon>
+          <a class="text-link" href="#contatti">
+            Prenota <span class="arrow-icon" aria-hidden="true">↗</span>
           </a>
         </li>
       }
@@ -207,7 +231,7 @@
             <span class="health-dot" aria-hidden="true"></span>{{ healthLabel[service.health] }}
           </p>
           <a class="text-link" [href]="service.healthUrl" target="_blank" rel="noreferrer">
-            Apri /health <mat-icon aria-hidden="true">north_east</mat-icon>
+            Apri /health <span class="arrow-icon" aria-hidden="true">↗</span>
           </a>
         </li>
       }

@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
+using SmartCampus.Spaces.Api.Features.Spaces;
+using SmartCampus.Spaces.Api.Infrastructure.Data;
 using SmartCampus.Spaces.Api.Infrastructure.Health;
 using SmartCampus.Spaces.Api.Infrastructure.MongoDb;
 
@@ -32,10 +34,21 @@ public static class ServiceCollectionExtensions
             options.SpacesCollectionName = mongoOptions.SpacesCollectionName;
         });
 
-        services.AddSingleton<IMongoClient>(_ => new MongoClient(connectionString));
+        services.AddSingleton<IMongoClient>(_ =>
+        {
+            var settings = MongoClientSettings.FromConnectionString(connectionString);
+            if (!connectionString.Contains("serverSelectionTimeoutMS", StringComparison.OrdinalIgnoreCase))
+            {
+                settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
+            }
+            return new MongoClient(settings);
+        });
         services.AddScoped<ISpacesDbContext, SpacesDbContext>();
         services.AddScoped<IMongoIndexInitializer, MongoIndexInitializer>();
         services.AddHostedService<MongoIndexHostedService>();
+        services.AddScoped<ISpacesDataSeeder, SpacesDataSeeder>();
+        services.AddHostedService<SpacesDataSeederHostedService>();
+        services.AddScoped<ISpacesService, SpacesService>();
 
         services.AddHealthChecks()
             .AddCheck<MongoHealthCheck>("mongodb", tags: ["db", "ready"]);
