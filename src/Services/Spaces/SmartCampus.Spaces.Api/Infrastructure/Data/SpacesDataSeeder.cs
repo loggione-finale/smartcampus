@@ -10,6 +10,9 @@ namespace SmartCampus.Spaces.Api.Infrastructure.Data;
 
 public class SpacesDataSeeder : ISpacesDataSeeder
 {
+    public static string DefaultFilePath =>
+        Path.Combine(AppContext.BaseDirectory, "data", "synthetic", "spaces.json");
+
     private readonly ISpacesDbContext _dbContext;
     private readonly IHostEnvironment _environment;
     private readonly IConfiguration _configuration;
@@ -46,10 +49,10 @@ public class SpacesDataSeeder : ISpacesDataSeeder
                 return;
             }
 
-            var filePath = FindSyntheticDataFilePath();
-            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+            var filePath = ResolveSyntheticDataFilePath();
+            if (!File.Exists(filePath))
             {
-                _logger.LogWarning("Synthetic spaces data file 'spaces.json' not found. Skipping seed.");
+                _logger.LogWarning("Synthetic spaces data file '{FilePath}' not found. Skipping seed.", filePath);
                 return;
             }
 
@@ -73,23 +76,11 @@ public class SpacesDataSeeder : ISpacesDataSeeder
         }
     }
 
-    private string? FindSyntheticDataFilePath()
+    private string ResolveSyntheticDataFilePath()
     {
         var configuredPath = _configuration["SyntheticData:SpacesFilePath"];
-        if (!string.IsNullOrWhiteSpace(configuredPath) && File.Exists(configuredPath))
-        {
-            return configuredPath;
-        }
-
-        var candidatePaths = new[]
-        {
-            Path.Combine(_environment.ContentRootPath, "..", "..", "..", "data", "synthetic", "spaces.json"),
-            Path.Combine(_environment.ContentRootPath, "data", "synthetic", "spaces.json"),
-            Path.Combine(AppContext.BaseDirectory, "data", "synthetic", "spaces.json"),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "data", "synthetic", "spaces.json"),
-            Path.GetFullPath("data/synthetic/spaces.json")
-        };
-
-        return candidatePaths.FirstOrDefault(File.Exists);
+        return !string.IsNullOrWhiteSpace(configuredPath)
+            ? configuredPath
+            : DefaultFilePath;
     }
 }

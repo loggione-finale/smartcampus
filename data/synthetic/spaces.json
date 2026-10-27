@@ -49,7 +49,7 @@
     "name": "Sala Studio Piano Terra",
     "type": "StudyRoom",
     "mode": "Mixed",
-    "building": "Edificio C",
+    "building": "Edificio A",
     "floor": 0,
     "capacity": 12,
     "isActive": true,
@@ -174,7 +174,7 @@
         "start": "2026-10-28T08:00:00Z",
         "end": "2026-10-28T12:00:00Z",
         "reason": "Manutenzione impianto elettrico",
-        "createdBy": "b7e1c2d3-0000-4000-8000-000000000002"
+        "createdBy": "b7e1c2d3-0000-4000-8000-000000000001"
       }
     ],
     "createdAt": "2026-10-26T08:00:00Z",

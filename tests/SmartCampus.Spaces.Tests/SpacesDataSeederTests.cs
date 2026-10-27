@@ -111,4 +111,41 @@ public class SpacesDataSeederTests
             Arg.Any<InsertManyOptions>(),
             Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task SeedAsync_LoadsFromBaseDirectory_IndependentOfContentRootPath()
+    {
+        Assert.True(File.Exists(SpacesDataSeeder.DefaultFilePath));
+
+        _environment.ContentRootPath.Returns(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()));
+        _collection.CountDocumentsAsync(
+            Arg.Any<FilterDefinition<Space>>(),
+            Arg.Any<CountOptions>(),
+            Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(0L));
+
+        List<Space>? insertedSpaces = null;
+        await _collection.InsertManyAsync(
+            Arg.Do<IEnumerable<Space>>(s => insertedSpaces = s.ToList()),
+            Arg.Any<InsertManyOptions>(),
+            Arg.Any<CancellationToken>());
+
+        var seeder = new SpacesDataSeeder(_dbContext, _environment, _configuration, _logger);
+
+        await seeder.SeedAsync();
+
+        Assert.NotNull(insertedSpaces);
+        Assert.Equal(8, insertedSpaces.Count);
+
+        var studio = insertedSpaces.Single(s => s.Id == "3f2a9c1e-0000-4000-8000-000000000003");
+        Assert.Equal("Sala Studio Piano Terra", studio.Name);
+        Assert.Equal("Edificio A", studio.Building);
+        Assert.Equal(SpaceType.StudyRoom, studio.Type);
+        Assert.Equal(SpaceMode.Mixed, studio.Mode);
+        Assert.Equal(12, studio.Capacity);
+
+        var maintenanceSpace = insertedSpaces.Single(s => s.Id == "3f2a9c1e-0000-4000-8000-000000000008");
+        var unavailability = Assert.Single(maintenanceSpace.Unavailabilities);
+        Assert.Equal("b7e1c2d3-0000-4000-8000-000000000001", unavailability.CreatedBy);
+    }
 }
