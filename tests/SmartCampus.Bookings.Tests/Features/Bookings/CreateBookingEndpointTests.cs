@@ -16,18 +16,12 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    private static DateTimeOffset NextSlot(int hour = 10)
-    {
-        var day = DateTimeOffset.UtcNow.Date.AddDays(60 + Random.Shared.Next(0, 3000));
-        return new DateTimeOffset(day.AddHours(hour), TimeSpan.Zero);
-    }
-
     [Fact]
     public async Task Requires_authentication()
     {
         var client = factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(Guid.NewGuid(), NextSlot(), NextSlot().AddHours(1)));
+        var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(Guid.NewGuid(), TestSlots.Next(), TestSlots.Next().AddHours(1)));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -37,7 +31,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
     {
         var userId = Guid.NewGuid();
         var spaceId = Guid.NewGuid();
-        var start = NextSlot();
+        var start = TestSlots.Next();
         var client = factory.CreateAuthenticatedClient(userId);
 
         var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(spaceId, start, start.AddHours(2)));
@@ -56,7 +50,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
     public async Task Rejects_an_end_before_the_start_with_400()
     {
         var client = factory.CreateAuthenticatedClient(Guid.NewGuid());
-        var start = NextSlot();
+        var start = TestSlots.Next();
 
         var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(Guid.NewGuid(), start, start.AddHours(-1)));
 
@@ -80,7 +74,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
     public async Task Rejects_times_not_aligned_to_15_minutes_with_400()
     {
         var client = factory.CreateAuthenticatedClient(Guid.NewGuid());
-        var start = NextSlot().AddMinutes(7);
+        var start = TestSlots.Next().AddMinutes(7);
 
         var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(Guid.NewGuid(), start, start.AddHours(1)));
 
@@ -91,7 +85,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
     public async Task Returns_409_when_the_dedicated_space_is_already_booked()
     {
         var spaceId = Guid.NewGuid();
-        var start = NextSlot();
+        var start = TestSlots.Next();
         var first = factory.CreateAuthenticatedClient(Guid.NewGuid());
         var second = factory.CreateAuthenticatedClient(Guid.NewGuid());
         await first.PostAsJsonAsync("/bookings", new CreateBookingRequest(spaceId, start, start.AddHours(2)));
@@ -107,7 +101,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
     public async Task Accepts_adjacent_bookings_on_the_same_space()
     {
         var spaceId = Guid.NewGuid();
-        var start = NextSlot();
+        var start = TestSlots.Next();
         var first = factory.CreateAuthenticatedClient(Guid.NewGuid());
         var second = factory.CreateAuthenticatedClient(Guid.NewGuid());
         await first.PostAsJsonAsync("/bookings", new CreateBookingRequest(spaceId, start, start.AddHours(1)));
@@ -120,7 +114,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
     [Fact]
     public async Task Returns_409_when_the_organizer_has_an_overlapping_booking()
     {
-        var start = NextSlot();
+        var start = TestSlots.Next();
         var client = factory.CreateAuthenticatedClient(Guid.NewGuid());
         await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(Guid.NewGuid(), start, start.AddHours(2)));
 
@@ -137,7 +131,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
         var spaceId = Guid.NewGuid();
         factory.Spaces.Behavior = id => id == spaceId ? throw new SpacesUnavailableException("down") : FakeSpacesClient.DefaultSpace();
         var client = factory.CreateAuthenticatedClient(Guid.NewGuid());
-        var start = NextSlot();
+        var start = TestSlots.Next();
 
         var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(spaceId, start, start.AddHours(1)));
 
@@ -150,7 +144,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
         var spaceId = Guid.NewGuid();
         factory.Spaces.Behavior = id => id == spaceId ? null : FakeSpacesClient.DefaultSpace();
         var client = factory.CreateAuthenticatedClient(Guid.NewGuid());
-        var start = NextSlot();
+        var start = TestSlots.Next();
 
         var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(spaceId, start, start.AddHours(1)));
 
@@ -165,7 +159,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
             ? FakeSpacesClient.DefaultSpace() with { Bookable = false, Reason = "Under maintenance" }
             : FakeSpacesClient.DefaultSpace();
         var client = factory.CreateAuthenticatedClient(Guid.NewGuid());
-        var start = NextSlot();
+        var start = TestSlots.Next();
 
         var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(spaceId, start, start.AddHours(1)));
 
@@ -180,7 +174,7 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
         var userId = Guid.NewGuid();
         var pendingCode = await SeedFinishedBookingAsync(userId);
         var client = factory.CreateAuthenticatedClient(userId);
-        var start = NextSlot();
+        var start = TestSlots.Next();
 
         var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(Guid.NewGuid(), start, start.AddHours(1)));
 

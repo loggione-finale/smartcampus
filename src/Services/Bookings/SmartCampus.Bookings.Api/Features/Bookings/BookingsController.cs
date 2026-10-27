@@ -7,7 +7,7 @@ namespace SmartCampus.Bookings.Api.Features.Bookings;
 [ApiController]
 [Authorize]
 [Route("bookings")]
-public class BookingsController(BookingService bookingService) : ControllerBase
+public class BookingsController(BookingService bookingService, CancelBookingService cancelBookingService) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType<BookingResponse>(StatusCodes.Status201Created)]
@@ -44,6 +44,36 @@ public class BookingsController(BookingService bookingService) : ControllerBase
                 statusCode: StatusCodes.Status409Conflict, title: "Overlapping booking", detail: result.Detail),
             CreateBookingOutcome.SpacesUnavailable => Problem(
                 statusCode: StatusCodes.Status503ServiceUnavailable, title: "Spaces unavailable", detail: result.Detail),
+            _ => throw new InvalidOperationException($"Unhandled outcome {result.Outcome}.")
+        };
+    }
+
+    [HttpPost("{id:guid}/cancel")]
+    [ProducesResponseType<BookingResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Cancel(
+        Guid id, CancelBookingRequest? request, CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await cancelBookingService.CancelAsync(id, userId, request?.Reason, cancellationToken);
+
+        return result.Outcome switch
+        {
+            CancelBookingOutcome.Cancelled => Ok(BookingResponse.From(result.Booking!)),
+            CancelBookingOutcome.NotFound => Problem(
+                statusCode: StatusCodes.Status404NotFound, title: "Booking not found"),
+            CancelBookingOutcome.Forbidden => Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Only the organizer can cancel a booking"),
+            CancelBookingOutcome.AlreadyCancelled => Problem(
+                statusCode: StatusCodes.Status409Conflict, title: "Booking already cancelled"),
+            CancelBookingOutcome.AlreadyEnded => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Booking already ended",
+                detail: "A booking that has ended cannot be cancelled."),
             _ => throw new InvalidOperationException($"Unhandled outcome {result.Outcome}.")
         };
     }
