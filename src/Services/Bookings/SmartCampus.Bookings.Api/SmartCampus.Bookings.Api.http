@@ -1,1 +1,34 @@
 @SmartCampus.Bookings.Api_HostAddress = http://localhost:5102
+
+### Creazione prenotazione di gruppo con richiesta di strumenti
+POST {{SmartCampus.Bookings.Api_HostAddress}}/bookings
+Authorization: Bearer <USER_JWT>
+Content-Type: application/json
+
+{
+  "spaceId": "3f2a9c1e-0000-4000-8000-000000000001",
+  "start": "2026-10-29T09:00:00Z",
+  "end": "2026-10-29T11:00:00Z",
+  "participantEmails": ["marco.bianchi@smartcampus.test", "sara.conti@smartcampus.test"],
+  "equipmentRequests": [
+    { "equipmentType": "videoprojector" },
+    { "equipmentType": "interactive-whiteboard", "notes": "Serve pennarello digitale" }
+  ]
+}
+
+### Elenco richieste di strumenti di una prenotazione
+GET {{SmartCampus.Bookings.Api_HostAddress}}/bookings/<BOOKING_ID>/equipment
+Authorization: Bearer <USER_OR_ADMIN_JWT>
+Accept: application/json
+
+### Aggiunta richieste di strumenti a una prenotazione di gruppo attiva
+POST {{SmartCampus.Bookings.Api_HostAddress}}/bookings/<BOOKING_ID>/equipment
+Authorization: Bearer <ORGANIZER_JWT>
+Content-Type: application/json
+
+{
+  "equipmentRequests": [
+    { "equipmentType": "other", "notes": "Serve adattatore USB-C HDMI" }
+  ]
+}
+

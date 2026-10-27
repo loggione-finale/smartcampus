@@ -5,6 +5,7 @@ using SmartCampus.Auth;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Data.Seed;
 using SmartCampus.Bookings.Api.Features.Bookings;
+using SmartCampus.Bookings.Api.Features.Equipment;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,7 @@ builder.Services.AddDbContext<BookingsDbContext>(options =>
 
 builder.Services.AddSmartCampusAuth(builder.Configuration);
 builder.Services.AddBookings(builder.Configuration);
+builder.Services.AddEquipment(builder.Configuration);
 builder.Services.AddScoped<BookingsSeeder>();
 
 builder.Services.AddHealthChecks()
