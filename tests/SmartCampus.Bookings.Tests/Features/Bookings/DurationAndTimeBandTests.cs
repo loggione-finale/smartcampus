@@ -151,4 +151,46 @@ public class DurationAndTimeBandTests(BookingsApiFactory factory) : IClassFixtur
         Assert.Equal(1, responses.Count(r => r.StatusCode == HttpStatusCode.Created));
         Assert.Equal(7, responses.Count(r => r.StatusCode == HttpStatusCode.Conflict));
     }
+
+    private Guid CreateMixedSpace(int capacity)
+    {
+        var spaceId = Guid.NewGuid();
+        var previous = factory.Spaces.Behavior;
+        factory.Spaces.Behavior = id => id == spaceId
+            ? FakeSpacesClient.DefaultSpace() with { AccessMode = SpaceAccessMode.Mixed, Capacity = capacity }
+            : previous(id);
+        return spaceId;
+    }
+
+    [Fact]
+    public async Task In_a_mixed_space_a_second_booking_in_the_same_band_is_rejected_and_the_lock_is_released()
+    {
+        var day = TestSlots.Next();
+        var spaceId = CreateMixedSpace(20);
+        var organizer = factory.CreateAuthenticatedClient(Guid.NewGuid());
+        var other = factory.CreateAuthenticatedClient(Guid.NewGuid());
+        await BookAsync(organizer, At(day, 9), At(day, 10), spaceId);
+
+        var rejected = await BookAsync(organizer, At(day, 11), At(day, 12), spaceId);
+        var otherUser = await BookAsync(other, At(day, 11), At(day, 12), spaceId);
+
+        Assert.Equal(HttpStatusCode.Conflict, rejected.StatusCode);
+        var problem = await rejected.Content.ReadFromJsonAsync<ProblemDetails>(JsonOptions);
+        Assert.Equal("Time band already used", problem!.Title);
+        Assert.Equal(HttpStatusCode.Created, otherUser.StatusCode);
+    }
+
+    [Fact]
+    public async Task In_a_mixed_space_simultaneous_requests_of_the_same_organizer_let_only_one_through()
+    {
+        var day = TestSlots.Next();
+        var spaceId = CreateMixedSpace(20);
+        var client = factory.CreateAuthenticatedClient(Guid.NewGuid());
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 8).Select(index =>
+            BookAsync(client, At(day, 9 + index % 4), At(day, 9 + index % 4).AddMinutes(30), spaceId)));
+
+        Assert.Equal(1, responses.Count(r => r.StatusCode == HttpStatusCode.Created));
+        Assert.Equal(7, responses.Count(r => r.StatusCode == HttpStatusCode.Conflict));
+    }
 }
