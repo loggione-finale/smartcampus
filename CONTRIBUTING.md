@@ -67,6 +67,11 @@ automaticamente la issue.
 - Compila il template: cosa cambia, perché, come l'hai verificato, limiti noti.
 - La PR deve compilare e i test devono passare **in locale** prima di chiedere la review.
 - Se la PR non è pronta, aprila come **Draft**.
+- Il job **Controllo PR** verifica titolo, issue collegata e corpo della PR: se fallisce, correggi la descrizione
+  (`gh pr edit <N> --body-file <file>`), non serve un nuovo commit.
+- Per controlli in più puoi usare gli agenti di [`docs/agents/`](docs/agents/README.md): propongono, ma review e
+  approvazione restano di una persona. Se ne usi uno, scrivilo nella PR e compila la scheda in
+  [`docs/evidence/agentic/`](docs/evidence/agentic/TEMPLATE.md).
 
 ## 5. Review
 

@@ -37,6 +37,7 @@ Incontro con il PO del **27/10/2026** (task #85). Le domande sono quelle prepara
 | 25 | 27/10 | Orari delle fasce | Mattina 08:00–14:00, pomeriggio 14:00–19:00, sera 19:00–23:00 (ora di Roma) | _Definiti dal gruppo, da confermare alla review di oggi_ | #139 | asprenolapo |
 | 26 | 27/10 | Prenotazione a cavallo di due fasce | Non ammessa: una prenotazione sta dentro una sola fascia | _Definito dal gruppo, da confermare alla review di oggi_ | #139 | asprenolapo |
 | 27 | 27/10 | Il limite per fascia vale anche per i partecipanti? | No, solo per chi prenota (i partecipanti sono già protetti dal vincolo sulle persone) | _Definito dal gruppo, da confermare alla review di oggi_ | #139 | asprenolapo |
+| 28 | 27/10 | **Richiesta del professore**: flusso agentico nel progetto | Le slide lo indicavano come bonus facoltativo su un solo task | **Da integrare nel progetto**, con i vincoli: nessun orchestratore, nessun segreto, nessuna spesa, tutto sotto il controllo del gruppo, solo lo strumento autorizzato e gratuito | Flusso e ruoli in [docs/agents](../agents/README.md); controllo fisso delle PR in CI | asprenolapo |
 
 ## Questioni aperte
 
