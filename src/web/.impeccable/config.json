@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "src/app/app.html"
+        ],
+        "createdAt": "2026-10-27T10:14:52.763Z",
+        "reason": "model: space images use [src] binding to real files in public/assets; no static src attribute"
+      }
+    ]
+  }
+}

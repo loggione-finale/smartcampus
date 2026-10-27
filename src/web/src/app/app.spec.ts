@@ -18,7 +18,8 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Spazi pronti');
-    expect(compiled.querySelectorAll('mat-card').length).toBe(4);
+    expect(compiled.querySelector('h1')?.textContent).toContain('Prenota.');
+    expect(compiled.querySelectorAll('.space').length).toBe(4);
+    expect(compiled.querySelectorAll('.service').length).toBe(3);
   });
 });
