@@ -6,10 +6,20 @@ Un solo comando avvia i database di tutti i servizi:
 |---|---|---|---|---|
 | Bookings | PostgreSQL 17 | `bookings`, `bookings_test` | `bookings_app` | `POSTGRES_PORT` (5432) |
 | Users | PostgreSQL 17 | `users`, `users_test` | `users_app` | `POSTGRES_PORT` (5432) |
-| Spaces | MongoDB 8 | `spaces`, `spaces_test` | `spaces_app` | `MONGO_PORT` (27017) |
+| Spaces | MongoDB 7.0 | `spaces`, `spaces_test` | `spaces_app` | `MONGO_PORT` (27017) |
 
 Ogni utente può usare **solo** i propri database. Le porte sono aperte solo su `127.0.0.1`: gli altri PC
 della rete non vedono i database.
+
+**Perché MongoDB 7.0 e non 8:** MongoDB 8 si rifiuta di partire sui kernel Linux dal 6.19 al 7.0.13
+([SERVER-121912](https://jira.mongodb.org/browse/SERVER-121912)). Con Docker conta il kernel del computer che
+ospita il container: alcuni server della CI di GitHub hanno già quel kernel, e lo stesso può succedere sui
+nostri PC dopo un aggiornamento di Docker Desktop. Tutto quello che usa Spaces (documenti, indici, utenti) c'è
+anche nella 7.0 (bug #148).
+
+Se avevi già avviato i database con MongoDB 8, la 7.0 non legge i dati scritti dalla 8 e il container `mongo`
+si riavvia di continuo. Serve una volta `docker compose down -v` e poi `docker compose up -d`: si perdono i dati
+locali (solo dati sintetici) e al prossimo avvio vengono ricreati utenti e database.
 
 ## Primo avvio
 

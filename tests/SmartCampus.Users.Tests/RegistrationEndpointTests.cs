@@ -10,40 +10,9 @@ using Microsoft.Extensions.DependencyInjection;
 using SmartCampus.Users.Api.Data;
 using SmartCampus.Users.Api.Domain.Entities;
 using SmartCampus.Users.Api.Features.Registration;
+using SmartCampus.Users.Tests.Support;
 
 namespace SmartCampus.Users.Tests;
-
-public class UsersApiFactory : WebApplicationFactory<Program>
-{
-    private readonly string _dbName = Guid.NewGuid().ToString();
-
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.UseEnvironment("Testing");
-        builder.ConfigureAppConfiguration((_, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                { "ConnectionStrings:Users", "Host=localhost;Database=users_test" },
-                { "JWT_SECRET", "super-secret-jwt-signing-key-for-smartcampus-tests-123456" }
-            });
-        });
-
-        builder.ConfigureServices(services =>
-        {
-            var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<UsersDbContext>));
-            if (descriptor != null)
-            {
-                services.Remove(descriptor);
-            }
-
-            services.AddDbContext<UsersDbContext>(options =>
-            {
-                options.UseInMemoryDatabase(_dbName);
-            });
-        });
-    }
-}
 
 public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
 {

@@ -18,7 +18,8 @@ public static class JwtTokenHelper
         string signingKey,
         TimeSpan? lifetime = null,
         string? issuer = null,
-        string? audience = null)
+        string? audience = null,
+        IEnumerable<Claim>? additionalClaims = null)
     {
         if (string.IsNullOrWhiteSpace(userId))
             throw new ArgumentException("User id cannot be null or empty.", nameof(userId));
@@ -42,6 +43,11 @@ public static class JwtTokenHelper
             new("role", role),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        if (additionalClaims != null)
+        {
+            claims.AddRange(additionalClaims);
+        }
 
         var now = DateTime.UtcNow;
         var tokenLifetime = lifetime ?? DefaultTokenLifetime;
