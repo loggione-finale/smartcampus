@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +15,10 @@ namespace SmartCampus.Bookings.Tests.Features.Equipment;
 
 public class EquipmentRequestsPostgresEndpointTests(BookingsApiFactory factory) : IClassFixture<BookingsApiFactory>
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     [Fact]
     public async Task Rejects_single_booking_with_equipment_with_400_and_persists_nothing()

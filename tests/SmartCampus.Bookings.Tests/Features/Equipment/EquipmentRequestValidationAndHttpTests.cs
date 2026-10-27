@@ -115,6 +115,35 @@ public class EquipmentRequestValidationAndHttpTests
         Assert.Null(deserialized.EquipmentRequests[0].Notes);
         Assert.Equal("other", deserialized.EquipmentRequests[1].EquipmentType);
         Assert.Equal("Serve cavo USB-C", deserialized.EquipmentRequests[1].Notes);
+
+        const string apiResponseJson = """
+        [
+          {
+            "id": "3f2a9c1e-0000-4000-8000-000000000010",
+            "bookingId": "3f2a9c1e-0000-4000-8000-000000000020",
+            "equipmentType": "videoprojector",
+            "equipmentName": "Videoproiettore",
+            "notes": null,
+            "status": "Confirmed",
+            "createdAt": "2026-10-29T09:00:00Z"
+          },
+          {
+            "id": "3f2a9c1e-0000-4000-8000-000000000011",
+            "bookingId": "3f2a9c1e-0000-4000-8000-000000000020",
+            "equipmentType": "interactive-whiteboard",
+            "equipmentName": "Lavagna interattiva",
+            "notes": "Serve pennarello digitale",
+            "status": "Pending",
+            "createdAt": "2026-10-29T09:00:00Z"
+          }
+        ]
+        """;
+
+        var responseItems = JsonSerializer.Deserialize<List<EquipmentRequestResponse>>(apiResponseJson, JsonOptions);
+        Assert.NotNull(responseItems);
+        Assert.Equal(2, responseItems!.Count);
+        Assert.Equal(EquipmentRequestStatus.Confirmed, responseItems[0].Status);
+        Assert.Equal(EquipmentRequestStatus.Pending, responseItems[1].Status);
     }
 
     [Fact]

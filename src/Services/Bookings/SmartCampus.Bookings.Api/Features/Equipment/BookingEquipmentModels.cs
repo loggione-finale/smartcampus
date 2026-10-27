@@ -130,7 +130,7 @@ public sealed record EquipmentRequestResponse(
     string EquipmentType,
     string EquipmentName,
     string? Notes,
-    EquipmentRequestStatus Status,
+    [property: JsonConverter(typeof(JsonStringEnumConverter))] EquipmentRequestStatus Status,
     DateTime CreatedAt)
 {
     public static EquipmentRequestResponse From(EquipmentRequest entity) =>
