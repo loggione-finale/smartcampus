@@ -8,8 +8,27 @@ namespace SmartCampus.Bookings.Api.Features.Invitations;
 [ApiController]
 [Authorize]
 [Route("invitations")]
-public class InvitationsController(AcceptInvitationService acceptInvitationService) : ControllerBase
+public class InvitationsController(
+    AcceptInvitationService acceptInvitationService,
+    MyInvitationsService myInvitationsService) : ControllerBase
 {
+    [HttpGet("mine")]
+    [ProducesResponseType<List<InvitationResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Mine(CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var email = User.FindFirstValue(ClaimTypes.Email);
+
+        var invitations = await myInvitationsService.GetMineAsync(userId, email, cancellationToken);
+
+        return Ok(invitations);
+    }
+
     [HttpPost("{id:guid}/accept")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Accept(Guid id, CancellationToken cancellationToken)

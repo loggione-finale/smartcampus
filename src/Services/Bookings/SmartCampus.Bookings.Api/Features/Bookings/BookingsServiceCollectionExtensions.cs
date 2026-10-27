@@ -19,6 +19,7 @@ public static class BookingsServiceCollectionExtensions
         services.AddScoped<AvailabilityService>();
         services.AddScoped<MyBookingsService>();
         services.AddScoped<AcceptInvitationService>();
+        services.AddScoped<MyInvitationsService>();
         services.AddScoped<IPendingClosureChecker, PendingClosureChecker>();
         services.AddHttpClient<ISpacesClient, SpacesClient>(client =>
         {
