@@ -1,3 +1,4 @@
+using SmartCampus.Bookings.Api.Features.Admin;
 using SmartCampus.Bookings.Api.Features.Availability;
 using SmartCampus.Bookings.Api.Features.Bookings.Closure;
 using SmartCampus.Bookings.Api.Features.Bookings.MyBookings;
@@ -21,6 +22,7 @@ public static class BookingsServiceCollectionExtensions
         services.AddScoped<CancelBookingService>();
         services.AddScoped<AvailabilityService>();
         services.AddScoped<MyBookingsService>();
+        services.AddScoped<AdminStatsService>();
         services.AddScoped<AcceptInvitationService>();
         services.AddScoped<MyInvitationsService>();
         services.AddScoped<IPendingClosureChecker, PendingClosureChecker>();
