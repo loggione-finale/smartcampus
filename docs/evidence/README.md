@@ -12,6 +12,12 @@ Per ogni prova significativa registriamo:
 
 Distinguiamo sempre ciò che è stato provato da ciò che è soltanto ipotizzato.
 
+## Prove registrate
+
+- [Avvio da zero](2026-10-27-startup-from-scratch.md) (SC-01.T6, #80)
+- [Concorrenza sulle prenotazioni](booking-concurrency.md) (SC-06.T5, #36)
+- [Blocco nuove prenotazioni con commento di chiusura in sospeso](2026-10-28-pending-closure-blocking.md) (SC-29.T3, #115)
+
 ## Limiti noti
 
 - **Prenotazioni**: la prova di concorrenza (`booking-concurrency.md`, #36) copre solo il livello database, non l'endpoint HTTP; la verifica negativa (senza vincolo o lock la prova fallisce) è solo manuale, e nel caso dell'aula mista il numero esatto di accettate non è deterministico (garantito solo il tetto di capienza).
