@@ -4,7 +4,9 @@
 > vincoli: **nessun orchestratore, nessun segreto, nessuna spesa**; tutto resta sotto il controllo del gruppo.
 > Si usa solo lo strumento autorizzato, gratuito per tutti.
 
-Sono **7 ruoli**: un controllo fisso in CI e sei agenti. Gli agenti aiutano il gruppo a controllare e a scrivere codice, ma **non decidono e non pubblicano**: propongono,
+Sono **7 ruoli**: un controllo fisso in CI e sei agenti. I sei agenti sono anche **agenti personalizzati di Copilot** in
+[`.github/agents/`](../../.github/agents/): in VS Code si scelgono dal selettore degli agenti della chat. Il controllore
+delle PR non è un agente Copilot perché non usa un LLM: è il job "Controllo PR". Gli agenti aiutano il gruppo a controllare e a scrivere codice, ma **non decidono e non pubblicano**: propongono,
 e una persona accetta, corregge o scarta (slide 41-44 e 58). Ogni ruolo nasce da un problema che abbiamo
 incontrato davvero durante lo Sprint 1.
 
@@ -88,6 +90,14 @@ confrontabili.
 4. Prima di ogni comando nel terminale Copilot chiede conferma: **leggi il comando** e conferma solo quelli
    elencati nella scheda. Non attivare l'approvazione automatica dei comandi.
 5. Alla fine rimuovi la copia: `git worktree remove ../smartcampus-agente`.
+
+Gli agenti di [`.github/agents/`](../../.github/agents/) compaiono nel selettore degli agenti di Copilot, in VS Code e
+nella pagina degli agenti di GitHub. Ogni file limita gli strumenti dell'agente (per esempio il revisore non ha lo
+strumento per modificare file) e ha `disable-model-invocation: true`, così Copilot non lo sceglie da solo.
+
+**Il cloud agent di Copilot non si usa** (decisione del 28/10): non si avviano attività dalla pagina degli agenti di
+GitHub e non si assegnano issue a Copilot. Gli agenti si usano solo in VS Code, con una persona che conferma ogni
+comando.
 
 Le regole comuni a tutti i ruoli sono anche in [`.github/copilot-instructions.md`](../../.github/copilot-instructions.md),
 che Copilot legge da solo in chat e nelle revisioni delle PR.
