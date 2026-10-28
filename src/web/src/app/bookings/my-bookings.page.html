@@ -155,6 +155,55 @@
                     </div>
                   </div>
                 }
+
+                @if (canCancel(booking)) {
+                  <div class="booking-actions" data-testid="booking-cancel-actions">
+                    @if (confirmingCancelBookingId() === booking.id) {
+                      <div class="cancel-confirm-box" role="alert" data-testid="cancel-confirm-box">
+                        <p class="confirm-text">
+                          Sei sicuro di voler annullare questa prenotazione? Lo spazio tornerà subito disponibile per tutti.
+                        </p>
+                        <div class="confirm-actions">
+                          <button
+                            mat-flat-button
+                            class="btn btn-danger"
+                            type="button"
+                            (click)="confirmCancel(booking)"
+                            [disabled]="cancellingBookingId() !== null"
+                            data-testid="confirm-cancel-btn"
+                          >
+                            {{
+                              cancellingBookingId() === booking.id
+                                ? 'Annullamento in corso…'
+                                : 'Sì, annulla prenotazione'
+                            }}
+                          </button>
+                          <button
+                            mat-stroked-button
+                            type="button"
+                            (click)="dismissCancel()"
+                            [disabled]="cancellingBookingId() !== null"
+                            data-testid="abort-cancel-btn"
+                          >
+                            Non annullare
+                          </button>
+                        </div>
+                      </div>
+                    } @else {
+                      <button
+                        mat-stroked-button
+                        class="cancel-btn"
+                        type="button"
+                        (click)="promptCancel(booking)"
+                        [disabled]="cancellingBookingId() !== null"
+                        data-testid="cancel-booking-btn"
+                      >
+                        <mat-icon aria-hidden="true">cancel</mat-icon>
+                        Annulla prenotazione
+                      </button>
+                    }
+                  </div>
+                }
               </li>
             }
           </ul>

@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { MyBookingsPage } from './my-bookings.page';
+import { BOOKINGS_CHANGED_EVENT, MyBookingsPage } from './my-bookings.page';
 import {
   BOOKING_STATUS_LABELS,
   MyBookingDto,
@@ -30,6 +30,21 @@ const FUTURE_BOOKING: MyBookingDto = {
   hasPendingClosureComment: false,
   hasPendingInvitation: true,
   invitationExpiresAt: '2099-01-10T17:00:00Z',
+};
+
+const FUTURE_ORGANIZER_BOOKING: MyBookingDto = {
+  id: 'booking-organizer',
+  referenceCode: 'SC-990116-DDDD',
+  spaceId: 'space-4',
+  spaceName: 'Laboratorio Grafica',
+  spaceBuilding: 'Edificio C',
+  start: '2099-01-16T14:00:00Z',
+  end: '2099-01-16T16:00:00Z',
+  status: 'Confirmed',
+  role: 'Organizer',
+  hasPendingClosureComment: false,
+  hasPendingInvitation: false,
+  invitationExpiresAt: null,
 };
 
 const PAST_AWAITING_COMMENT: MyBookingDto = {
@@ -381,5 +396,140 @@ describe('MyBookingsPage', () => {
     );
     const link = host().querySelector('[data-testid="empty-state"] a') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/spaces');
+  });
+
+  it('shows cancel button only for the organizer of active confirmed bookings and not for participants or cancelled bookings', () => {
+    flushInitialLoad([FUTURE_ORGANIZER_BOOKING, FUTURE_BOOKING, PAST_CANCELLED]);
+
+    const cards = host().querySelectorAll('[data-testid="booking-card"]');
+    expect(cards.length).toBe(3);
+
+    // Organizer future confirmed: has cancel button
+    expect(cards[0].querySelector('[data-testid="cancel-booking-btn"]')).toBeTruthy();
+
+    // Participant future confirmed: no cancel button
+    expect(cards[1].querySelector('[data-testid="cancel-booking-btn"]')).toBeFalsy();
+
+    // Cancelled past: no cancel button
+    expect(cards[2].querySelector('[data-testid="cancel-booking-btn"]')).toBeFalsy();
+  });
+
+  it('shows inline confirmation box when cancel button is clicked, and aborts when requested', () => {
+    flushInitialLoad([FUTURE_ORGANIZER_BOOKING]);
+
+    const cancelBtn = host().querySelector('[data-testid="cancel-booking-btn"]') as HTMLButtonElement;
+    expect(cancelBtn).toBeTruthy();
+    cancelBtn.click();
+    fixture.detectChanges();
+
+    const confirmBox = host().querySelector('[data-testid="cancel-confirm-box"]');
+    expect(confirmBox).toBeTruthy();
+    expect(confirmBox?.textContent).toContain('Sei sicuro di voler annullare questa prenotazione?');
+
+    const abortBtn = host().querySelector('[data-testid="abort-cancel-btn"]') as HTMLButtonElement;
+    expect(abortBtn).toBeTruthy();
+    abortBtn.click();
+    fixture.detectChanges();
+
+    expect(host().querySelector('[data-testid="cancel-confirm-box"]')).toBeFalsy();
+    expect(host().querySelector('[data-testid="cancel-booking-btn"]')).toBeTruthy();
+  });
+
+  it('cancels the booking, reloads the list, shows success and dispatches smartcampus:bookings-changed event', () => {
+    let eventDispatched = false;
+    const eventListener = () => {
+      eventDispatched = true;
+    };
+    window.addEventListener(BOOKINGS_CHANGED_EVENT, eventListener);
+
+    try {
+      flushInitialLoad([FUTURE_ORGANIZER_BOOKING]);
+
+      (host().querySelector('[data-testid="cancel-booking-btn"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      const confirmBtn = host().querySelector('[data-testid="confirm-cancel-btn"]') as HTMLButtonElement;
+      confirmBtn.click();
+      fixture.detectChanges();
+
+      const cancelReq = httpTesting.expectOne(`/api/bookings/${FUTURE_ORGANIZER_BOOKING.id}/cancel`);
+      expect(cancelReq.request.method).toBe('POST');
+      cancelReq.flush({ id: FUTURE_ORGANIZER_BOOKING.id, status: 'Cancelled' });
+      fixture.detectChanges();
+
+      expect(eventDispatched).toBeTrue();
+
+      // The component reloads bookings
+      const reloadReq = httpTesting.expectOne(BOOKINGS_URL);
+      reloadReq.flush([{ ...FUTURE_ORGANIZER_BOOKING, status: 'Cancelled' }]);
+      fixture.detectChanges();
+
+      expect(host().querySelector('[data-testid="action-success"]')?.textContent).toContain(
+        'Prenotazione annullata. Lo spazio è di nuovo disponibile.',
+      );
+    } finally {
+      window.removeEventListener(BOOKINGS_CHANGED_EVENT, eventListener);
+    }
+  });
+
+  it('handles 409 conflict when booking was already cancelled or ended', () => {
+    flushInitialLoad([FUTURE_ORGANIZER_BOOKING]);
+
+    (host().querySelector('[data-testid="cancel-booking-btn"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    (host().querySelector('[data-testid="confirm-cancel-btn"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    httpTesting
+      .expectOne(`/api/bookings/${FUTURE_ORGANIZER_BOOKING.id}/cancel`)
+      .flush({ title: 'Booking already cancelled' }, { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+
+    // Reloads bookings
+    httpTesting.expectOne(BOOKINGS_URL).flush([{ ...FUTURE_ORGANIZER_BOOKING, status: 'Cancelled' }]);
+    fixture.detectChanges();
+
+    expect(host().querySelector('[data-testid="action-error"]')?.textContent).toContain(
+      'La prenotazione risulta già annullata o non più annullabile.',
+    );
+  });
+
+  it('handles 403 forbidden when user is not authorized to cancel', () => {
+    flushInitialLoad([FUTURE_ORGANIZER_BOOKING]);
+
+    (host().querySelector('[data-testid="cancel-booking-btn"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    (host().querySelector('[data-testid="confirm-cancel-btn"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    httpTesting
+      .expectOne(`/api/bookings/${FUTURE_ORGANIZER_BOOKING.id}/cancel`)
+      .flush({ title: 'Only organizer can cancel' }, { status: 403, statusText: 'Forbidden' });
+    fixture.detectChanges();
+
+    expect(host().querySelector('[data-testid="action-error"]')?.textContent).toContain(
+      'Solo l’organizzatore può annullare la prenotazione.',
+    );
+  });
+
+  it('handles 503 service unavailable during cancellation', () => {
+    flushInitialLoad([FUTURE_ORGANIZER_BOOKING]);
+
+    (host().querySelector('[data-testid="cancel-booking-btn"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    (host().querySelector('[data-testid="confirm-cancel-btn"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    httpTesting
+      .expectOne(`/api/bookings/${FUTURE_ORGANIZER_BOOKING.id}/cancel`)
+      .flush({ title: 'Unavailable' }, { status: 503, statusText: 'Service Unavailable' });
+    fixture.detectChanges();
+
+    expect(host().querySelector('[data-testid="action-error"]')?.textContent).toContain(
+      'Il servizio prenotazioni non è raggiungibile. Riprova tra poco.',
+    );
   });
 });

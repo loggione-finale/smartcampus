@@ -318,6 +318,64 @@
   --mat-button-outlined-label-text-color: #8a5600;
 }
 
+.booking-actions {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(28, 24, 90, 0.15);
+}
+
+.cancel-btn.mat-mdc-outlined-button {
+  --mat-button-outlined-container-height: 40px;
+  --mat-button-outlined-outline-color: #a32d2d;
+  --mat-button-outlined-label-text-color: #a32d2d;
+  font-weight: 700;
+  font-size: 14px;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: #ffe8e4;
+  }
+}
+
+.cancel-confirm-box {
+  padding: 12px 14px;
+  background: #ffe8e4;
+  border-left: 3px solid #a32d2d;
+
+  .confirm-text {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #7a2119;
+    line-height: 1.4;
+  }
+
+  .confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+}
+
+.btn-danger.mat-mdc-unelevated-button {
+  --mat-button-filled-container-color: #a32d2d;
+  --mat-button-filled-label-text-color: #ffffff;
+  --mat-button-filled-container-height: 38px;
+  font-weight: 700;
+  font-size: 14px;
+
+  &:hover {
+    background: #7a2119;
+  }
+}
+
 .state-panel,
 .loading-box {
   display: grid;
