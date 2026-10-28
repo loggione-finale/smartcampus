@@ -16,8 +16,7 @@ export const routes: Routes = [
   {
     path: 'admin',
     canActivate: [adminGuard],
-    loadComponent: () => import('./admin/admin-home.page').then((m) => m.AdminHomePage),
-    title: 'Pannello amministratore · SmartCampus',
+    loadChildren: () => import('./admin/admin.routes').then((m) => m.ADMIN_ROUTES),
   },
   {
     path: 'forbidden',

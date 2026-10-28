@@ -39,7 +39,7 @@ matricola e la password di un account del seed; le credenziali demo sono in
 - Il token restituito da `POST /api/users/auth/login` viene salvato in `sessionStorage` sotto le
   chiavi `smartcampus.auth.token`, `smartcampus.auth.user` e `smartcampus.auth.expiresAt`.
   Per compatibilità temporanea vengono aggiornate anche `smartcampus.token` e
-  `smartcampus.role`, usate dalle pagine admin già presenti nei branch dedicati.
+  `smartcampus.role`, usate dalle pagine admin già in `main`.
 - Il ruolo per la UI viene letto dai claim del token, non dal campo modificabile dell’utente in
   `sessionStorage`. Resta comunque solo una comodità: la firma e i permessi sono verificati dal
   server a ogni chiamata.
@@ -94,3 +94,11 @@ Gli artefatti vengono salvati nella cartella `dist/`, esclusa dal repository.
 ```bash
 npm test -- --watch=false
 ```
+
+## Area personale (`/admin`)
+
+Le pagine sotto `/admin` sono per il personale (ruolo `Admin`). Dopo il login (#82) la guardia
+`adminGuard` legge il ruolo dai claim del JWT e un utente `User` viene mandato a `/forbidden`.
+Il servizio della dashboard legge ancora il token dalla chiave legacy `smartcampus.token`, tenuta
+sincronizzata da `AuthSessionService`: `admin-session.ts` può essere rimosso quando tutte le pagine
+admin useranno la sessione centrale.

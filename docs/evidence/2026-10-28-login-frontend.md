@@ -5,7 +5,7 @@
 | Cosa verifica | Accesso con email o matricola, sessione in `sessionStorage`, `Authorization: Bearer`, guard utente/admin, logout e ritorno al login con token scaduto |
 | Come | `npm run build` e `npm test -- --watch=false --browsers=ChromeHeadless` in `src/web`; lettura del contratto `POST /api/users/auth/login` in `AuthController.cs` |
 | Esito atteso | Build senza errori, test verdi, utente `User` respinto da `/admin`, sessione cancellata su `401` |
-| Esito osservato | Build completata; 56 test su 56 passati il 28/10/2026. Warning: chunk iniziale 603,54 kB (budget 600 kB) e `app.scss` sotto il limite dopo la pulizia. |
+| Esito osservato | Build completata; 89 test su 89 passati il 28/10/2026 dopo l’allineamento a `main`. Warning: chunk iniziale 814,53 kB (budget 600 kB) e `app.scss` 11,99 kB (soglia di warning 10 kB). |
 | Limiti | Vedi sotto |
 
 ## Prove automatiche
@@ -15,7 +15,7 @@
 - `auth.interceptor.spec.ts`: Bearer sulle API protette, esclusione di login/registrazione, `401` singolo e concorrente, `403` senza logout, token scaduto.
 - `auth.guard.spec.ts`: anonimo, sessione valida, sessione scaduta, `User` su admin, `Admin` su admin.
 - `login.page.spec.ts`: form invalido, login User/Admin, ritorno all’URL richiesto, `401` generico, `5xx`, `returnUrl` non sicuro, avviso di sessione scaduta.
-- `account.page.spec.ts` e `admin-home.page.spec.ts`: dati mostrati e logout.
+- `account.page.spec.ts`: dati mostrati e logout. La dashboard admin della issue #74 resta coperta da `admin/dashboard.page.spec.ts`.
 
 ## Limiti noti
 
@@ -24,5 +24,5 @@
 - **Logout**: è solo client-side. Il JWT resta valido fino alla scadenza di 8 ore; non esiste revoca server-side.
 - **Scadenza**: viene riconosciuta alla prima navigazione o chiamata API successiva; non c’è un timer che sposta l’utente mentre la pagina è ferma.
 - **Multi-scheda**: `sessionStorage` è per scheda; login e logout non si propagano tra schede.
-- **Pagine admin**: `/admin` in questo branch è un segnaposto protetto. Le pagine dei branch `feature/74-admin-dashboard-page` e `feature/119-admin-alerts-page` dovranno usare `adminGuard` e le chiavi legacy restano sincronizzate per la transizione.
+- **Pagine admin**: `/admin` monta la dashboard della issue #74 ed è protetta da `adminGuard`; le chiavi legacy restano sincronizzate perché `admin-api.service.ts` legge ancora `smartcampus.token` tramite `admin-session.ts`, da rimuovere quando tutte le pagine admin useranno `AuthSessionService`.
 - **Proxy**: il frontend usa `/api/users/auth/login`; il rewrite di `proxy.conf.json` lo porta a `/auth/login`. Un deploy senza lo stesso rewrite richiede una configurazione equivalente.
