@@ -5,6 +5,10 @@
 > riusciamo a far rientrare prima della consegna, chi fa cosa e cosa dichiariamo come sviluppo futuro.
 > Commentate la PR **entro le 21:45** con la vostra disponibilità, le obiezioni e le idee (vedi
 > [la sezione 8](#8-le-vostre-idee)). asprenolapo conferma il piano alle 21:45 e apre le issue.
+>
+> **Non è un obbligo.** Se il gruppo preferisce fermarsi con quello che c'è, si torna al piano già concordato:
+> prova da zero la mattina, prova dell'interfaccia (#93), rilascio `v0.2` e prova a voce (#51). In quel caso le
+> decisioni 31 e 32 e le richieste R1–R9 si dichiarano come sviluppi futuri, nella release e nella presentazione.
 
 ## 1. Cosa è emerso
 
