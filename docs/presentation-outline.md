@@ -1,6 +1,6 @@
 # Scaletta della presentazione e della demo
 
-> **Stato: bozza aggiornata il 28/10** (issue #92). Durata prevista 12 minuti più la demo. Le parti marcate **[da completare]** le
+> **Stato: bozza aggiornata il 28/10 (Sprint 2 e chi ha fatto cosa)** (issue #92). Durata prevista 12 minuti più la demo. Le parti marcate **[da completare]** le
 > scrive e le verifica chi è responsabile di quell'area: si presenta solo ciò che è stato provato davvero.
 > Le slide chiedono che ogni componente sappia spiegare il proprio contributo: ognuno rilegge e fa proprio il suo pezzo.
 
@@ -13,10 +13,11 @@ Le slide corrispondenti sono in [presentation-slides.pptx](presentation-slides.p
 | 1 | 1 | Il bisogno | Trovare e prenotare aule, laboratori e sale studio senza conflitti, anche per gruppi, e capire come vengono usati | **[da assegnare]** |
 | 2 | 1 | Perimetro concordato | Cosa abbiamo concordato con il PO e cosa è fuori ([po-decisions.md](analysis/po-decisions.md)). Le decisioni ancora "in attesa" vanno chiuse prima di presentare | asprenolapo **[da completare]** |
 | 3 | 2 | Architettura e scelte | Tre servizi (Spaces su MongoDB, Bookings e Users su PostgreSQL), REST sincrono, Angular. Perché: [architecture.md](architecture.md), scelte D1-D10 con pro e contro | **[da assegnare]** |
-| 4 | 4 | Demo | Percorso scritto qui sotto, su dati sintetici | tutti, una parte ciascuno |
-| 5 | 2 | Prove eseguite | Cosa abbiamo provato davvero e con che esito; sotto "Prove da citare" | Rhaastrake, FranDeSa456 |
-| 6 | 1 | Limiti noti | Sotto "Limiti da dichiarare" | **[da assegnare]** |
-| 7 | 1 | Costi e sviluppi futuri | Costi di sviluppo e gestione **[da completare: FranDeSa456]**; cosa faremmo con più tempo | **[da assegnare]** |
+| 4 | 1 | Sprint 2: cosa abbiamo consegnato | Gruppi e inviti, commento finale, area admin, accesso e catalogo, regole di prenotazione, piattaforma; 76 PR mergiate in due giorni | **[da assegnare]** |
+| 5 | 4 | Demo | Percorso scritto qui sotto, su dati sintetici | tutti, una parte ciascuno |
+| 6 | 2 | Prove eseguite | Cosa abbiamo provato davvero e con che esito; sotto "Prove da citare" | Rhaastrake, FranDeSa456 |
+| 7 | 1 | Limiti noti | Sotto "Limiti da dichiarare" | **[da assegnare]** |
+| 8 | 1 | Costi e sviluppi futuri | Stime di `docs/analysis/value-and-costs.md`: zero licenze, demo in locale, esercizio stimato in 2 vCPU e 2-4 GB; sviluppi: email reali, SSO, più sedi, sensori | **[da assegnare]** |
 
 ## Percorso della demo (da provare a voce almeno una volta con tutto il gruppo)
 
@@ -64,15 +65,17 @@ Interfaccia provata su due sistemi operativi e su uno smartphone, con esito regi
 
 ## Chi spiega cosa
 
-| Persona | Contributo da saper spiegare |
-|---|---|
-| asprenolapo | Piattaforma: soluzione, Docker Compose, CI, controllo PR, flusso agentico, ADR; incontro con il PO |
-| AldAndrew0 | Spaces su MongoDB: catalogo, indisponibilità, strumenti |
-| Rhaastrake | Bookings: schema, creazione, annullamento, vincoli, aule miste, fasce orarie, seed dei dati sintetici |
-| FranDeSa456 | Bookings: gruppi, inviti, scadenza, email, mie prenotazioni, test di concorrenza |
-| fedeericodl | Users e accesso, commento finale, disponibilità, dati sintetici |
-| antoStr | Admin: dashboard, avvisi, eccezioni, statistiche d'uso; frontend dell'area admin |
-| Leo-prova | Frontend utente: accesso, prenotazione, gestione errori |
+Il numero di PR è quello delle PR mergiate dal 26/10 al 28/10 (fonte: GitHub).
+
+| Persona | PR | Contributo da saper spiegare |
+|---|---|---|
+| asprenolapo | 11 | Piattaforma: CI, MongoDB 7.0, ADR, prove di guasto, flusso agentico e controllo PR; incontro con il PO |
+| AldAndrew0 | 10 | Spaces: catalogo e ricerca, indisponibilità, strumenti, pagine del catalogo |
+| Rhaastrake | 16 | Bookings: schema, creazione, annullamento, vincoli, aule miste, fasce orarie, seed, demo |
+| FranDeSa456 | 9 | Gruppi, inviti con scadenza, email `.eml`, mie prenotazioni, test di concorrenza |
+| fedeericodl | 13 | Users e accesso, commento finale, disponibilità, dati sintetici |
+| antoStr | 11 | Area admin: dashboard, avvisi, annullamento, statistiche, report, metriche d'uso |
+| Leo-prova | 6 | Frontend: login, registrazione, form di prenotazione, mie prenotazioni |
 
 ## Prima di presentare
 
