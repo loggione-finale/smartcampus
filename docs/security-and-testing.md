@@ -89,7 +89,7 @@
 | Il client invia campi che non gli spettano (`status`, `organizerId`, `checkedInAt`) | DTO di input senza questi campi; l'organizzatore è sempre l'utente corrente |
 | Prenotazioni sovrapposte per richieste simultanee | Vincoli di esclusione nel database (spazio e persona) |
 | Abuso delle prenotazioni di gruppo (W6) | Il partecipante può uscire; proposta: limite di prenotazioni future per persona |
-| Statistiche viste da uno studente | `GET /bookings/stats` solo per `Staff` |
+| Statistiche viste da uno studente | `GET /admin/stats` solo per `Admin` |
 | Dati personali nelle statistiche | Le statistiche restituiscono conteggi, non elenchi di persone |
 | Servizio lento o giù che blocca Bookings | Timeout di 3 s sulle chiamate a Spaces e Users, `503` chiaro |
 

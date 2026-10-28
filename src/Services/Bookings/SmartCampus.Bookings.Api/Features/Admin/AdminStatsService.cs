@@ -20,6 +20,7 @@ public record StatsGroupResponse(
     int Closed,
     int SpaceUsed,
     int SpaceNotUsed,
+    int WithoutComment,
     int TotalAttendees,
     int IssuesReported);
 
@@ -39,26 +40,34 @@ public class AdminStatsService(BookingsDbContext dbContext)
                 b.SpaceTypeSnapshot,
                 b.SpaceBuildingSnapshot,
                 b.Status,
+                b.Period,
                 Comment = b.ClosingComment
             })
             .ToListAsync(cancellationToken);
 
+        var now = DateTime.UtcNow;
+
+        // Space groups use the id only: the label is the name snapshot of the latest booking in the period.
         return bookings
             .GroupBy(b => groupBy switch
             {
-                StatsGroupBy.Type => (Key: b.SpaceTypeSnapshot, Label: b.SpaceTypeSnapshot),
-                StatsGroupBy.Building => (Key: b.SpaceBuildingSnapshot, Label: b.SpaceBuildingSnapshot),
-                _ => (Key: b.SpaceId.ToString(), Label: b.SpaceNameSnapshot)
+                StatsGroupBy.Type => b.SpaceTypeSnapshot,
+                StatsGroupBy.Building => b.SpaceBuildingSnapshot,
+                _ => b.SpaceId.ToString()
             })
             .Select(group => new StatsGroupResponse(
-                group.Key.Key,
-                group.Key.Label,
+                group.Key,
+                groupBy == StatsGroupBy.Space
+                    ? group.MaxBy(b => b.Period.LowerBound)!.SpaceNameSnapshot
+                    : group.Key,
                 group.Count(),
                 group.Count(b => b.Status == BookingStatus.Confirmed),
                 group.Count(b => b.Status == BookingStatus.Cancelled),
                 group.Count(b => b.Status == BookingStatus.Closed),
                 group.Count(b => b.Comment is { SpaceUsed: true }),
                 group.Count(b => b.Comment is { SpaceUsed: false }),
+                // Finished, not cancelled, no closing comment.
+                group.Count(b => b.Status != BookingStatus.Cancelled && b.Period.UpperBound <= now && b.Comment is null),
                 group.Sum(b => b.Comment?.AttendeesCount ?? 0),
                 group.Count(b => b.Comment is { IssuesReported: true })))
             .OrderBy(s => s.Label)
