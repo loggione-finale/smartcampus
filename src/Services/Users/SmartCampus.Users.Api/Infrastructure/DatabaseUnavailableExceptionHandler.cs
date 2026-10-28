@@ -18,7 +18,11 @@ public sealed class DatabaseUnavailableExceptionHandler(ILogger<DatabaseUnavaila
             return false;
         }
 
-        logger.LogWarning(exception, "Database not reachable while handling {Path}.", httpContext.Request.Path);
+        var safePath = (httpContext.Request.Path.Value ?? string.Empty)
+            .Replace("\r", string.Empty)
+            .Replace("\n", string.Empty);
+
+        logger.LogWarning(exception, "Database not reachable while handling {Path}.", safePath);
 
         httpContext.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
         httpContext.Response.Headers.RetryAfter = "5";

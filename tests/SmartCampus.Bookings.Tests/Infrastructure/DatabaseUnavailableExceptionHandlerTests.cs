@@ -59,4 +59,19 @@ public class DatabaseUnavailableExceptionHandlerTests
 
         Assert.False(handled);
     }
+
+    [Fact]
+    public async Task Handles_path_with_line_breaks_safely()
+    {
+        var handler = new DatabaseUnavailableExceptionHandler(NullLogger<DatabaseUnavailableExceptionHandler>.Instance);
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/api/bookings\r\n[FORGED]";
+        context.Response.Body = new MemoryStream();
+        var exception = new NpgsqlException("unreachable", new SocketException());
+
+        var handled = await handler.TryHandleAsync(context, exception, CancellationToken.None);
+
+        Assert.True(handled);
+        Assert.Equal(StatusCodes.Status503ServiceUnavailable, context.Response.StatusCode);
+    }
 }
