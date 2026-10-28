@@ -2,6 +2,7 @@ using System.Net.Sockets;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 using SmartCampus.Bookings.Api.Infrastructure;
@@ -12,6 +13,25 @@ public class DatabaseUnavailableExceptionHandlerTests
 {
     private static PostgresException Postgres(string sqlState) =>
         new("error", "ERROR", "ERROR", sqlState);
+
+    private sealed class CapturingLogger<T> : ILogger<T>
+    {
+        public List<string> Messages { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            Messages.Add(formatter(state, exception));
+        }
+    }
 
     [Fact]
     public async Task A_connection_failure_becomes_a_503_problem_details()
@@ -58,5 +78,25 @@ public class DatabaseUnavailableExceptionHandlerTests
         var handled = await handler.TryHandleAsync(new DefaultHttpContext(), new InvalidOperationException("boom"), CancellationToken.None);
 
         Assert.False(handled);
+    }
+
+    [Fact]
+    public async Task Sanitizes_path_with_line_breaks_in_log_warning()
+    {
+        var logger = new CapturingLogger<DatabaseUnavailableExceptionHandler>();
+        var handler = new DatabaseUnavailableExceptionHandler(logger);
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/api/bookings\r\n[FORGED]";
+        context.Response.Body = new MemoryStream();
+        var exception = new NpgsqlException("unreachable", new SocketException());
+
+        var handled = await handler.TryHandleAsync(context, exception, CancellationToken.None);
+
+        Assert.True(handled);
+        Assert.Equal(StatusCodes.Status503ServiceUnavailable, context.Response.StatusCode);
+        var loggedMessage = Assert.Single(logger.Messages);
+        Assert.Contains("/api/bookings[FORGED]", loggedMessage);
+        Assert.DoesNotContain("\r", loggedMessage);
+        Assert.DoesNotContain("\n", loggedMessage);
     }
 }
