@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
 using SmartCampus.Bookings.Api.Features.Admin;
@@ -11,6 +12,8 @@ public class ClosingCommentService(
     ClosingCommentValidator validator,
     TimeProvider timeProvider) : IClosingCommentService
 {
+    private const string ClosingCommentUniqueIndex = "ux_closing_comments_booking";
+
     public async Task<ClosingCommentResult> SubmitAsync(
         string code,
         Guid userId,
@@ -52,34 +55,66 @@ public class ClosingCommentService(
             return ClosingCommentResult.Invalid(validationErrors);
         }
 
+        var isSpaceUsed = request.SpaceUsed == true;
+        var attendees = isSpaceUsed ? (request.AttendeesCount ?? 0) : 0;
+        var issuesReported = request.IssuesReported == true;
+
         var closingComment = new ClosingComment
         {
             Id = Guid.NewGuid(),
             BookingId = booking.Id,
             AuthorId = userId,
-            SpaceUsed = request.SpaceUsed,
-            AttendeesCount = request.SpaceUsed ? request.AttendeesCount : 0,
-            IssuesReported = request.IssuesReported,
+            SpaceUsed = isSpaceUsed,
+            AttendeesCount = attendees,
+            IssuesReported = issuesReported,
             Comment = request.Comment!.Trim(),
             CreatedAt = now
         };
 
-        dbContext.ClosingComments.Add(closingComment);
-        booking.ClosingComment = closingComment;
-        booking.Status = BookingStatus.Closed;
-        booking.UpdatedAt = now;
-
-        if (request.IssuesReported)
+        try
         {
-            await adminAlerts.RaiseAsync(
-                AdminAlertKind.ReportedIssue,
-                booking.Id,
-                $"Problema segnalato nel commento di {booking.ReferenceCode}: {closingComment.Comment}",
-                cancellationToken);
+            dbContext.ClosingComments.Add(closingComment);
+            booking.ClosingComment = closingComment;
+            booking.Status = BookingStatus.Closed;
+            booking.UpdatedAt = now;
+
+            if (issuesReported)
+            {
+                await adminAlerts.RaiseAsync(
+                    AdminAlertKind.ReportedIssue,
+                    booking.Id,
+                    $"Problema segnalato nel commento di {booking.ReferenceCode}: {closingComment.Comment}",
+                    cancellationToken);
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (IsClosingCommentUniqueViolation(ex))
+        {
+            dbContext.ChangeTracker.Clear();
+            return ClosingCommentResult.AlreadyClosed("A closing comment has already been submitted for this booking.");
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-
         return ClosingCommentResult.Success(closingComment, booking);
+    }
+
+    private static bool IsClosingCommentUniqueViolation(DbUpdateException ex)
+    {
+        if (ex.InnerException is PostgresException postgres)
+        {
+            if (postgres.ConstraintName == ClosingCommentUniqueIndex)
+            {
+                return true;
+            }
+
+            if (postgres.SqlState == PostgresErrorCodes.UniqueViolation &&
+                (postgres.MessageText.Contains("closing_comments", StringComparison.OrdinalIgnoreCase) ||
+                 postgres.ConstraintName?.Contains("closing_comments", StringComparison.OrdinalIgnoreCase) == true))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

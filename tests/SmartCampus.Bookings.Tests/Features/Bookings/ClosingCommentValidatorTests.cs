@@ -97,6 +97,53 @@ public class ClosingCommentValidatorTests
     }
 
     [Fact]
+    public void Rejects_comment_with_fewer_than_10_runes_when_using_surrogate_pair_emojis()
+    {
+        // 5 emojis = 10 UTF-16 chars in C# but only 5 characters according to Postgres char_length
+        var request = new SubmitClosingCommentRequest(
+            SpaceUsed: true,
+            AttendeesCount: 1,
+            IssuesReported: false,
+            Comment: "😀😀😀😀😀");
+
+        var errors = _validator.Validate(request, spaceCapacity: 30);
+
+        Assert.True(errors.ContainsKey("Comment"));
+        Assert.Contains("between 10 and 500 characters", errors["Comment"][0]);
+    }
+
+    [Fact]
+    public void Accepts_comment_with_10_runes_when_using_surrogate_pair_emojis()
+    {
+        // 10 emojis = 10 characters according to Postgres char_length
+        var request = new SubmitClosingCommentRequest(
+            SpaceUsed: true,
+            AttendeesCount: 1,
+            IssuesReported: false,
+            Comment: "😀😀😀😀😀😀😀😀😀😀");
+
+        var errors = _validator.Validate(request, spaceCapacity: 30);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Rejects_missing_required_fields()
+    {
+        var request = new SubmitClosingCommentRequest(
+            SpaceUsed: null,
+            AttendeesCount: null,
+            IssuesReported: null,
+            Comment: "Commento valido con testo sufficiente.");
+
+        var errors = _validator.Validate(request, spaceCapacity: 30);
+
+        Assert.True(errors.ContainsKey("SpaceUsed"));
+        Assert.True(errors.ContainsKey("AttendeesCount"));
+        Assert.True(errors.ContainsKey("IssuesReported"));
+    }
+
+    [Fact]
     public void Rejects_negative_attendees_count()
     {
         var request = new SubmitClosingCommentRequest(

@@ -285,4 +285,69 @@ public class ClosingCommentEndpointTests(BookingsApiFactory factory) : IClassFix
             Assert.Null(pendingCode);
         }
     }
+
+    [Fact]
+    public async Task Simultaneous_comment_submissions_accept_only_one_and_return_409_for_others()
+    {
+        var organizerId = Guid.NewGuid();
+        var client = factory.CreateAuthenticatedClient(organizerId);
+
+        var now = DateTime.UtcNow;
+        var booking = await InsertBookingAsync(organizerId, now.AddHours(-3), now.AddHours(-1), capacity: 30);
+
+        var payload = new SubmitClosingCommentRequest(
+            SpaceUsed: true,
+            AttendeesCount: 10,
+            IssuesReported: false,
+            Comment: "Commento simultaneo per verifica concorrenza.");
+
+        const int concurrentRequests = 10;
+        var responses = await Task.WhenAll(Enumerable.Range(0, concurrentRequests).Select(_ =>
+            client.PostAsJsonAsync($"/bookings/{booking.ReferenceCode}/closing-comment", payload)));
+
+        var okResponses = responses.Where(r => r.StatusCode == HttpStatusCode.OK).ToList();
+        var conflictResponses = responses.Where(r => r.StatusCode == HttpStatusCode.Conflict).ToList();
+
+        Assert.Single(okResponses);
+        Assert.Equal(concurrentRequests - 1, conflictResponses.Count);
+
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+        var count = await dbContext.ClosingComments.CountAsync(c => c.BookingId == booking.Id);
+        Assert.Equal(1, count);
+        var updated = await dbContext.Bookings.FindAsync(booking.Id);
+        Assert.NotNull(updated);
+        Assert.Equal(BookingStatus.Closed, updated.Status);
+    }
+
+    [Fact]
+    public async Task Simultaneous_comment_submissions_with_issues_reported_creates_single_alert()
+    {
+        var organizerId = Guid.NewGuid();
+        var client = factory.CreateAuthenticatedClient(organizerId);
+
+        var now = DateTime.UtcNow;
+        var booking = await InsertBookingAsync(organizerId, now.AddHours(-3), now.AddHours(-1), capacity: 30);
+
+        var payload = new SubmitClosingCommentRequest(
+            SpaceUsed: true,
+            AttendeesCount: 10,
+            IssuesReported: true,
+            Comment: "Segnalazione guasto concorrente su database reale.");
+
+        const int concurrentRequests = 8;
+        var responses = await Task.WhenAll(Enumerable.Range(0, concurrentRequests).Select(_ =>
+            client.PostAsJsonAsync($"/bookings/{booking.ReferenceCode}/closing-comment", payload)));
+
+        var okResponses = responses.Where(r => r.StatusCode == HttpStatusCode.OK).ToList();
+        var conflictResponses = responses.Where(r => r.StatusCode == HttpStatusCode.Conflict).ToList();
+
+        Assert.Single(okResponses);
+        Assert.Equal(concurrentRequests - 1, conflictResponses.Count);
+
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+        var alertCount = await dbContext.AdminAlerts.CountAsync(a => a.BookingId == booking.Id);
+        Assert.Equal(1, alertCount);
+    }
 }

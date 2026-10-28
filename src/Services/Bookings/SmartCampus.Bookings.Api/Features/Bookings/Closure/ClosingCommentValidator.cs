@@ -9,6 +9,36 @@ public class ClosingCommentValidator
     {
         var errors = new Dictionary<string, string[]>();
 
+        if (!request.SpaceUsed.HasValue)
+        {
+            errors[nameof(request.SpaceUsed)] = ["The space used field is required."];
+        }
+
+        if (!request.AttendeesCount.HasValue)
+        {
+            errors[nameof(request.AttendeesCount)] = ["The attendees count is required."];
+        }
+        else
+        {
+            if (request.AttendeesCount.Value < 0)
+            {
+                errors[nameof(request.AttendeesCount)] = ["The attendees count cannot be negative."];
+            }
+            else if (request.SpaceUsed == false && request.AttendeesCount.Value > 0)
+            {
+                errors[nameof(request.AttendeesCount)] = ["The attendees count must be 0 if the space was not used."];
+            }
+            else if (request.AttendeesCount.Value > spaceCapacity)
+            {
+                errors[nameof(request.AttendeesCount)] = [$"The attendees count cannot exceed the space capacity ({spaceCapacity})."];
+            }
+        }
+
+        if (!request.IssuesReported.HasValue)
+        {
+            errors[nameof(request.IssuesReported)] = ["The issues reported field is required."];
+        }
+
         if (string.IsNullOrWhiteSpace(request.Comment))
         {
             errors[nameof(request.Comment)] = ["The comment is required."];
@@ -16,23 +46,12 @@ public class ClosingCommentValidator
         else
         {
             var trimmed = request.Comment.Trim();
-            if (trimmed.Length < MinCommentLength || trimmed.Length > MaxCommentLength)
+            // EnumerateRunes matches PostgreSQL char_length behavior with Unicode code points / emojis
+            var runeCount = trimmed.EnumerateRunes().Count();
+            if (runeCount < MinCommentLength || runeCount > MaxCommentLength)
             {
                 errors[nameof(request.Comment)] = [$"The comment must be between {MinCommentLength} and {MaxCommentLength} characters."];
             }
-        }
-
-        if (request.AttendeesCount < 0)
-        {
-            errors[nameof(request.AttendeesCount)] = ["The attendees count cannot be negative."];
-        }
-        else if (!request.SpaceUsed && request.AttendeesCount > 0)
-        {
-            errors[nameof(request.AttendeesCount)] = ["The attendees count must be 0 if the space was not used."];
-        }
-        else if (request.AttendeesCount > spaceCapacity)
-        {
-            errors[nameof(request.AttendeesCount)] = [$"The attendees count cannot exceed the space capacity ({spaceCapacity})."];
         }
 
         return errors;
