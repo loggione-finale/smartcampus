@@ -42,13 +42,16 @@ I passi 5, 9 e 11 mostrano le regole garantite dal database: nessuna sovrapposiz
 giorno, mai oltre la capienza. I test di concorrenza sono in
 [evidence/booking-concurrency.md](evidence/booking-concurrency.md).
 
-## Cose da non promettere in demo
+## Cose da sapere prima di mostrare
 
-- Le email di invito e di scadenza finiscono in una coda del database (outbox): i file `.eml` in una cartella locale
-  arrivano con #106. Se non sono ancora su `main`, non mostrarli.
-- Le statistiche d'uso per l'admin (`GET /admin/stats`, #47) e le definizioni delle misure (#97) sono mostrabili solo se
-  quelle PR sono su `main`.
+- **Email:** i file `.eml` sono su `main` (#106). Appaiono in `src/Services/Bookings/SmartCampus.Bookings.Api/mail-outbox/`
+  pochi secondi dopo l'azione (prenotazione creata, invito, annullamento, scadenza dell'invito). La cartella non è versionata.
+- **Statistiche e report dell'admin** (`GET /admin/stats` e pagina report) sono su `main` e provate sull'API il 28/10 (`200`
+  per l'admin, `403` per un utente).
 - Gli inviti scadono dopo due ore: per mostrare la scadenza serve aspettare o cambiare l'orologio; meglio dirla a voce.
+- Il tasto per cercare spazi liberi in una fascia nel catalogo propone finestre di ricerca (mattina 09:00-11:00,
+  pomeriggio 14:00-16:00, sera 19:00-21:00) diverse dalle fasce di prenotazione del PO (08-14, 14-19, 19-23): spiegarlo a voce
+  per non creare confusione.
 
 ## Dichiarazioni obbligatorie
 
