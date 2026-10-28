@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SmartCampus.Bookings.Api.Domain;
 using SmartCampus.Bookings.Api.Features.Bookings.Closure;
 using SmartCampus.Bookings.Api.Features.Bookings.MyBookings;
+using SmartCampus.Auth;
 
 namespace SmartCampus.Bookings.Api.Features.Bookings;
 
@@ -39,9 +40,17 @@ public class BookingsController(
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Create(
         CreateBookingRequest request, CancellationToken cancellationToken)
     {
+        if (User.IsInRole(SmartCampusAuthConstants.RoleAdmin))
+        {
+            return Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Admins cannot create bookings");
+        }
+
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var organizerId))
         {
             return Unauthorized();

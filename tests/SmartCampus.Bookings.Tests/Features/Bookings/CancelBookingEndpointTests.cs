@@ -99,6 +99,40 @@ public class CancelBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
     }
 
     [Fact]
+    public async Task A_participant_of_a_group_booking_cannot_cancel_it()
+    {
+        var organizerId = Guid.NewGuid();
+        var participantId = Guid.NewGuid();
+        var participantEmail = "participant@smartcampus.test";
+        var organizer = factory.CreateAuthenticatedClient(organizerId, "organizer@smartcampus.test");
+
+        var start = TestSlots.Next();
+        var created = await organizer.PostAsJsonAsync("/bookings", new CreateBookingRequest(
+            Guid.NewGuid(), start, start.AddHours(1),
+            ParticipantEmails: [participantEmail]));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var bookingId = (await created.Content.ReadFromJsonAsync<JsonElement>(JsonOptions))
+            .GetProperty("id").GetGuid();
+
+        Guid invitationId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+            var invitation = await dbContext.Invitations.SingleAsync(
+                i => i.BookingId == bookingId && i.Email == participantEmail);
+            invitationId = invitation.Id;
+        }
+
+        var participant = factory.CreateAuthenticatedClient(participantId, participantEmail);
+        var accepted = await participant.PostAsync($"/invitations/{invitationId}/accept", null);
+        Assert.Equal(HttpStatusCode.OK, accepted.StatusCode);
+
+        var response = await participant.PostAsync($"/bookings/{bookingId}/cancel", null);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Returns_404_for_an_unknown_booking()
     {
         var client = factory.CreateAuthenticatedClient(Guid.NewGuid());
