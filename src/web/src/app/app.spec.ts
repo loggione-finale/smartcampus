@@ -2,10 +2,37 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { FormControl, FormGroup } from '@angular/forms';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { AuthSessionService } from './auth/auth-session.service';
+import { LoginResponse } from './auth/auth.models';
 import { App } from './app';
 import { SpacesApiService } from './spaces/spaces-api.service';
 import { EquipmentCatalogItemDto, SpaceDto } from './spaces/spaces.models';
+
+const LOGIN_RESPONSE: LoginResponse = {
+  token: 'token-123',
+  tokenType: 'Bearer',
+  expiresIn: 28_800,
+  expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+  user: {
+    id: 'b7e1c2d3-0000-4000-8000-000000000002',
+    matricola: '1000000001',
+    firstName: 'Giulia',
+    lastName: 'Rossi',
+    displayName: 'Giulia Rossi',
+    email: 'giulia.rossi@smartcampus.test',
+    phoneNumber: '+393331122334',
+    role: 'User',
+    createdAt: '2026-10-27T10:00:00Z',
+  },
+};
+
+const ADMIN_RESPONSE: LoginResponse = {
+  ...LOGIN_RESPONSE,
+  token: 'admin-token',
+  user: { ...LOGIN_RESPONSE.user, role: 'Admin' },
+};
 
 type RegistrationTestApp = {
   registrationForm: FormGroup<{
@@ -116,11 +143,13 @@ describe('App', () => {
   let httpTesting: HttpTestingController;
 
   beforeEach(async () => {
+    sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]),
         { provide: SpacesApiService, useValue: spacesApiStub },
       ],
     }).compileComponents();
@@ -130,6 +159,7 @@ describe('App', () => {
   afterEach(() => {
     httpTesting.match((request) => request.url.endsWith('/health')).forEach((request) => request.flush({}));
     httpTesting.verify();
+    sessionStorage.clear();
   });
 
   function createApp(): any {
@@ -224,6 +254,28 @@ describe('App', () => {
 
     expect(fixture.nativeElement.textContent).toContain('Email is already registered.');
     expect(fixture.nativeElement.textContent).toContain('Esiste già un account');
+  });
+
+  it('shows the login entry when anonymous and the personal area when authenticated', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Accedi');
+
+    const session = TestBed.inject(AuthSessionService);
+    session.store(LOGIN_RESPONSE);
+    fixture.detectChanges();
+
+    const authenticatedText = fixture.nativeElement.textContent as string;
+    expect(authenticatedText).toContain('Area personale');
+    expect(authenticatedText).toContain('Esci');
+    expect(authenticatedText).not.toContain('Accedi');
+    expect(authenticatedText).not.toContain('Admin');
+
+    session.store(ADMIN_RESPONSE);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Admin');
   });
 
   it('does not submit an incomplete booking form and shows the field error', () => {

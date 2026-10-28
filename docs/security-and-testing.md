@@ -48,7 +48,7 @@
 
 | Cosa | Esempi | Tipo |
 |---|---|---|
-| Interceptor | Aggiunge `X-User-Id` e `X-User-Role` a ogni richiesta | `ng test` |
+| Interceptor | Aggiunge `Authorization: Bearer <token>` alle chiamate `/api/...` | `ng test` |
 | Guard | Uno studente viene respinto dalle pagine del personale | `ng test` |
 | Gestione errori | `503`, `409` e timeout producono il messaggio giusto | `ng test` |
 | Form di prenotazione | Fine prima dell'inizio, campi vuoti, troppi partecipanti | `ng test` |

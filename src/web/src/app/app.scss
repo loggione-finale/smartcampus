@@ -37,53 +37,48 @@
   font-size: 28px;
 }
 
-.topnav {
+.topnav,
+.topbar-auth {
   display: flex;
+  align-items: center;
   gap: clamp(20px, 3vw, 44px);
+}
 
-  a {
-    color: var(--cream);
-    font-size: 17px;
-    font-weight: 500;
-    text-decoration: none;
-    position: relative;
-    padding-block: 8px;
+.topnav a,
+.topbar-auth a {
+  color: var(--cream);
+  font-size: 17px;
+  font-weight: 500;
+  text-decoration: none;
+  position: relative;
+  padding-block: 8px;
 
-    &::after {
-      content: '';
-      position: absolute;
-      inset: auto 0 2px;
-      height: 2px;
-      background: currentColor;
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s var(--ease);
-    }
-
-    &:hover::after,
-    &:focus-visible::after {
-      transform: none;
-    }
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 2px;
+    height: 2px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s var(--ease);
   }
+
+  &:hover::after,
+  &:focus-visible::after {
+    transform: none;
+  }
+}
+
+.auth-button.mat-mdc-button {
+  --mat-button-text-label-text-color: var(--cream);
+  --mat-button-text-label-text-size: 17px;
+  min-height: 44px;
 }
 
 .menu-btn.mat-mdc-icon-button {
   display: none;
   color: var(--cream);
-}
-
-.menu-symbol {
-  font-size: 24px;
-  line-height: 1;
-}
-
-.nav-symbol {
-  display: inline-grid;
-  width: 24px;
-  margin-right: 12px;
-  place-items: center;
-  color: var(--cream);
-  font-weight: 800;
 }
 
 // Hero: indigo field, the library photo pressed into it, the words stacked on a rule
@@ -796,7 +791,8 @@ h1 {
 }
 
 @media (max-width: 860px) {
-  .topnav {
+  .topnav,
+  .topbar-auth {
     display: none;
   }
 

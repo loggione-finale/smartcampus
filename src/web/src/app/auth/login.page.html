@@ -1,0 +1,100 @@
+<section class="login-page" aria-labelledby="login-title">
+  <div class="login-intro">
+    <a class="back-link" href="/">
+      <span aria-hidden="true">←</span> Torna alla home
+    </a>
+    <p class="eyebrow">AREA RISERVATA</p>
+    <h1 id="login-title">Accedi a SmartCampus.</h1>
+    <p class="login-lead">
+      Entra con l’email o la matricola del tuo profilo. Il tuo ruolo decide quali funzioni vedi
+      nell’area personale.
+    </p>
+
+    <ul class="login-points">
+      <li>
+        <mat-icon aria-hidden="true">verified_user</mat-icon>
+        <span>Il token firmato dal servizio Users resta valido per 8 ore.</span>
+      </li>
+      <li>
+        <mat-icon aria-hidden="true">schedule</mat-icon>
+        <span>Se la sessione scade, torni qui e riprendi dal punto in cui eri.</span>
+      </li>
+      <li>
+        <mat-icon aria-hidden="true">admin_panel_settings</mat-icon>
+        <span>Le funzioni del personale sono visibili solo agli account Admin.</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="login-panel">
+    <div class="login-card">
+      <p class="section-tag">ACCESSO</p>
+      <h2>Entra con il tuo profilo</h2>
+      <p class="login-hint">Puoi usare l’email oppure la matricola di 10 cifre.</p>
+
+      @if (notice(); as message) {
+        <p class="form-notice" role="status" aria-live="polite">{{ message }}</p>
+      }
+
+      <form [formGroup]="loginForm" (ngSubmit)="submit()" novalidate data-testid="login-form">
+        @if (errorMessage(); as message) {
+          <p class="form-alert" role="alert">{{ message }}</p>
+        }
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email o matricola</mat-label>
+          <input
+            matInput
+            formControlName="identifier"
+            autocomplete="username"
+            maxlength="254"
+            data-testid="login-identifier"
+          />
+          @if (fieldError('identifier'); as message) {
+            <mat-error>{{ message }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+            data-testid="login-password"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            class="password-toggle"
+            (click)="togglePassword()"
+            [attr.aria-label]="showPassword() ? 'Nascondi la password' : 'Mostra la password'"
+            [attr.aria-pressed]="showPassword()"
+          >
+            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (fieldError('password'); as message) {
+            <mat-error>{{ message }}</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-flat-button
+          class="btn login-submit"
+          type="submit"
+          [disabled]="submitting()"
+          data-testid="login-submit"
+        >
+          {{ submitting() ? 'Accesso in corso…' : 'Accedi' }}
+        </button>
+      </form>
+
+      <p class="login-alt">
+        Non hai ancora un account?
+        <a href="/#registrazione">Registrati dalla home</a>.
+      </p>
+    </div>
+  </div>
+</section>
