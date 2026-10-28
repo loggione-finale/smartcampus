@@ -43,7 +43,7 @@ public static class ServiceCollectionExtensions
             var settings = MongoClientSettings.FromConnectionString(connectionString);
             if (!connectionString.Contains("serverSelectionTimeoutMS", StringComparison.OrdinalIgnoreCase))
             {
-                settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
+                settings.ServerSelectionTimeout = TimeSpan.FromSeconds(3);
             }
             return new MongoClient(settings);
         });
