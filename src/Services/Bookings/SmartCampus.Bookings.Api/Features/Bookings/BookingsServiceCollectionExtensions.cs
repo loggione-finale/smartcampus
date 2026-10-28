@@ -23,6 +23,7 @@ public static class BookingsServiceCollectionExtensions
         services.AddScoped<AvailabilityService>();
         services.AddScoped<MyBookingsService>();
         services.AddScoped<AdminStatsService>();
+        services.AddScoped<AdminAlertsReviewService>();
         services.AddScoped<AdminDashboardService>();
         services.AddScoped<AcceptInvitationService>();
         services.AddScoped<MyInvitationsService>();

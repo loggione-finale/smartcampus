@@ -1,0 +1,51 @@
+<section class="admin-hero">
+  <div class="admin-inner">
+    <a class="back-link" href="/">← Torna alla home</a>
+    <p class="eyebrow">AREA PERSONALE</p>
+    <h1>Gestione spazi</h1>
+    <button mat-flat-button class="btn" type="button" (click)="go('new')">Aggiungi spazio</button>
+  </div>
+</section>
+
+<section class="admin-body">
+  @if (error(); as message) {
+    <p class="form-alert" role="alert">{{ message }}</p>
+  }
+
+  @if (loading()) {
+    <p role="status">Caricamento in corso…</p>
+  } @else if (spaces().length === 0 && !error()) {
+    <p>Nessuno spazio presente.</p>
+  } @else {
+    <table class="admin-table">
+      <caption class="visually-hidden">Elenco degli spazi, attivi e disattivati</caption>
+      <thead>
+        <tr>
+          <th scope="col">Nome</th>
+          <th scope="col">Tipo</th>
+          <th scope="col">Edificio</th>
+          <th scope="col">Capienza</th>
+          <th scope="col">Stato</th>
+          <th scope="col">Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (space of spaces(); track space.id) {
+          <tr [class.inactive]="!space.isActive">
+            <th scope="row">{{ space.name }}</th>
+            <td>{{ typeLabels[space.type] }}</td>
+            <td>{{ space.building }}, {{ formatFloorLabel(space.floor) }}</td>
+            <td>{{ space.capacity }}</td>
+            <td>{{ space.isActive ? 'Attivo' : 'Disattivato' }}</td>
+            <td class="actions">
+              <button mat-button type="button" (click)="go(space.id + '/edit')">Modifica</button>
+              <button mat-button type="button" (click)="toggleActive(space)">
+                {{ space.isActive ? 'Disattiva' : 'Riattiva' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

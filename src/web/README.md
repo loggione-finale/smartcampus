@@ -30,6 +30,14 @@ di validazione (`400`) e i duplicati (`409`) vengono mostrati sul campo interess
 Per simulare un accesso da invito usa `http://localhost:4200/?invite=demo#registrazione`: dopo una
 registrazione riuscita viene mostrata la conferma dell’invito.
 
+## Prenotare uno spazio
+
+La form è disponibile nella sezione `#prenota`: seleziona spazio, data e fascia oraria, poi aggiungi
+facoltativamente le email dei partecipanti. Con almeno un partecipante compare la selezione degli
+strumenti, con indicazione di quelli già presenti nello spazio. Il frontend invia questi dati a
+`POST /api/bookings`, mostra il codice di riferimento in caso di conferma e traduce i principali rifiuti
+del servizio in messaggi comprensibili. La creazione richiede autenticazione.
+
 ## Generazione del codice
 
 Per generare un nuovo componente:
@@ -57,3 +65,10 @@ Gli artefatti vengono salvati nella cartella `dist/`, esclusa dal repository.
 ```bash
 npm test -- --watch=false
 ```
+
+## Area personale (`/admin`)
+
+Le pagine sotto `/admin` sono per il personale (ruolo `Admin`). Finché non c'è il login (#82), la guardia
+legge il ruolo da `sessionStorage` (chiave `smartcampus.role`) e il servizio invia il JWT di `smartcampus.token` come Bearer: per provarle in locale, dalla console del
+browser, `sessionStorage.setItem('smartcampus.role', 'Admin')`. Il file `admin-session.ts` va sostituito
+con la sessione vera.

@@ -39,7 +39,9 @@ public class AdminDashboardEndpointTests(BookingsApiFactory factory) : IClassFix
     {
         var start = TestSlots.Next().UtcDateTime;
         var spaceId = Guid.NewGuid();
+        var building = $"Edificio {Guid.NewGuid():N}";
         var booking = BookingTestData.NewBooking(spaceId, start, start.AddHours(2));
+        booking.SpaceBuildingSnapshot = building;
         var invitations = new[]
         {
             BookingTestData.NewInvitation(booking, Guid.NewGuid(), InvitationStatus.Accepted, ParticipantRole.Organizer),
@@ -54,7 +56,7 @@ public class AdminDashboardEndpointTests(BookingsApiFactory factory) : IClassFix
             await db.SaveChangesAsync();
         }
 
-        var response = await AdminClient().GetAsync($"/admin/dashboard?date={booking.BookingDate:yyyy-MM-dd}");
+        var response = await AdminClient().GetAsync($"/admin/dashboard?date={booking.BookingDate:yyyy-MM-dd}&building={building}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var spaces = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);

@@ -6,4 +6,5 @@ Qui raccogliamo il ragionamento del gruppo prima e durante lo sviluppo:
 - **Ipotesi e domande aperte** da chiarire con il PO.
 - **Perimetro concordato**: cosa il PO ha validato, con data. Le variazioni vanno registrate qui.
 - **Regole di dominio**: ad esempio cosa rende due prenotazioni incompatibili.
+- **Valore, costi e sviluppi futuri**: benefici attesi, costi infrastrutturali (risorse, storage, rete, log), trade-off cloud vs on-prem e scenari evolutivi ([value-and-costs.md](value-and-costs.md)).
 - **Limiti dei dati**: una prenotazione registra un'intenzione, non l'uso effettivo.
