@@ -28,6 +28,7 @@ public class BookingService(
     private const string ReferenceCodeIndex = "ux_bookings_reference_code";
     private const string OrganizerBandIndex = "ux_bookings_organizer_date_band";
     private const int MaxReferenceCodeAttempts = 5;
+    private const int MixedSpaceMaxGroupSize = 4;
 
     public async Task<CreateBookingResult> CreateAsync(
         Guid organizerId, string organizerName, string organizerEmail, CreateBookingRequest request, CancellationToken cancellationToken)
@@ -85,6 +86,11 @@ public class BookingService(
         if (space.AccessMode == SpaceAccessMode.Dedicated && seatsRequested > space.Capacity)
         {
             return CreateBookingResult.NoSeatsLeft(space.Capacity);
+        }
+
+        if (space.AccessMode == SpaceAccessMode.Mixed && normalizedParticipants.Count > 0 && seatsRequested > MixedSpaceMaxGroupSize)
+        {
+            return CreateBookingResult.GroupTooLarge(MixedSpaceMaxGroupSize);
         }
 
         var registeredParticipants = new Dictionary<string, RegisteredUser>(StringComparer.OrdinalIgnoreCase);

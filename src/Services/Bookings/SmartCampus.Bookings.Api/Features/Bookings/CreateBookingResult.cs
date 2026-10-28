@@ -9,6 +9,7 @@ public class CreateBookingResult
     public string? Detail { get; private init; }
     public string? PendingReferenceCode { get; private init; }
     public int? FreeSeats { get; private init; }
+    public int? MaxGroupSize { get; private init; }
     public IReadOnlyDictionary<string, string[]>? ValidationErrors { get; private init; }
 
     public static CreateBookingResult Created(Booking booking) =>
@@ -52,6 +53,14 @@ public class CreateBookingResult
             Detail = freeSeats == 0
                 ? "No seats are left in that time slot."
                 : $"Only {freeSeats} seats are left in that time slot."
+        };
+
+    public static CreateBookingResult GroupTooLarge(int maxGroupSize) =>
+        new()
+        {
+            Outcome = CreateBookingOutcome.GroupTooLarge,
+            MaxGroupSize = maxGroupSize,
+            Detail = $"A group in a mixed space cannot exceed {maxGroupSize} people in total."
         };
 
     public static CreateBookingResult SpacesUnavailable() =>

@@ -11,6 +11,7 @@ public enum CreateBookingOutcome
     PersonConflict,
     TimeBandAlreadyUsed,
     NoSeatsLeft,
+    GroupTooLarge,
     SpacesUnavailable,
     UsersUnavailable
 }
