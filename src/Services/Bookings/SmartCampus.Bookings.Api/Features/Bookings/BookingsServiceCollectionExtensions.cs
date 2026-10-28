@@ -23,10 +23,16 @@ public static class BookingsServiceCollectionExtensions
         services.AddScoped<AvailabilityService>();
         services.AddScoped<MyBookingsService>();
         services.AddScoped<AdminAlertsReviewService>();
+        services.AddScoped<AdminDashboardService>();
         services.AddScoped<AcceptInvitationService>();
         services.AddScoped<MyInvitationsService>();
         services.AddScoped<IPendingClosureChecker, PendingClosureChecker>();
+        services.AddScoped<IAdminAlerts, AdminAlertsService>();
+        services.AddSingleton<ClosingCommentValidator>();
+        services.AddScoped<IClosingCommentService, ClosingCommentService>();
         services.AddScoped<IEmailOutbox, EmailOutbox>();
+        services.Configure<InvitationExpiryOptions>(configuration.GetSection(InvitationExpiryOptions.SectionName));
+        services.AddHostedService<InvitationExpiryBackgroundService>();
         services.AddHttpClient<ISpacesClient, SpacesClient>(client =>
         {
             client.BaseAddress = new Uri(spacesOptions.BaseUrl.TrimEnd('/') + "/");
