@@ -57,3 +57,10 @@ Gli artefatti vengono salvati nella cartella `dist/`, esclusa dal repository.
 ```bash
 npm test -- --watch=false
 ```
+
+## Area personale (`/admin`)
+
+Le pagine sotto `/admin` sono per il personale (ruolo `Staff`). Finché non c'è il login (#82), la guardia
+legge il ruolo da `sessionStorage` (chiave `smartcampus.role`): per provarle in locale, dalla console del
+browser, `sessionStorage.setItem('smartcampus.role', 'Staff')`. Il file `admin-session.ts` va sostituito
+con la sessione vera.

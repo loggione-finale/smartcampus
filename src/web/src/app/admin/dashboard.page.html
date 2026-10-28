@@ -1,0 +1,70 @@
+<div class="admin-shell">
+  <header class="admin-head">
+    <p class="eyebrow">AREA PERSONALE</p>
+    <h1>Dashboard aule</h1>
+    <p class="hint">Vista di sola lettura: da qui non si creano prenotazioni.</p>
+  </header>
+
+  <form class="filters" [formGroup]="filters" (ngSubmit)="load()" aria-label="Filtri dashboard">
+    <mat-form-field appearance="outline">
+      <mat-label>Giorno</mat-label>
+      <input matInput type="date" formControlName="date" />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Edificio</mat-label>
+      <input matInput formControlName="building" />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Tipo di spazio</mat-label>
+      <mat-select formControlName="type">
+        <mat-option value="">Tutti</mat-option>
+        @for (t of typeOptions; track t.value) {
+          <mat-option [value]="t.value">{{ t.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button type="submit" class="apply-btn" [disabled]="loading()">Aggiorna</button>
+  </form>
+
+  <div aria-live="polite">
+    @if (loading()) {
+      <p class="state">Caricamento in corso…</p>
+    } @else if (error(); as message) {
+      <p class="state state-error" role="alert">{{ message }}</p>
+    } @else if (data(); as dto) {
+      @if (dto.rooms.length === 0) {
+        <p class="state">Nessuna aula corrisponde ai filtri.</p>
+      } @else {
+        <div class="table-wrap">
+          <table mat-table [dataSource]="dto.rooms" aria-label="Occupazione aule per fascia oraria">
+            <ng-container matColumnDef="room" sticky>
+              <th mat-header-cell *matHeaderCellDef scope="col">Aula</th>
+              <td mat-cell *matCellDef="let room">
+                <strong>{{ room.name }}</strong>
+                <span class="room-meta">
+                  {{ room.building }} · {{ room.capacity }} posti
+                  @if (room.mode === 'Mixed') {
+                    · mista
+                  }
+                </span>
+              </td>
+            </ng-container>
+
+            @for (slot of slots(); track slot.key) {
+              <ng-container [matColumnDef]="slot.key">
+                <th mat-header-cell *matHeaderCellDef scope="col">{{ slot.label }}</th>
+                <td mat-cell *matCellDef="let room">
+                  @let c = cell(room.cells, slot.key);
+                  <span class="chip" [attr.data-status]="c?.status ?? 'none'">{{ cellText(c) }}</span>
+                </td>
+              </ng-container>
+            }
+
+            <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+            <tr mat-row *matRowDef="let row; columns: columns()"></tr>
+          </table>
+        </div>
+      }
+    }
+  </div>
+</div>
