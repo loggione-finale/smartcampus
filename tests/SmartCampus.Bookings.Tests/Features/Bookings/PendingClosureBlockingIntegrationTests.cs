@@ -172,7 +172,9 @@ public class PendingClosureBlockingIntegrationTests(BookingsApiFactory factory) 
         var organizerId = Guid.NewGuid();
         var client = factory.CreateAuthenticatedClient(organizerId);
 
-        var olderEnd = DateTime.UtcNow.AddHours(-10);
+        // Un giorno prima della più recente: le due prenotazioni hanno sempre date diverse e non violano
+        // ux_bookings_organizer_date_band, a qualunque ora giri il test (#207)
+        var olderEnd = DateTime.UtcNow.AddDays(-1).AddHours(-2);
         var olderStart = olderEnd.AddHours(-2);
         var olderBooking = await SeedBookingAsync(organizerId, olderStart, olderEnd);
 
