@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="SmartCampus.Bookings.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\..\..\data\synthetic\bookings.json" Link="Data\Seed\synthetic-bookings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
