@@ -2,6 +2,7 @@ using System.Net.Sockets;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 using SmartCampus.Users.Api.Infrastructure;
@@ -12,6 +13,25 @@ public class DatabaseUnavailableExceptionHandlerTests
 {
     private static PostgresException Postgres(string sqlState) =>
         new("error", "ERROR", "ERROR", sqlState);
+
+    private sealed class CapturingLogger<T> : ILogger<T>
+    {
+        public List<string> Messages { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            Messages.Add(formatter(state, exception));
+        }
+    }
 
     [Fact]
     public async Task A_connection_failure_becomes_a_503_problem_details()
@@ -61,9 +81,10 @@ public class DatabaseUnavailableExceptionHandlerTests
     }
 
     [Fact]
-    public async Task Handles_path_with_line_breaks_safely()
+    public async Task Sanitizes_path_with_line_breaks_in_log_warning()
     {
-        var handler = new DatabaseUnavailableExceptionHandler(NullLogger<DatabaseUnavailableExceptionHandler>.Instance);
+        var logger = new CapturingLogger<DatabaseUnavailableExceptionHandler>();
+        var handler = new DatabaseUnavailableExceptionHandler(logger);
         var context = new DefaultHttpContext();
         context.Request.Path = "/api/users/login\r\n[FORGED]";
         context.Response.Body = new MemoryStream();
@@ -73,5 +94,9 @@ public class DatabaseUnavailableExceptionHandlerTests
 
         Assert.True(handled);
         Assert.Equal(StatusCodes.Status503ServiceUnavailable, context.Response.StatusCode);
+        var loggedMessage = Assert.Single(logger.Messages);
+        Assert.Contains("/api/users/login[FORGED]", loggedMessage);
+        Assert.DoesNotContain("\r", loggedMessage);
+        Assert.DoesNotContain("\n", loggedMessage);
     }
 }
