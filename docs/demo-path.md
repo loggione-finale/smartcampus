@@ -58,13 +58,37 @@ giorno, mai oltre la capienza. I test di concorrenza sono in
 
 ## Prova dell'interfaccia (da compilare)
 
-Il criterio di #91 chiede la prova su due sistemi operativi e su uno smartphone, con l'esito registrato. Finora la prova è
-solo sull'API. Compilare una riga a persona, dopo aver seguito il percorso nel browser:
+Il criterio di #91 (task #93) chiede la prova su due sistemi operativi e su uno smartphone, con l'esito registrato.
+Finora la prova è solo sull'API. Si fa il 29/10, dopo l'avvio da zero della mattina.
+
+### Come si prova
+
+1. **PC** (Windows e un secondo sistema: Linux o macOS). Sistema avviato con `scripts/dev-up` (README, passo 3), poi
+   `http://localhost:4200`. Si seguono i passi 1–14 nel browser; il passo 15 (Spaces fermo) basta su un sistema.
+2. **Smartphone**, collegato alla stessa rete Wi-Fi del PC che fa girare il sistema:
+   - sul PC il frontend va avviato in ascolto sulla rete: con `dev-up` già lanciato, ferma solo il frontend e lancia
+     `npm start -- --host 0.0.0.0` in `src/web`; senza `dev-up`, lancia solo quel comando dopo i servizi;
+   - indirizzo del PC: `ipconfig` (Windows, voce "Indirizzo IPv4") o `ip -4 addr` (Linux); sul telefono
+     `http://<indirizzo-del-PC>:4200`. Le API passano dal proxy del PC, quindi i servizi restano su `localhost`;
+   - su Windows, al primo avvio il firewall chiede se permettere a Node.js l'accesso alle reti private: lo decide chi
+     usa il PC. Se il telefono non si collega, è quasi sempre questo o una rete Wi-Fi che isola i dispositivi (per
+     esempio una rete ospiti): in quel caso usa l'hotspot del telefono;
+   - sul telefono: accesso (passo 1), catalogo con filtro (2), disponibilità (3), una prenotazione (4), un conflitto
+     (5), le mie prenotazioni e il commento finale (12). Si controllano orari in ora di Roma, testo leggibile senza
+     zoom, pulsanti e menu raggiungibili e nessuno scorrimento orizzontale.
+3. Ogni differenza dall'esito atteso diventa un Bug con il numero del passo, come per le prove di guasto.
+
+Controllo fatto il 28/10 (asprenolapo, Windows 11): con `npm start -- --host 0.0.0.0` la pagina risponde `200` anche
+dall'indirizzo di rete del PC (`http://192.168.x.x:4200`). Il telefono non è ancora stato provato.
+
+### Esiti
+
+Una riga a persona, dopo aver seguito il percorso nel browser:
 
 | Sistema | Browser | Chi | Data | Passi riusciti | Differenze | Bug aperti |
 |---|---|---|---|---|---|---|
-| | | | | | | |
-| | | | | | | |
+| Windows 11 | | | | | | |
+| Linux o macOS | | | | | | |
 | Smartphone (ora di Roma e layout stretto) | | | | | | |
 
 ## Ogni componente spiega il proprio contributo
