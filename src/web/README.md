@@ -30,6 +30,35 @@ di validazione (`400`) e i duplicati (`409`) vengono mostrati sul campo interess
 Per simulare un accesso da invito usa `http://localhost:4200/?invite=demo#registrazione`: dopo una
 registrazione riuscita viene mostrata la conferma dell’invito.
 
+## Accesso e sessione
+
+La pagina di accesso è su `http://localhost:4200/login`. Si entra con l’email oppure con la
+matricola e la password di un account del seed; le credenziali demo sono in
+[`data/synthetic/README.md`](../../data/synthetic/README.md).
+
+- Il token restituito da `POST /api/users/auth/login` viene salvato in `sessionStorage` sotto le
+  chiavi `smartcampus.auth.token`, `smartcampus.auth.user` e `smartcampus.auth.expiresAt`.
+  Per compatibilità temporanea vengono aggiornate anche `smartcampus.token` e
+  `smartcampus.role`, usate dalle pagine admin già presenti nei branch dedicati.
+- Il ruolo per la UI viene letto dai claim del token, non dal campo modificabile dell’utente in
+  `sessionStorage`. Resta comunque solo una comodità: la firma e i permessi sono verificati dal
+  server a ogni chiamata.
+- L’interceptor `authInterceptor` aggiunge `Authorization: Bearer <token>` alle chiamate
+  `/api/...`; login e registrazione restano senza header.
+- `authGuard` protegge `/account`, `adminGuard` protegge `/admin`. Un utente `User` che apre una
+  route admin viene mandato a `/forbidden`; il controllo definitivo resta sul server.
+- Con un `401` su una chiamata protetta, o con un token scaduto, la sessione viene cancellata e
+  si torna a `/login` con `reason=expired` e `returnUrl` per riprendere il percorso. La scadenza
+  viene riconosciuta alla prima navigazione o chiamata API successiva, non con un timer.
+- Il pulsante **Esci** cancella la sessione e riporta al login con `reason=logout`. Il logout è
+  solo lato client: il token resta valido sul server fino alla sua scadenza di 8 ore.
+
+I test coprono sessione, interceptor, guard, form di login, area personale e area admin:
+
+```bash
+npm test -- --watch=false --browsers=ChromeHeadless
+```
+
 ## Generazione del codice
 
 Per generare un nuovo componente:
