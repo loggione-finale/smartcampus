@@ -86,6 +86,18 @@ public class OutboxEmailE2ETests(BookingsApiFactory factory) : IClassFixture<Boo
         Assert.Contains("Registrati sul portale", invitationToExternal.Body);
         var invitationToRegistered = emails.Single(e => e.ToAddress == "registrata@smartcampus.test");
         Assert.Contains("utente registrato", invitationToRegistered.Body);
+
+        // Le mail di invito contengono il link di conferma con l'id dell'invito.
+        var invitationIds = await dbContext.Invitations
+            .Where(i => i.BookingId == bookingId && i.Role != ParticipantRole.Organizer)
+            .Select(i => i.Id)
+            .ToListAsync();
+        Assert.All(invitationIds, id =>
+        {
+            var expectedLink = $"/invitations/{id}";
+            var mail = emails.Single(e => e.Body.Contains(expectedLink));
+            Assert.Contains(expectedLink, mail.Body);
+        });
     }
 
     private async Task RunOutboxDispatcherAsync()
