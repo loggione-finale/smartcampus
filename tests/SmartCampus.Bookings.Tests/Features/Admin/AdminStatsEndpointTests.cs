@@ -85,6 +85,84 @@ public class AdminStatsEndpointTests(BookingsApiFactory factory) : IClassFixture
         Assert.Equal(0, byType.GetProperty("totalAttendees").GetInt32());
     }
 
+    [Fact]
+    public async Task Anonymous_access_gets_401()
+    {
+        var response = await factory.CreateClient().GetAsync("/admin/stats?from=2030-01-01&to=2030-01-02");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Space_grouping_uses_the_id_only_and_labels_with_the_latest_name()
+    {
+        var space = Guid.NewGuid();
+        var start = TestSlots.Next().UtcDateTime;
+        var old = Seed(space, "Aula", "Edificio X", start, BookingStatus.Confirmed, null);
+        old.SpaceNameSnapshot = "Nome vecchio";
+        var renamed = Seed(space, "Aula", "Edificio X", start.AddHours(1), BookingStatus.Confirmed, null);
+        renamed.SpaceNameSnapshot = "Nome nuovo";
+        await Save(old, renamed);
+        var day = old.BookingDate.ToString("yyyy-MM-dd");
+
+        var group = await Group(AdminClient(), day, "space", space.ToString());
+
+        Assert.Equal(2, group.GetProperty("totalBookings").GetInt32());
+        Assert.Equal("Nome nuovo", group.GetProperty("label").GetString());
+    }
+
+    [Fact]
+    public async Task Counts_only_finished_non_cancelled_bookings_without_comment()
+    {
+        var space = Guid.NewGuid();
+        var day = DateTime.UtcNow.Date.AddDays(-1000 - Random.Shared.Next(0, 3000)).AddHours(8);
+        var future = TestSlots.Next().UtcDateTime;
+
+        // Finished and no comment: 2 (one still marked Confirmed, one Closed).
+        // Not counted: Closed with comment, Cancelled, and a future booking.
+        await Save(
+            Seed(space, "Aula", "Edificio Y", day, BookingStatus.Confirmed, null),
+            Seed(space, "Aula", "Edificio Y", day.AddHours(1), BookingStatus.Closed, null),
+            Seed(space, "Aula", "Edificio Y", day.AddHours(2), BookingStatus.Closed, Comment(true, 3, false)),
+            Seed(space, "Aula", "Edificio Y", day.AddHours(3), BookingStatus.Cancelled, null),
+            Seed(space, "Aula", "Edificio Y", future, BookingStatus.Confirmed, null));
+        var pastDay = DateOnly.FromDateTime(day).ToString("yyyy-MM-dd");
+        var futureDay = DateOnly.FromDateTime(future).ToString("yyyy-MM-dd");
+
+        var past = await Group(AdminClient(), pastDay, "space", space.ToString());
+        var upcoming = await Group(AdminClient(), futureDay, "space", space.ToString());
+
+        Assert.Equal(4, past.GetProperty("totalBookings").GetInt32());
+        Assert.Equal(2, past.GetProperty("withoutComment").GetInt32());
+        Assert.Equal(0, upcoming.GetProperty("withoutComment").GetInt32());
+    }
+
+    [Fact]
+    public async Task Range_is_inclusive_at_both_ends_and_groupBy_defaults_to_space()
+    {
+        var space = Guid.NewGuid();
+        var start = TestSlots.Next().UtcDateTime;
+        var first = Seed(space, "Aula", "Edificio Z", start, BookingStatus.Confirmed, null);
+        var middle = Seed(space, "Aula", "Edificio Z", start.AddDays(1), BookingStatus.Confirmed, null);
+        var last = Seed(space, "Aula", "Edificio Z", start.AddDays(2), BookingStatus.Confirmed, null);
+        var outside = Seed(space, "Aula", "Edificio Z", start.AddDays(3), BookingStatus.Confirmed, null);
+        await Save(first, middle, last, outside);
+
+        var groups = await AdminClient().GetFromJsonAsync<JsonElement>(
+            $"/admin/stats?from={first.BookingDate:yyyy-MM-dd}&to={last.BookingDate:yyyy-MM-dd}", JsonOptions);
+
+        var group = Assert.Single(groups.EnumerateArray(), g => g.GetProperty("key").GetString() == space.ToString());
+        Assert.Equal(3, group.GetProperty("totalBookings").GetInt32());
+    }
+
+    private async Task Save(params Booking[] bookings)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+        db.Bookings.AddRange(bookings);
+        await db.SaveChangesAsync();
+    }
+
     private static async Task<JsonElement> Group(HttpClient client, string day, string groupBy, string key)
     {
         var groups = await client.GetFromJsonAsync<JsonElement>($"/admin/stats?from={day}&to={day}&groupBy={groupBy}", JsonOptions);
