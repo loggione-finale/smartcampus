@@ -1,11 +1,13 @@
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Npgsql;
 using SmartCampus.Auth;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Data.Seed;
 using SmartCampus.Bookings.Api.Features.Bookings;
 using SmartCampus.Bookings.Api.Features.Equipment;
+using SmartCampus.Bookings.Api.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,9 +18,21 @@ builder.Services.AddOpenApi();
 var connectionString = builder.Configuration.GetConnectionString("Bookings")
     ?? throw new InvalidOperationException("Missing connection string 'ConnectionStrings:Bookings'. Set it with dotnet user-secrets.");
 
+var connectionStringBuilder = new NpgsqlConnectionStringBuilder(connectionString);
+if (!connectionString.Contains("Timeout", StringComparison.OrdinalIgnoreCase))
+{
+    connectionStringBuilder.Timeout = 3;
+}
+
 builder.Services.AddDbContext<BookingsDbContext>(options =>
-    options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure())
+    options.UseNpgsql(
+            connectionStringBuilder.ConnectionString,
+            npgsql => npgsql.EnableRetryOnFailure(
+                maxRetryCount: 2, maxRetryDelay: TimeSpan.FromSeconds(1), errorCodesToAdd: null))
         .UseSnakeCaseNamingConvention());
+
+builder.Services.AddExceptionHandler<DatabaseUnavailableExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddSmartCampusAuth(builder.Configuration);
 builder.Services.AddBookings(builder.Configuration);
@@ -50,6 +64,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "Bookings API v1"));
 }
 
+app.UseExceptionHandler();
 app.UseSmartCampusAuth();
 app.MapControllers();
 app.MapHealthChecks("/health");
