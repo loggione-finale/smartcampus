@@ -48,6 +48,7 @@
       <p class="equipment-hint">{{ participantSummary() }}</p>
       @if (seatSummary(); as summary) { <p class="equipment-hint">{{ summary }}</p> }
       @if (participantSeatWarning(); as warning) { <p class="field-error" role="alert">{{ warning }}</p> }
+      @if (participantMixedSizeWarning(); as warning) { <p class="field-error" role="alert">{{ warning }}</p> }
     </div>
 
     @if (participantEmails().length > 0) {

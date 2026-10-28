@@ -65,6 +65,44 @@ public class GroupBookingEndpointTests(BookingsApiFactory factory) : IClassFixtu
     }
 
     [Fact]
+    public async Task Rejects_a_mixed_space_group_over_four_people_with_409()
+    {
+        var spaceId = Guid.NewGuid();
+        factory.Spaces.Behavior = _ => FakeSpacesClient.DefaultSpace()
+            with { AccessMode = SpaceAccessMode.Mixed, Capacity = 10 };
+        var client = factory.CreateAuthenticatedClient(Guid.NewGuid(), "organizer@smartcampus.test");
+        var start = TestSlots.Next();
+
+        var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(
+            spaceId, start, start.AddHours(1),
+            ParticipantEmails:
+            [
+                "uno@smartcampus.test", "due@smartcampus.test", "tre@smartcampus.test", "quattro@smartcampus.test"
+            ]));
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
+        Assert.Equal("Group too large", problem.GetProperty("title").GetString());
+        Assert.Equal(4, problem.GetProperty("maxGroupSize").GetInt32());
+    }
+
+    [Fact]
+    public async Task Accepts_a_mixed_space_group_of_four_people()
+    {
+        var spaceId = Guid.NewGuid();
+        factory.Spaces.Behavior = _ => FakeSpacesClient.DefaultSpace()
+            with { AccessMode = SpaceAccessMode.Mixed, Capacity = 10 };
+        var client = factory.CreateAuthenticatedClient(Guid.NewGuid(), "organizer@smartcampus.test");
+        var start = TestSlots.Next();
+
+        var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(
+            spaceId, start, start.AddHours(1),
+            ParticipantEmails: ["uno@smartcampus.test", "due@smartcampus.test", "tre@smartcampus.test"]));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Returns_503_when_Users_is_unreachable()
     {
         factory.Users.IsDown = true;

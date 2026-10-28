@@ -88,6 +88,11 @@ public class BookingsController(
                 title: "Not enough seats",
                 detail: result.Detail,
                 extensions: new Dictionary<string, object?> { ["freeSeats"] = result.FreeSeats }),
+            CreateBookingOutcome.GroupTooLarge => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Group too large",
+                detail: result.Detail,
+                extensions: new Dictionary<string, object?> { ["maxGroupSize"] = result.MaxGroupSize }),
             CreateBookingOutcome.SpacesUnavailable => Problem(
                 statusCode: StatusCodes.Status503ServiceUnavailable, title: "Spaces unavailable", detail: result.Detail),
             CreateBookingOutcome.UsersUnavailable => Problem(
