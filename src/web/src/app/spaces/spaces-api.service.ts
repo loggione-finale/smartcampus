@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
 import {
   BatchAvailabilityPayload,
+  EquipmentCatalogItemDto,
   SpaceAvailabilityDto,
   SpaceDto,
   SpaceSearchParams,
@@ -26,8 +27,8 @@ export class BookingsAvailabilityError extends Error {
 export class SpacesApiService {
   private readonly http = inject(HttpClient);
   private bookingsAvailabilityBase:
-    | '/api/bookings/bookings/availability'
-    | '/api/bookings/availability' = '/api/bookings/bookings/availability';
+    | '/api/bookings/availability'
+    | '/api/bookings/bookings/availability' = '/api/bookings/availability';
 
   searchSpaces(params: SpaceSearchParams = {}): Observable<SpaceDto[]> {
     const httpParams = this.buildHttpParams(params);
@@ -37,6 +38,10 @@ export class SpacesApiService {
   getSpaceById(id: string): Observable<SpaceDto> {
     const encodedId = encodeURIComponent(id.trim());
     return this.http.get<SpaceDto>(`/api/spaces/spaces/${encodedId}`);
+  }
+
+  getEquipmentCatalog(): Observable<EquipmentCatalogItemDto[]> {
+    return this.http.get<EquipmentCatalogItemDto[]>('/api/spaces/equipment');
   }
 
   getSpaceDailyAvailability(spaceId: string, date: string): Observable<SpaceAvailabilityDto> {

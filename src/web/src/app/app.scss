@@ -37,53 +37,48 @@
   font-size: 28px;
 }
 
-.topnav {
+.topnav,
+.topbar-auth {
   display: flex;
+  align-items: center;
   gap: clamp(20px, 3vw, 44px);
+}
 
-  a {
-    color: var(--cream);
-    font-size: 17px;
-    font-weight: 500;
-    text-decoration: none;
-    position: relative;
-    padding-block: 8px;
+.topnav a,
+.topbar-auth a {
+  color: var(--cream);
+  font-size: 17px;
+  font-weight: 500;
+  text-decoration: none;
+  position: relative;
+  padding-block: 8px;
 
-    &::after {
-      content: '';
-      position: absolute;
-      inset: auto 0 2px;
-      height: 2px;
-      background: currentColor;
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s var(--ease);
-    }
-
-    &:hover::after,
-    &:focus-visible::after {
-      transform: none;
-    }
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 2px;
+    height: 2px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s var(--ease);
   }
+
+  &:hover::after,
+  &:focus-visible::after {
+    transform: none;
+  }
+}
+
+.auth-button.mat-mdc-button {
+  --mat-button-text-label-text-color: var(--cream);
+  --mat-button-text-label-text-size: 17px;
+  min-height: 44px;
 }
 
 .menu-btn.mat-mdc-icon-button {
   display: none;
   color: var(--cream);
-}
-
-.menu-symbol {
-  font-size: 24px;
-  line-height: 1;
-}
-
-.nav-symbol {
-  display: inline-grid;
-  width: 24px;
-  margin-right: 12px;
-  place-items: center;
-  color: var(--cream);
-  font-weight: 800;
 }
 
 // Hero: indigo field, the library photo pressed into it, the words stacked on a rule
@@ -393,6 +388,123 @@ h1 {
   }
 }
 
+// Booking: group participants and equipment stay secondary to the date and space choice
+.booking {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(360px, 7fr);
+  gap: clamp(40px, 8vw, 128px);
+  align-items: start;
+  padding: var(--section) var(--gutter);
+  color: var(--cream);
+  background: var(--brand);
+}
+
+.booking-intro {
+  max-width: 42ch;
+
+  h2 {
+    margin: 12px 0 28px;
+    font-size: clamp(42px, 5vw, 76px);
+    line-height: 0.96;
+    letter-spacing: -0.04em;
+  }
+
+  > p:not(.eyebrow):not(.booking-note) {
+    font-size: clamp(19px, 1.5vw, 22px);
+    line-height: 1.45;
+  }
+}
+
+.booking-note {
+  margin-top: 28px;
+  color: color-mix(in srgb, var(--cream) 72%, transparent);
+  font-size: 14px;
+}
+
+.booking-form {
+  display: grid;
+  gap: 16px;
+  padding: clamp(24px, 4vw, 48px);
+  color: var(--ink);
+  background: var(--cream);
+  box-shadow: 16px 16px 0 var(--night);
+
+  mat-form-field { width: 100%; }
+}
+
+.booking-times { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.booking-submit { min-height: 52px; color: var(--cream) !important; background: var(--night) !important; font-weight: 800; }
+.booking-feedback { margin: 4px 0 0; padding: 14px 16px; font-weight: 700; }
+.booking-feedback.success { color: #164d35; background: #d6f3df; }
+.booking-feedback.error { color: #8f1d2c; background: #ffe0e2; }
+
+.booking-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+}
+
+.field-error { margin: 0; color: #8f1d2c; font-size: 14px; font-weight: 600; }
+
+.equipment-field {
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+
+  legend {
+    padding-inline: 6px;
+    font-weight: 800;
+  }
+}
+
+.equipment-hint {
+  margin: 0 0 12px;
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+  font-size: 14px;
+}
+
+.equipment-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px 16px;
+
+  mat-checkbox { font-size: 15px; }
+}
+
+.equipment-name { font-weight: 600; }
+
+.equipment-state {
+  margin-left: 6px;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  font-size: 13px;
+
+  &.available { color: #164d35; }
+}
+
+.duration-field {
+  display: grid;
+  gap: 4px;
+
+  mat-slider { width: 100%; }
+}
+
+.duration-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 15px;
+
+  strong { font-variant-numeric: tabular-nums; }
+}
+
+.duration-hint {
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 65%, transparent);
+  font-size: 13px;
+}
+
 // Spaces: tall photographs on a staggered row
 .spaces {
   padding: 0 var(--gutter) var(--section);
@@ -679,7 +791,8 @@ h1 {
 }
 
 @media (max-width: 860px) {
-  .topnav {
+  .topnav,
+  .topbar-auth {
     display: none;
   }
 
@@ -702,9 +815,12 @@ h1 {
 
   .intro,
   .contact,
-  .registration {
+  .registration,
+  .booking {
     grid-template-columns: 1fr;
   }
+
+  .booking-intro { max-width: 52ch; }
 
   .registration-heading {
     position: static;
@@ -732,4 +848,8 @@ h1 {
   .space-photo {
     margin-bottom: 16px;
   }
+
+  .booking { padding-inline: 20px; }
+  .booking-form { padding: 20px; box-shadow: 8px 8px 0 var(--night); }
+  .booking-times { grid-template-columns: 1fr; gap: 0; }
 }

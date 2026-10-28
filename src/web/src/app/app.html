@@ -1,5 +1,5 @@
 <header class="topbar">
-  <a class="wordmark" href="#top" aria-label="SmartCampus, torna in cima">
+  <a class="wordmark" href="/#top" aria-label="SmartCampus, torna in cima">
     smart<span>campus</span>
   </a>
 
@@ -8,6 +8,18 @@
       <a [href]="link.href">{{ link.label }}</a>
     }
   </nav>
+
+  <div class="topbar-auth">
+    @if (session.isAuthenticated()) {
+      @if (session.isAdmin()) {
+        <a class="auth-link" href="/admin">Admin</a>
+      }
+      <a class="auth-link" href="/account">Area personale</a>
+      <button mat-button class="auth-button" type="button" (click)="logout()">Esci</button>
+    } @else {
+      <a class="auth-link" href="/login">Accedi</a>
+    }
+  </div>
 
   <button mat-icon-button class="menu-btn" [matMenuTriggerFor]="menu" aria-label="Apri il menu">
     <mat-icon>menu</mat-icon>
@@ -19,9 +31,31 @@
         <span>{{ link.label }}</span>
       </a>
     }
+    @if (session.isAuthenticated()) {
+      @if (session.isAdmin()) {
+        <a mat-menu-item href="/admin">
+          <mat-icon>admin_panel_settings</mat-icon>
+          <span>Admin</span>
+        </a>
+      }
+      <a mat-menu-item href="/account">
+        <mat-icon>account_circle</mat-icon>
+        <span>Area personale</span>
+      </a>
+      <button mat-menu-item type="button" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Esci</span>
+      </button>
+    } @else {
+      <a mat-menu-item href="/login">
+        <mat-icon>login</mat-icon>
+        <span>Accedi</span>
+      </a>
+    }
   </mat-menu>
 </header>
 
+@if (showHome()) {
 <main id="top">
   <section class="hero" aria-labelledby="hero-title">
     <img
@@ -47,13 +81,125 @@
         </p>
       </div>
 
-      <a class="hero-cta" href="#spazi">
+      <a class="hero-cta" href="#prenota">
         Trova uno spazio
         <svg viewBox="0 0 34 30" aria-hidden="true">
           <path d="M2 2l13 13L2 28M17 2l13 13-13 13" />
         </svg>
       </a>
     </div>
+  </section>
+
+  <section class="booking" id="prenota" aria-labelledby="booking-title">
+    <div class="booking-intro" data-reveal>
+      <p class="eyebrow">Una fascia, un posto per te</p>
+      <h2 id="booking-title">Prenota senza sorprese.</h2>
+      <p>Scegli lo spazio e la fascia oraria. Il sistema controlla sovrapposizioni, disponibilità e commenti finali prima di confermare.</p>
+      <p class="booking-note">Gli orari sono interpretati nel fuso del dispositivo e inviati al servizio in UTC.</p>
+    </div>
+
+    <form class="booking-form" [formGroup]="bookingForm" (ngSubmit)="submitBooking()" novalidate data-reveal>
+      <mat-form-field appearance="outline">
+        <mat-label>Spazio</mat-label>
+        <mat-select
+          formControlName="spaceId"
+          (selectionChange)="bookingForm.controls.equipment.setValue([])"
+        >
+          @for (space of bookingSpaces(); track space.id) {
+            <mat-option [value]="space.id">{{ space.name }} · {{ space.detail }}</mat-option>
+          }
+        </mat-select>
+        @if (bookingSpacesLoading()) { <mat-hint>Caricamento degli spazi…</mat-hint> }
+        @if (bookingFieldError('spaceId'); as error) { <mat-error>{{ error }}</mat-error> }
+      </mat-form-field>
+      @if (bookingSpacesError(); as error) {
+        <p class="form-alert booking-alert" role="alert">
+          {{ error }}
+          <button mat-button type="button" (click)="retryBookingSpaces()">Riprova</button>
+        </p>
+      }
+
+      <mat-form-field appearance="outline" class="participant-field">
+        <mat-label>Email dei partecipanti</mat-label>
+        <mat-chip-grid #participantGrid aria-label="Email dei partecipanti">
+          @for (email of participantEmails(); track email) {
+            <mat-chip-row (removed)="removeParticipant(email)">
+              {{ email }}
+              <button matChipRemove type="button" [attr.aria-label]="'Rimuovi ' + email"><mat-icon>cancel</mat-icon></button>
+            </mat-chip-row>
+          }
+          <input placeholder="Aggiungi un indirizzo email" [matChipInputFor]="participantGrid"
+            [matChipInputSeparatorKeyCodes]="participantSeparators" [matChipInputAddOnBlur]="true"
+            (matChipInputTokenEnd)="addParticipant($event)" />
+        </mat-chip-grid>
+        <mat-hint>Aggiungi gli invitati uno alla volta. Il responsabile non va inserito.</mat-hint>
+      </mat-form-field>
+      @if (participantError(); as error) { <p class="field-error" role="alert">{{ error }}</p> }
+
+      @if (participantEmails().length > 0) {
+        <fieldset class="equipment-field">
+          <legend>Strumenti richiesti</legend>
+          <p class="equipment-hint">
+            Seleziona ciò che serve all’aula: “già presente” vuol dire che lo spazio lo ha già,
+            “da preparare” che va portato.
+          </p>
+          <div class="equipment-options">
+            @for (equipment of equipmentForSelectedSpace(); track equipment.code) {
+              <mat-checkbox
+                [checked]="isEquipmentSelected(equipment.code)"
+                (change)="toggleEquipment(equipment.code, $event.checked)"
+              >
+                <span class="equipment-name">{{ equipment.name }}</span>
+                <span class="equipment-state" [class.available]="equipment.available">
+                  {{ equipment.available ? 'già presente' : 'da preparare' }}
+                </span>
+              </mat-checkbox>
+            }
+          </div>
+          @if (equipmentError(); as error) { <p class="field-error" role="alert">{{ error }}</p> }
+        </fieldset>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>Data</mat-label>
+        <input matInput type="date" formControlName="date" [min]="minimumBookingDate" />
+        @if (bookingFieldError('date'); as error) { <mat-error>{{ error }}</mat-error> }
+      </mat-form-field>
+      <div class="booking-times">
+        <mat-form-field appearance="outline">
+          <mat-label>Inizio</mat-label>
+          <input matInput type="time" step="900" formControlName="start" />
+          @if (bookingFieldError('start'); as error) { <mat-error>{{ error }}</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fine</mat-label>
+          <input matInput type="time" step="900" formControlName="end" />
+          @if (bookingFieldError('end'); as error) { <mat-error>{{ error }}</mat-error> }
+        </mat-form-field>
+      </div>
+
+      <div class="duration-field">
+        <div class="duration-head">
+          <span>Durata</span>
+          <strong>{{ bookingDuration() }} minuti</strong>
+        </div>
+        <mat-slider min="30" max="240" step="15" discrete showTickMarks>
+          <input
+            matSliderThumb
+            [value]="bookingDuration()"
+            (valueChange)="setBookingDuration($event)"
+            aria-label="Durata della prenotazione in minuti"
+          />
+        </mat-slider>
+        <p class="duration-hint">Da 30 minuti a 4 ore, a passi di 15 minuti.</p>
+      </div>
+
+      <button mat-flat-button class="booking-submit" type="submit" [disabled]="bookingState() === 'submitting'">
+        {{ bookingState() === 'submitting' ? 'Invio in corso…' : 'Conferma prenotazione' }}
+      </button>
+      @if (bookingState() === 'success') { <p class="booking-feedback success" role="status">{{ bookingMessage() }} <strong>Codice: {{ bookingReference() }}</strong></p> }
+      @if (bookingState() === 'error') { <p class="booking-feedback error" role="alert">{{ bookingMessage() }}</p> }
+    </form>
   </section>
 
   <section class="registration" id="registrazione" aria-labelledby="registration-title">
@@ -188,7 +334,7 @@
               <li>{{ fact }}</li>
             }
           </ul>
-          <a class="text-link" href="#contatti">
+          <a class="text-link" href="#prenota">
             Prenota <span class="arrow-icon" aria-hidden="true">↗</span>
           </a>
         </li>
@@ -281,5 +427,6 @@
     </p>
   </div>
 </footer>
+}
 
 <router-outlet />
