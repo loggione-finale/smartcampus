@@ -201,7 +201,7 @@ describe('SpacesCatalogPage', () => {
     const spacesReq = httpTesting.expectOne('/api/spaces/spaces');
     spacesReq.flush(SAMPLE_SPACES);
 
-    const availabilityReq = httpTesting.expectOne('/api/bookings/bookings/availability');
+    const availabilityReq = httpTesting.expectOne('/api/bookings/availability');
     expect(availabilityReq.request.method).toBe('POST');
     expect(availabilityReq.request.body).toEqual({
       spaceIds: [
@@ -249,7 +249,7 @@ describe('SpacesCatalogPage', () => {
     fixture.detectChanges();
 
     httpTesting.expectNone('/api/spaces/spaces');
-    httpTesting.expectNone('/api/bookings/bookings/availability');
+    httpTesting.expectNone('/api/bookings/availability');
 
     const alert = (fixture.nativeElement as HTMLElement).querySelector(
       '[data-testid="slot-error"]',
@@ -324,7 +324,7 @@ describe('SpacesCatalogPage', () => {
 
     httpTesting.expectOne('/api/spaces/spaces').flush([SAMPLE_SPACES[0]]);
     httpTesting
-      .expectOne('/api/bookings/bookings/availability')
+      .expectOne('/api/bookings/availability')
       .flush({ title: 'Bookings unavailable' }, { status: 503, statusText: 'Service Unavailable' });
     fixture.detectChanges();
 

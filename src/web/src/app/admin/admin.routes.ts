@@ -1,0 +1,7 @@
+import { Routes } from '@angular/router';
+import { DashboardPage } from './dashboard.page';
+
+export const ADMIN_ROUTES: Routes = [
+  { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+  { path: 'dashboard', component: DashboardPage, title: 'Dashboard · SmartCampus' },
+];

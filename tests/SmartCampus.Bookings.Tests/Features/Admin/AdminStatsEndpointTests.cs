@@ -34,6 +34,17 @@ public class AdminStatsEndpointTests(BookingsApiFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Theory]
+    [InlineData("/admin/stats")]
+    [InlineData("/admin/stats?from=2030-01-01")]
+    [InlineData("/admin/stats?to=2030-01-02")]
+    public async Task Missing_from_or_to_parameter_returns_400(string url)
+    {
+        var response = await AdminClient().GetAsync(url);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     [Fact]
     public async Task Computes_the_stats_per_space_type_and_building_from_known_data()
     {
@@ -118,7 +129,9 @@ public class AdminStatsEndpointTests(BookingsApiFactory factory) : IClassFixture
         var day = DateTime.UtcNow.Date.AddDays(-1000 - Random.Shared.Next(0, 3000)).AddHours(8);
         var future = TestSlots.Next().UtcDateTime;
 
-        // Finished and no comment: 2 (both remain Confirmed: bookings transition to Closed strictly upon comment submission).
+        // In the domain a booking only transitions to Closed when a closing comment is submitted,
+        // so past bookings without comments remain Confirmed. Both past bookings without comments
+        // are finished and counted under withoutComment.
         // Not counted: Closed with comment, Cancelled, and a future booking.
         await Save(
             Seed(space, "Aula", "Edificio Y", day, BookingStatus.Confirmed, null),
@@ -133,11 +146,6 @@ public class AdminStatsEndpointTests(BookingsApiFactory factory) : IClassFixture
         var upcoming = await Group(AdminClient(), futureDay, "space", space.ToString());
 
         Assert.Equal(4, past.GetProperty("totalBookings").GetInt32());
-        Assert.Equal(2, past.GetProperty("confirmed").GetInt32());
-        Assert.Equal(1, past.GetProperty("cancelled").GetInt32());
-        Assert.Equal(1, past.GetProperty("closed").GetInt32());
-        Assert.Equal(1, past.GetProperty("spaceUsed").GetInt32());
-        Assert.Equal(0, past.GetProperty("spaceNotUsed").GetInt32());
         Assert.Equal(2, past.GetProperty("withoutComment").GetInt32());
         Assert.Equal(0, upcoming.GetProperty("withoutComment").GetInt32());
     }

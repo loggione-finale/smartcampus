@@ -12,13 +12,18 @@ public class AdminStatsController(AdminStatsService statsService) : ControllerBa
     [HttpGet]
     [ProducesResponseType<List<StatsGroupResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Get(
-        DateOnly from, DateOnly to, StatsGroupBy groupBy, CancellationToken cancellationToken)
+        DateOnly? from, DateOnly? to, StatsGroupBy groupBy, CancellationToken cancellationToken)
     {
+        if (from is null || to is null)
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "'from' and 'to' query parameters are required");
+        }
+
         if (from > to)
         {
             return Problem(statusCode: StatusCodes.Status400BadRequest, title: "'from' must not be after 'to'");
         }
 
-        return Ok(await statsService.GetAsync(from, to, groupBy, cancellationToken));
+        return Ok(await statsService.GetAsync(from.Value, to.Value, groupBy, cancellationToken));
     }
 }

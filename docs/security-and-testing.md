@@ -61,7 +61,7 @@
 
 | Rischio | Contromisura |
 |---|---|
-| Uno studente crea, modifica o disattiva spazi | Controllo del ruolo `Staff` su ogni endpoint di scrittura (`403` altrimenti) |
+| Uno studente crea, modifica o disattiva spazi | Controllo del ruolo `Admin` su ogni endpoint di scrittura (`403` altrimenti) |
 | Dati non validi (capienza negativa, nome vuoto, testo enorme) | Data Annotations sui DTO, `400` con `ProblemDetails` |
 | Iniezione nelle query (SQL o MongoDB) | EF Core usa query parametrizzate; con MongoDB solo filtri tipizzati (`Builders<T>.Filter`), mai query costruite concatenando stringhe |
 | Cancellazione che rompe i riferimenti di Bookings | Nessun `DELETE`: solo disattivazione |

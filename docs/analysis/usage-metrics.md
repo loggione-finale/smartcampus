@@ -123,8 +123,8 @@ quella che blocca le nuove prenotazioni di Elena Greco): nel sistema è ancora i
 `withoutComment` 0, `totalAttendees` 9, `issuesReported` 1. Qui `confirmed` mescola 8 prenotazioni future con la 0011:
 `withoutComment` le distingue (solo la 0011 è finita) e rispetta `withoutComment <= confirmed` (1 <= 9).
 
-Verifica: i numeri dell'esempio 1 coincidono con le asserzioni di `AdminStatsEndpointTests` (7 test su 7 superati in
-locale, su PostgreSQL reale; 174/174 sull'intero progetto di test). L'esempio 2 è calcolato a mano dal file JSON; non è stato confrontato con una chiamata
+Verifica: i numeri dell'esempio 1 e quelli del test su `withoutComment` coincidono con le asserzioni di
+`AdminStatsEndpointTests` nel ramo base (confronto fatto a mano sul codice dei test). L'esempio 2 è calcolato a mano dal file JSON; non è stato confrontato con una chiamata
 all'endpoint sul seed.
 
 ## Limiti

@@ -24,7 +24,7 @@ public record StatsGroupResponse(
     int TotalAttendees,
     int IssuesReported);
 
-public class AdminStatsService(BookingsDbContext dbContext)
+public class AdminStatsService(BookingsDbContext dbContext, TimeProvider timeProvider)
 {
     // Both dates are inclusive and refer to the campus booking date.
     public async Task<List<StatsGroupResponse>> GetAsync(
@@ -45,7 +45,7 @@ public class AdminStatsService(BookingsDbContext dbContext)
             })
             .ToListAsync(cancellationToken);
 
-        var now = DateTime.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
 
         // Space groups use the id only: the label is the name snapshot of the latest booking in the period.
         return bookings

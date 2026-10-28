@@ -3,6 +3,7 @@ using Npgsql;
 using NpgsqlTypes;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
+using SmartCampus.Bookings.Api.Features.Admin;
 using SmartCampus.Bookings.Api.Features.Bookings.Closure;
 using SmartCampus.Bookings.Api.Features.Bookings.Spaces;
 using SmartCampus.Bookings.Api.Features.Bookings.Users;
@@ -19,7 +20,8 @@ public class BookingService(
     TimeProvider timeProvider,
     IUsersClient? usersClient = null,
     IBookingEquipmentService? bookingEquipmentService = null,
-    IEmailOutbox? emailOutbox = null)
+    IEmailOutbox? emailOutbox = null,
+    IAdminAlerts? adminAlerts = null)
 {
     private const string SpaceOverlapConstraint = "ex_bookings_dedicated_space_no_overlap";
     private const string PersonOverlapConstraint = "ex_invitations_person_no_overlap";
@@ -224,6 +226,7 @@ public class BookingService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         await EnqueueInvitationEmailsAsync(booking, cancellationToken);
+        await RaiseNewBookingAlertAsync(booking, cancellationToken);
 
         if (equipmentPlan.MissingItems.Count > 0 && bookingEquipmentService is not null)
         {
@@ -231,6 +234,20 @@ public class BookingService(
         }
 
         return CreateBookingResult.Created(booking);
+    }
+
+    private async Task RaiseNewBookingAlertAsync(Booking booking, CancellationToken cancellationToken)
+    {
+        if (adminAlerts is null)
+        {
+            return;
+        }
+
+        await adminAlerts.RaiseAsync(
+            AdminAlertKind.NewBooking,
+            booking.Id,
+            $"Nuova prenotazione {booking.ReferenceCode}: {booking.SpaceNameSnapshot}, {booking.OrganizerNameSnapshot}",
+            cancellationToken);
     }
 
     private Task<CreateBookingResult> InsertInMixedSpaceAsync(
@@ -286,6 +303,7 @@ public class BookingService(
             await dbContext.SaveChangesAsync(cancellationToken);
 
             await EnqueueInvitationEmailsAsync(booking, cancellationToken);
+            await RaiseNewBookingAlertAsync(booking, cancellationToken);
 
             if (equipmentPlan.MissingItems.Count > 0 && bookingEquipmentService is not null)
             {
