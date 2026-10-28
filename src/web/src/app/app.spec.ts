@@ -8,7 +8,7 @@ import { AuthSessionService } from './auth/auth-session.service';
 import { LoginResponse } from './auth/auth.models';
 import { App } from './app';
 import { SpacesApiService } from './spaces/spaces-api.service';
-import { EquipmentCatalogItemDto, SpaceDto } from './spaces/spaces.models';
+import { EquipmentCatalogItemDto, SpaceAvailabilityDto, SpaceDto } from './spaces/spaces.models';
 
 const LOGIN_RESPONSE: LoginResponse = {
   token: 'token-123',
@@ -75,6 +75,34 @@ const SPACES: SpaceDto[] = [
     unavailabilities: [],
     updatedAt: '2026-01-01T00:00:00Z',
   },
+  {
+    id: 'space-3',
+    name: 'Sala studio condivisa',
+    type: 'StudyRoom',
+    mode: 'Mixed',
+    building: 'Edificio B',
+    floor: 0,
+    capacity: 8,
+    isActive: true,
+    features: {},
+    equipment: [],
+    unavailabilities: [],
+    updatedAt: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: 'space-4',
+    name: 'Aula mini',
+    type: 'Classroom',
+    mode: 'Dedicated',
+    building: 'Edificio C',
+    floor: 1,
+    capacity: 2,
+    isActive: true,
+    features: {},
+    equipment: [],
+    unavailabilities: [],
+    updatedAt: '2026-01-01T00:00:00Z',
+  },
 ];
 
 const EQUIPMENT: EquipmentCatalogItemDto[] = [
@@ -88,6 +116,14 @@ const EQUIPMENT: EquipmentCatalogItemDto[] = [
 const spacesApiStub = {
   searchSpaces: () => of(SPACES),
   getEquipmentCatalog: () => of(EQUIPMENT),
+  getSpaceDailyAvailability: () =>
+    of<SpaceAvailabilityDto>({
+      spaceId: 'space-3',
+      date: '2026-10-29',
+      accessMode: 'Mixed',
+      capacity: 8,
+      slots: [],
+    }),
 };
 
 // The form validates time bands in Europe/Rome, while the inputs are in the device time zone.
@@ -205,7 +241,11 @@ describe('App', () => {
     const app = fixture.componentInstance as any;
     fixture.detectChanges();
 
-    expect(app.bookingSpaces().map((space: { id: string }) => space.id)).toEqual(['space-1']);
+    expect(app.bookingSpaces().map((space: { id: string }) => space.id)).toEqual([
+      'space-1',
+      'space-3',
+      'space-4',
+    ]);
     expect(app.bookingForm.controls.spaceId.value).toBe('space-1');
   });
 
@@ -458,6 +498,154 @@ describe('App', () => {
     app.removeParticipant('group@example.test');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.equipment-field')).toBeNull();
+  });
+
+  it('shows the participant total and the capacity of the selected space', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as any;
+    fixture.detectChanges();
+    const chipInput = { clear() {} };
+
+    app.addParticipant({ value: 'one@example.test', chipInput } as any);
+    app.addParticipant({ value: 'two@example.test', chipInput } as any);
+    fixture.detectChanges();
+
+    expect(app.participantTotal()).toBe(3);
+    expect(app.participantSummary()).toContain('responsabile + 2 invitati');
+    expect(fixture.nativeElement.textContent).toContain('Partecipanti totali: 3');
+    expect(fixture.nativeElement.textContent).toContain('Capienza: 30 posti');
+  });
+
+  it('loads the free seats when the first bookable space is mixed', () => {
+    spyOn(spacesApiStub, 'searchSpaces').and.returnValue(of([SPACES[2]]));
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as any;
+    fixture.detectChanges();
+
+    expect(app.bookingForm.controls.spaceId.value).toBe('space-3');
+    expect(fixture.nativeElement.textContent).toContain('Posti liberi nella fascia: 8 su 8');
+  });
+
+  it('does not accept the organizer email as a participant', () => {
+    const fixture = TestBed.createComponent(App);
+    const session = TestBed.inject(AuthSessionService);
+    session.store(LOGIN_RESPONSE);
+    fixture.detectChanges();
+    const app = fixture.componentInstance as any;
+    const chipInput = { clear() {} };
+
+    app.addParticipant({ value: 'GIULIA.ROSSI@smartcampus.test', chipInput } as any);
+    fixture.detectChanges();
+
+    expect(app.participantEmails()).toEqual([]);
+    expect(app.participantError()).toContain('responsabile');
+    expect(fixture.nativeElement.textContent).toContain('non aggiungere la tua email');
+  });
+
+  it('blocks a group larger than the capacity of a dedicated space', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as any;
+    fixture.detectChanges();
+    fillValidBooking(app);
+    app.bookingForm.controls.spaceId.setValue('space-4');
+    const chipInput = { clear() {} };
+    app.addParticipant({ value: 'one@example.test', chipInput } as any);
+    app.addParticipant({ value: 'two@example.test', chipInput } as any);
+    fixture.detectChanges();
+
+    expect(app.participantSeatWarning()).toContain('Aula mini ha 2 posti');
+
+    app.submitBooking();
+    fixture.detectChanges();
+
+    expect(app.bookingState()).toBe('error');
+    expect(fixture.nativeElement.textContent).toContain('Aula mini ha 2 posti');
+    httpTesting.expectNone('/api/bookings');
+
+    app.removeParticipant('two@example.test');
+    fixture.detectChanges();
+
+    expect(app.participantTotal()).toBe(2);
+    expect(app.participantSeatWarning()).toBe('');
+    expect(app.bookingState()).toBe('idle');
+    expect(fixture.nativeElement.textContent).not.toContain('Aula mini ha 2 posti');
+  });
+
+  it('blocks a group larger than the free seats in a mixed space', () => {
+    const slot = localSlotFromRome(romeDayOffset(1), '10:00', '11:00');
+    const startIso = new Date(`${slot.date}T${slot.start}`).toISOString();
+    const endIso = new Date(`${slot.date}T${slot.end}`).toISOString();
+    spyOn(spacesApiStub, 'getSpaceDailyAvailability').and.returnValue(
+      of<SpaceAvailabilityDto>({
+        spaceId: 'space-3',
+        date: slot.date,
+        accessMode: 'Mixed',
+        capacity: 8,
+        slots: [
+          { start: startIso, end: endIso, occupiedSeats: 6, freeSeats: 2, isAvailable: true },
+        ],
+      }),
+    );
+
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as any;
+    fixture.detectChanges();
+    fillValidBooking(app);
+    app.bookingForm.patchValue({ spaceId: 'space-3' });
+    const chipInput = { clear() {} };
+    for (const name of ['one', 'two', 'three']) {
+      app.addParticipant({ value: `${name}@example.test`, chipInput } as any);
+    }
+    fixture.detectChanges();
+
+    expect(app.participantTotal()).toBe(4);
+    expect(app.participantSeatWarning()).toContain('restano 2 posti su 8');
+    expect(fixture.nativeElement.textContent).toContain('Posti liberi nella fascia: 2 su 8');
+
+    app.submitBooking();
+    fixture.detectChanges();
+
+    expect(app.bookingState()).toBe('error');
+    expect(fixture.nativeElement.textContent).toContain('restano 2 posti su 8');
+    httpTesting.expectNone('/api/bookings');
+  });
+
+  it('accepts a mixed group that fits in the free seats', () => {
+    const slot = localSlotFromRome(romeDayOffset(1), '10:00', '11:00');
+    const startIso = new Date(`${slot.date}T${slot.start}`).toISOString();
+    const endIso = new Date(`${slot.date}T${slot.end}`).toISOString();
+    spyOn(spacesApiStub, 'getSpaceDailyAvailability').and.returnValue(
+      of<SpaceAvailabilityDto>({
+        spaceId: 'space-3',
+        date: slot.date,
+        accessMode: 'Mixed',
+        capacity: 8,
+        slots: [
+          { start: startIso, end: endIso, occupiedSeats: 4, freeSeats: 4, isAvailable: true },
+        ],
+      }),
+    );
+
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as any;
+    fixture.detectChanges();
+    fillValidBooking(app);
+    app.bookingForm.patchValue({ spaceId: 'space-3' });
+    const chipInput = { clear() {} };
+    app.addParticipant({ value: 'one@example.test', chipInput } as any);
+    app.addParticipant({ value: 'two@example.test', chipInput } as any);
+    fixture.detectChanges();
+
+    expect(app.participantSeatWarning()).toBe('');
+
+    app.submitBooking();
+
+    const request = httpTesting.expectOne('/api/bookings');
+    expect(request.request.body.participantEmails).toEqual([
+      'one@example.test',
+      'two@example.test',
+    ]);
+    request.flush({ referenceCode: 'SC-261027-MIXD' }, { status: 201, statusText: 'Created' });
   });
 
   it('sends participant emails and equipment codes with a group booking', () => {

@@ -4,7 +4,12 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { SpacesApiService } from './spaces/spaces-api.service';
-import { EquipmentCatalogItemDto, SpaceDto } from './spaces/spaces.models';
+import {
+  EquipmentCatalogItemDto,
+  SpaceAvailabilityDto,
+  SpaceDto,
+  SpaceMode,
+} from './spaces/spaces.models';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule, MatChipInputEvent } from '@angular/material/chips';
@@ -15,7 +20,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { filter, map } from 'rxjs';
+import { filter, map, merge } from 'rxjs';
 import { AuthSessionService } from './auth/auth-session.service';
 
 type Health = 'checking' | 'online' | 'offline';
@@ -56,6 +61,8 @@ type BookingSpace = {
   name: string;
   detail: string;
   equipment: string[];
+  capacity: number;
+  mode: SpaceMode;
 };
 
 type EquipmentOption = {
@@ -152,7 +159,69 @@ function toBookingSpace(space: SpaceDto): BookingSpace {
     name: space.name,
     detail,
     equipment: space.equipment ?? [],
+    capacity: space.capacity,
+    mode: space.mode,
   };
+}
+
+function seatsLabel(count: number): string {
+  return `${count} ${count === 1 ? 'posto' : 'posti'}`;
+}
+
+function peopleLabel(count: number): string {
+  return `${count} ${count === 1 ? 'persona' : 'persone'}`;
+}
+
+// A mixed space shares its seats: the group must fit in the smallest number of free seats
+// across the requested interval. Gaps between slots mean the space is completely free.
+function minimumFreeSeats(
+  availability: SpaceAvailabilityDto,
+  startIso: string,
+  endIso: string,
+  fallbackCapacity: number,
+): number | null {
+  const startMs = Date.parse(startIso);
+  const endMs = Date.parse(endIso);
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) return null;
+
+  const capacity = availability.capacity > 0 ? availability.capacity : fallbackCapacity;
+  const slots = (availability.slots ?? [])
+    .map((slot) => ({
+      start: Date.parse(slot.start),
+      end: Date.parse(slot.end),
+      freeSeats: Math.max(0, slot.freeSeats),
+      isAvailable: slot.isAvailable,
+    }))
+    .filter((slot) => Number.isFinite(slot.start) && Number.isFinite(slot.end) && slot.start < slot.end);
+
+  // A single full-day block means Bookings could not break the day down: let the server decide.
+  if (
+    slots.length === 1 &&
+    !slots[0].isAvailable &&
+    slots[0].end - slots[0].start >= 24 * 3_600_000
+  ) {
+    return null;
+  }
+
+  const boundaries = new Set<number>([startMs, endMs]);
+  for (const slot of slots) {
+    if (slot.end > startMs && slot.start < endMs) {
+      boundaries.add(Math.max(startMs, slot.start));
+      boundaries.add(Math.min(endMs, slot.end));
+    }
+  }
+
+  const ordered = Array.from(boundaries).sort((a, b) => a - b);
+  let freeSeats = capacity;
+  for (let index = 0; index < ordered.length - 1; index += 1) {
+    const from = ordered[index];
+    const to = ordered[index + 1];
+    if (from >= to) continue;
+    const covering = slots.find((slot) => slot.start <= from && slot.end >= to);
+    freeSeats = Math.min(freeSeats, covering ? covering.freeSeats : capacity);
+  }
+
+  return freeSeats;
 }
 
 @Component({
@@ -224,6 +293,45 @@ export class App {
     start: new FormControl(this.initialSlot.start, { nonNullable: true, validators: [Validators.required] }),
     end: new FormControl(this.initialSlot.end, { nonNullable: true, validators: [Validators.required] }),
     equipment: new FormControl<string[]>([], { nonNullable: true }),
+  });
+
+  protected readonly participantTotal = computed(() => 1 + this.participantEmails().length);
+
+  private readonly selectedSpaceId = toSignal(this.bookingForm.controls.spaceId.valueChanges, {
+    initialValue: this.bookingForm.controls.spaceId.value,
+  });
+  protected readonly selectedBookingSpace = computed(
+    () => this.bookingSpaces().find((space) => space.id === this.selectedSpaceId()) ?? null,
+  );
+
+  private readonly mixedFreeSeats = signal<number | null>(null);
+  private mixedSeatsRequest = 0;
+
+  protected readonly seatSummary = computed(() => {
+    const space = this.selectedBookingSpace();
+    if (!space) return '';
+    if (space.mode === 'Dedicated') {
+      return `Capienza: ${seatsLabel(space.capacity)}. La prenotazione occupa tutta l’aula.`;
+    }
+    const freeSeats = this.mixedFreeSeats();
+    if (freeSeats === null) return `Capienza: ${seatsLabel(space.capacity)}.`;
+    return `Posti liberi nella fascia: ${freeSeats} su ${space.capacity}.`;
+  });
+
+  protected readonly participantSeatWarning = computed(() => {
+    const space = this.selectedBookingSpace();
+    if (!space) return '';
+
+    const total = this.participantTotal();
+    if (space.mode === 'Dedicated') {
+      if (total <= space.capacity) return '';
+      return `Il gruppo è di ${peopleLabel(total)}, ma ${space.name} ha ${seatsLabel(space.capacity)}. Riduci i partecipanti o scegli uno spazio più grande.`;
+    }
+
+    const freeSeats = this.mixedFreeSeats();
+    if (freeSeats === null || total <= freeSeats) return '';
+    const verb = freeSeats === 1 ? 'resta' : 'restano';
+    return `Nella fascia scelta ${verb} ${seatsLabel(freeSeats)} su ${space.capacity}, ma il gruppo è di ${peopleLabel(total)}. Riduci i partecipanti o cambia orario.`;
   });
 
   protected readonly bookingState = signal<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -328,9 +436,15 @@ export class App {
 
   constructor() {
     this.inviteToken.set(new URLSearchParams(window.location.search).get('invite'));
+    this.bookingForm.valueChanges.subscribe(() => this.clearBookingErrors());
+    merge(
+      this.bookingForm.controls.spaceId.valueChanges,
+      this.bookingForm.controls.date.valueChanges,
+      this.bookingForm.controls.start.valueChanges,
+      this.bookingForm.controls.end.valueChanges,
+    ).subscribe(() => this.refreshMixedSeats());
     this.loadBookingSpaces();
     this.loadEquipmentCatalog();
-    this.bookingForm.valueChanges.subscribe(() => this.clearBookingErrors());
     afterNextRender(() => {
       this.checkHealth();
       this.revealOnScroll();
@@ -471,6 +585,13 @@ export class App {
       return;
     }
 
+    const seatWarning = this.participantSeatWarning();
+    if (seatWarning) {
+      this.bookingState.set('error');
+      this.bookingMessage.set(seatWarning);
+      return;
+    }
+
     const { date, start, end, spaceId, equipment } = this.bookingForm.getRawValue();
     const isGroup = this.participantEmails().length > 0;
     if (!isGroup && equipment.length > 0) {
@@ -520,17 +641,37 @@ export class App {
       this.participantError.set('Inserisci un indirizzo email valido.');
       return;
     }
+    const ownEmail = this.session.user()?.email?.trim().toLowerCase();
+    if (ownEmail && email === ownEmail) {
+      this.participantError.set('Sei tu il responsabile della prenotazione: non aggiungere la tua email.');
+      return;
+    }
     if (this.participantEmails().includes(email)) {
       this.participantError.set('Questa email è già stata aggiunta.');
       return;
     }
     this.participantEmails.update((emails) => [...emails, email]);
+    this.clearSeatBookingError();
   }
 
   protected removeParticipant(email: string): void {
     this.participantEmails.update((emails) => emails.filter((item) => item !== email));
     this.participantError.set('');
     if (this.participantEmails().length === 0) this.bookingForm.controls.equipment.setValue([]);
+    this.clearSeatBookingError();
+  }
+
+  private clearSeatBookingError(): void {
+    if (this.bookingState() !== 'error' || this.participantSeatWarning()) return;
+    this.bookingState.set('idle');
+    this.bookingMessage.set('');
+  }
+
+  protected participantSummary(): string {
+    const guests = this.participantEmails().length;
+    if (guests === 0) return 'Partecipanti totali: 1 (solo il responsabile).';
+    const invited = guests === 1 ? 'invitato' : 'invitati';
+    return `Partecipanti totali: ${guests + 1} (responsabile + ${guests} ${invited}).`;
   }
 
   protected bookingFieldError(field: BookingField): string | null {
@@ -608,6 +749,8 @@ export class App {
         const selected = this.bookingForm.controls.spaceId.value;
         if (!active.some((space) => space.id === selected)) {
           this.bookingForm.controls.spaceId.setValue(active[0].id);
+        } else {
+          this.refreshMixedSeats();
         }
       },
       error: () => {
@@ -622,6 +765,46 @@ export class App {
       next: (catalog) =>
         this.equipmentCatalog.set(catalog.length > 0 ? catalog : FALLBACK_EQUIPMENT),
       error: () => this.equipmentCatalog.set(FALLBACK_EQUIPMENT),
+    });
+  }
+
+  private refreshMixedSeats(): void {
+    const space = this.selectedBookingSpace();
+    const { date, start, end } = this.bookingForm.getRawValue();
+    const startDate = new Date(`${date}T${start}`);
+    const endDate = new Date(`${date}T${end}`);
+
+    if (
+      !space ||
+      space.mode !== 'Mixed' ||
+      !date ||
+      !start ||
+      !end ||
+      Number.isNaN(startDate.valueOf()) ||
+      Number.isNaN(endDate.valueOf()) ||
+      endDate <= startDate
+    ) {
+      this.mixedSeatsRequest += 1;
+      this.mixedFreeSeats.set(null);
+      return;
+    }
+
+    const requestId = ++this.mixedSeatsRequest;
+    this.spacesApi.getSpaceDailyAvailability(space.id, date).subscribe({
+      next: (availability) => {
+        if (requestId !== this.mixedSeatsRequest) return;
+        this.mixedFreeSeats.set(
+          minimumFreeSeats(
+            availability,
+            startDate.toISOString(),
+            endDate.toISOString(),
+            space.capacity,
+          ),
+        );
+      },
+      error: () => {
+        if (requestId === this.mixedSeatsRequest) this.mixedFreeSeats.set(null);
+      },
     });
   }
 
