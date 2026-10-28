@@ -27,8 +27,8 @@ export class BookingsAvailabilityError extends Error {
 export class SpacesApiService {
   private readonly http = inject(HttpClient);
   private bookingsAvailabilityBase:
-    | '/api/bookings/bookings/availability'
-    | '/api/bookings/availability' = '/api/bookings/bookings/availability';
+    | '/api/bookings/availability'
+    | '/api/bookings/bookings/availability' = '/api/bookings/availability';
 
   searchSpaces(params: SpaceSearchParams = {}): Observable<SpaceDto[]> {
     const httpParams = this.buildHttpParams(params);
