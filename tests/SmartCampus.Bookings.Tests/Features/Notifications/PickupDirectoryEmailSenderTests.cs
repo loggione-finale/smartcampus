@@ -94,6 +94,23 @@ public class PickupDirectoryEmailSenderTests : IDisposable
     }
 
     [Fact]
+    public void Templates_format_times_in_the_campus_timezone_not_utc()
+    {
+        // 09:00 UTC = 11:00 ora italiana (CEST, UTC+2 a fine marzo).
+        var booking = BookingTestData.NewBooking(Guid.NewGuid(), Start, Start.AddHours(2));
+        var invitation = BookingTestData.NewInvitation(booking, userId: null, InvitationStatus.Invited);
+
+        var email = NotificationTemplates.BookingCreated(booking, "organizer@smartcampus.test");
+
+        Assert.Contains("30/03/2033 11:00 - 13:00", email.Body);
+        Assert.DoesNotContain("09:00", email.Body);
+
+        var invitationEmail = NotificationTemplates.InvitationToUnregistered(invitation, booking);
+        // ExpiresAt coincide con l'inizio della prenotazione: 09:00 UTC = 11:00.
+        Assert.Contains("conferma entro 11:00", invitationEmail.Body);
+    }
+
+    [Fact]
     public void Templates_use_one_kind_per_event()
     {
         var booking = BookingTestData.NewBooking(Guid.NewGuid(), Start, Start.AddHours(2));

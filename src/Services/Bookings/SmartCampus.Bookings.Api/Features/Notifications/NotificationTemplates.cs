@@ -14,6 +14,8 @@ public record OutgoingEmail(
 /// I modelli di email dei cinque eventi notificati: prenotazione creata,
 /// invito a utente registrato, invito a utente non registrato, scadenza dell'invito,
 /// annullamento della prenotazione.
+/// I tempi sono formattati nel fuso orario del campus (<see cref="BookingTimeBands.CampusTimeZone"/>),
+/// non in UTC.
 /// </summary>
 public static class NotificationTemplates
 {
@@ -29,7 +31,7 @@ public static class NotificationTemplates
         invitation.Email,
         $"Invito alla prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}",
         $"Sei stato invitato come utente registrato alla prenotazione {booking.SpaceNameSnapshot} " +
-        $"({Period(booking)}). Conferma entro {invitation.ExpiresAt:HH:mm}.",
+        $"({Period(booking)}). Conferma entro {CampusTime(invitation.ExpiresAt):HH:mm}.",
         "invitation",
         booking.Id);
 
@@ -37,7 +39,7 @@ public static class NotificationTemplates
         invitation.Email,
         $"Invito alla prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}",
         $"Sei stato invitato alla prenotazione {booking.SpaceNameSnapshot} " +
-        $"({Period(booking)}). Registrati sul portale e conferma entro {invitation.ExpiresAt:HH:mm}.",
+        $"({Period(booking)}). Registrati sul portale e conferma entro {CampusTime(invitation.ExpiresAt):HH:mm}.",
         "invitation",
         booking.Id);
 
@@ -47,9 +49,9 @@ public static class NotificationTemplates
         $"Invito scaduto - prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}",
         toOrganizer
             ? $"L'invito per {invitation.Email} alla prenotazione {booking.SpaceNameSnapshot} " +
-              $"({Period(booking)}) è scaduto alle {invitation.ExpiresAt:HH:mm} senza conferma."
+              $"({Period(booking)}) è scaduto alle {CampusTime(invitation.ExpiresAt):HH:mm} senza conferma."
             : $"Il tuo invito alla prenotazione {booking.SpaceNameSnapshot} " +
-              $"({Period(booking)}) è scaduto alle {invitation.ExpiresAt:HH:mm} senza conferma.",
+              $"({Period(booking)}) è scaduto alle {CampusTime(invitation.ExpiresAt):HH:mm} senza conferma.",
         "invitation-expired",
         booking.Id);
 
@@ -62,5 +64,8 @@ public static class NotificationTemplates
         booking.Id);
 
     private static string Period(Booking booking) =>
-        $"{booking.Period.LowerBound:dd/MM/yyyy HH:mm} - {booking.Period.UpperBound:HH:mm}";
+        $"{CampusTime(booking.Period.LowerBound):dd/MM/yyyy HH:mm} - {CampusTime(booking.Period.UpperBound):HH:mm}";
+
+    private static DateTime CampusTime(DateTime utc) =>
+        TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), BookingTimeBands.CampusTimeZone);
 }
