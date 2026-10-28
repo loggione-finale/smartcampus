@@ -4,7 +4,7 @@ using SmartCampus.Bookings.Api.Domain;
 
 namespace SmartCampus.Bookings.Api.Features.Invitations;
 
-public class MyInvitationsService(BookingsDbContext dbContext, TimeProvider timeProvider)
+public class MyInvitationsService(BookingsDbContext dbContext)
 {
     public async Task<List<InvitationResponse>> GetMineAsync(
         Guid userId, string? email, CancellationToken cancellationToken)

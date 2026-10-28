@@ -26,7 +26,8 @@ public class BookingsController(
             return Unauthorized();
         }
 
-        var email = User.FindFirstValue(ClaimTypes.Email);
+        var email = User.FindFirstValue("email")
+            ?? User.FindFirstValue(ClaimTypes.Email);
 
         var bookings = await myBookingsService.GetMineAsync(userId, email, cancellationToken);
         return Ok(bookings);
@@ -46,11 +47,20 @@ public class BookingsController(
             return Unauthorized();
         }
 
-        var organizerName = User.FindFirstValue(ClaimTypes.Name)
+        var organizerName = User.FindFirstValue("name")
+            ?? User.FindFirstValue(ClaimTypes.Name)
             ?? User.FindFirstValue(ClaimTypes.Email)
             ?? organizerId.ToString();
 
-        var result = await bookingService.CreateAsync(organizerId, organizerName, request, cancellationToken);
+        var organizerEmail = User.FindFirstValue("email")
+            ?? User.FindFirstValue(ClaimTypes.Email);
+        if (organizerEmail is null)
+        {
+            return Unauthorized();
+        }
+
+        var result = await bookingService.CreateAsync(
+            organizerId, organizerName, organizerEmail, request, cancellationToken);
 
         return result.Outcome switch
         {
