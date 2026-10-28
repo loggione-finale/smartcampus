@@ -547,6 +547,80 @@ describe('BookingFormComponent', () => {
     request.flush({ referenceCode: 'SC-261027-MIXD' }, { status: 201, statusText: 'Created' });
   });
 
+  it('blocks a mixed-space group larger than 4 people', () => {
+    const fixture = TestBed.createComponent(BookingFormComponent);
+    const form = fixture.componentInstance as any;
+    fixture.detectChanges();
+    fillValidBooking(form);
+    form.bookingForm.patchValue({ spaceId: 'space-3' });
+    const chipInput = { clear() {} };
+    for (const name of ['one', 'two', 'three', 'four']) {
+      form.addParticipant({ value: `${name}@example.test`, chipInput } as any);
+    }
+    fixture.detectChanges();
+
+    expect(form.participantTotal()).toBe(5);
+    expect(form.participantMixedSizeWarning()).toContain('al massimo 4 persone');
+
+    form.submitBooking();
+    fixture.detectChanges();
+
+    expect(form.bookingState()).toBe('error');
+    expect(fixture.nativeElement.textContent).toContain('al massimo 4 persone');
+    httpTesting.expectNone('/api/bookings');
+
+    form.removeParticipant('four@example.test');
+    fixture.detectChanges();
+
+    expect(form.participantTotal()).toBe(4);
+    expect(form.participantMixedSizeWarning()).toBe('');
+    expect(form.bookingState()).toBe('idle');
+  });
+
+  it('accepts a mixed-space group of exactly 4 people', () => {
+    const fixture = TestBed.createComponent(BookingFormComponent);
+    const form = fixture.componentInstance as any;
+    fixture.detectChanges();
+    fillValidBooking(form);
+    form.bookingForm.patchValue({ spaceId: 'space-3' });
+    const chipInput = { clear() {} };
+    for (const name of ['one', 'two', 'three']) {
+      form.addParticipant({ value: `${name}@example.test`, chipInput } as any);
+    }
+    fixture.detectChanges();
+
+    expect(form.participantTotal()).toBe(4);
+    expect(form.participantMixedSizeWarning()).toBe('');
+
+    form.submitBooking();
+
+    const request = httpTesting.expectOne('/api/bookings');
+    expect(request.request.body.participantEmails.length).toBe(3);
+    request.flush({ referenceCode: 'SC-261027-MIX4' }, { status: 201, statusText: 'Created' });
+    expect(form.bookingState()).toBe('success');
+  });
+
+  it('shows the mixed group limit message when Bookings answers 409 Group too large', () => {
+    const fixture = TestBed.createComponent(BookingFormComponent);
+    const form = fixture.componentInstance as any;
+    fixture.detectChanges();
+    fillValidBooking(form);
+    form.bookingForm.patchValue({ spaceId: 'space-3' });
+
+    form.submitBooking();
+    httpTesting
+      .expectOne('/api/bookings')
+      .flush(
+        { title: 'Group too large', maxGroupSize: 4 },
+        { status: 409, statusText: 'Conflict' },
+      );
+    fixture.detectChanges();
+
+    expect(form.bookingState()).toBe('error');
+    expect(form.bookingMessage()).toContain('al massimo 4 persone');
+    expect(fixture.nativeElement.textContent).toContain('al massimo 4 persone');
+  });
+
   it('sends participant emails and equipment codes with a group booking', () => {
     const fixture = TestBed.createComponent(BookingFormComponent);
     const form = fixture.componentInstance as any;

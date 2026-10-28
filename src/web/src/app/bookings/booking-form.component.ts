@@ -38,6 +38,9 @@ type EquipmentOption = {
 
 type BookingField = 'spaceId' | 'date' | 'start' | 'end';
 
+// Maximum total people (organizer included) allowed in a mixed space; enforced by Bookings (#211).
+export const MAX_MIXED_GROUP_SIZE = 4;
+
 type BookingResponse = {
   referenceCode?: string;
 };
@@ -271,6 +274,14 @@ export class BookingFormComponent {
     return `Nella fascia scelta ${verb} ${seatsLabel(freeSeats)} su ${space.capacity}, ma il gruppo è di ${peopleLabel(total)}. Riduci i partecipanti o cambia orario.`;
   });
 
+  protected readonly participantMixedSizeWarning = computed(() => {
+    const space = this.selectedBookingSpace();
+    if (space?.mode !== 'Mixed') return '';
+    const total = this.participantTotal();
+    if (total <= MAX_MIXED_GROUP_SIZE) return '';
+    return `In un’aula mista un gruppo può avere al massimo ${peopleLabel(MAX_MIXED_GROUP_SIZE)}. Riduci i partecipanti o prenota un’aula dedicata.`;
+  });
+
   protected readonly bookingState = signal<'idle' | 'submitting' | 'success' | 'error'>('idle');
   protected readonly bookingMessage = signal('');
   protected readonly bookingReference = signal('');
@@ -307,6 +318,13 @@ export class BookingFormComponent {
     if (seatWarning) {
       this.bookingState.set('error');
       this.bookingMessage.set(seatWarning);
+      return;
+    }
+
+    const mixedSizeWarning = this.participantMixedSizeWarning();
+    if (mixedSizeWarning) {
+      this.bookingState.set('error');
+      this.bookingMessage.set(mixedSizeWarning);
       return;
     }
 
@@ -381,6 +399,7 @@ export class BookingFormComponent {
 
   private clearSeatBookingError(): void {
     if (this.bookingState() !== 'error' || this.participantSeatWarning()) return;
+    if (this.participantMixedSizeWarning()) return;
     this.bookingState.set('idle');
     this.bookingMessage.set('');
   }
@@ -630,6 +649,8 @@ export class BookingFormComponent {
     if (title === 'Space already booked') return 'Questa fascia è già occupata. Scegli un altro orario.';
     if (title === 'Time band already used') return 'Hai già una prenotazione in questa fascia della giornata. Scegli un altro orario.';
     if (title === 'Not enough seats') return 'Non ci sono abbastanza posti liberi in questa fascia.';
+    if (title === 'Group too large')
+      return `In un’aula mista un gruppo può avere al massimo ${peopleLabel(MAX_MIXED_GROUP_SIZE)}. Riduci i partecipanti o prenota un’aula dedicata.`;
     if (title === 'Overlapping booking') return 'Hai già una prenotazione sovrapposta in questa fascia.';
     if (title === 'Closing comment pending') return 'Prima di prenotare devi completare il commento finale della prenotazione.';
     if (title === 'Space not bookable') return 'Questo spazio non è prenotabile in questa fascia.';
