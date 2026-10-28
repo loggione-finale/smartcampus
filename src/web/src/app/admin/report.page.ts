@@ -28,6 +28,7 @@ export class ReportPage {
     'closed',
     'spaceUsed',
     'spaceNotUsed',
+    'withoutComment',
     'totalAttendees',
     'issuesReported',
   ];

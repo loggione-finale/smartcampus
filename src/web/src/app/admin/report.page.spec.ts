@@ -16,6 +16,7 @@ const ROWS: StatsGroup[] = [
     closed: 4,
     spaceUsed: 3,
     spaceNotUsed: 1,
+    withoutComment: 7,
     totalAttendees: 25,
     issuesReported: 2,
   },
@@ -73,6 +74,8 @@ describe('ReportPage', () => {
     expect(el.querySelectorAll('tr[mat-row]').length).toBe(1);
     expect(el.textContent).toContain('Aula');
     expect(el.textContent).toContain('25');
+    expect(el.textContent).toContain('Senza commento');
+    expect(el.querySelectorAll('td[mat-cell]')[7].textContent).toContain('7');
   });
 
   it('does not call the API when the range is inverted', () => {

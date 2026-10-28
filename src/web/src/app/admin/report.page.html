@@ -7,6 +7,8 @@
   <p class="limits-note" role="note">
     <strong>Attenzione:</strong> l'assenza di dati non dimostra che lo spazio fosse libero. Il report
     conta solo le prenotazioni registrate: uno spazio senza righe può essere stato usato senza prenotazione.
+    "Senza commento" indica le prenotazioni concluse senza commento finale: per queste non sappiamo se lo
+    spazio sia stato usato.
   </p>
 
   <form class="filters" [formGroup]="filters" (ngSubmit)="load()" aria-label="Filtri report">
@@ -69,6 +71,10 @@
             <ng-container matColumnDef="spaceNotUsed">
               <th mat-header-cell *matHeaderCellDef scope="col">Spazio non usato</th>
               <td mat-cell *matCellDef="let row">{{ row.spaceNotUsed }}</td>
+            </ng-container>
+            <ng-container matColumnDef="withoutComment">
+              <th mat-header-cell *matHeaderCellDef scope="col">Senza commento</th>
+              <td mat-cell *matCellDef="let row">{{ row.withoutComment }}</td>
             </ng-container>
             <ng-container matColumnDef="totalAttendees">
               <th mat-header-cell *matHeaderCellDef scope="col">Presenti</th>

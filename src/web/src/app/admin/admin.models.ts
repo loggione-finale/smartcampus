@@ -50,6 +50,7 @@ export interface StatsGroup {
   closed: number;
   spaceUsed: number;
   spaceNotUsed: number;
+  withoutComment: number;
   totalAttendees: number;
   issuesReported: number;
 }
