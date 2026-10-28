@@ -33,7 +33,7 @@ public class BookingService(
     public async Task<CreateBookingResult> CreateAsync(
         Guid organizerId, string organizerName, string organizerEmail, CreateBookingRequest request, CancellationToken cancellationToken)
     {
-        var errors = validator.Validate(request, organizerName);
+        var errors = validator.Validate(request, organizerEmail);
         if (errors.Count > 0)
         {
             return CreateBookingResult.Invalid(errors);
@@ -41,7 +41,7 @@ public class BookingService(
 
         EquipmentRequestValidator.TryValidateParticipantEmails(
             request.ParticipantEmails,
-            organizerName,
+            organizerEmail,
             out var normalizedParticipants,
             out _);
 
