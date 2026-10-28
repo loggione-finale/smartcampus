@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Npgsql;
 using SmartCampus.Auth;
 using SmartCampus.Users.Api.Data;
 using SmartCampus.Users.Api.Data.Seed;
 using SmartCampus.Users.Api.Domain.Entities;
+using SmartCampus.Users.Api.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,10 +18,22 @@ if (!builder.Environment.IsEnvironment("Testing"))
     var connectionString = builder.Configuration.GetConnectionString("Users")
         ?? throw new InvalidOperationException("Missing connection string 'ConnectionStrings:Users'. Set it with dotnet user-secrets.");
 
+    var connectionStringBuilder = new NpgsqlConnectionStringBuilder(connectionString);
+    if (!connectionString.Contains("Timeout", StringComparison.OrdinalIgnoreCase))
+    {
+        connectionStringBuilder.Timeout = 3;
+    }
+
     builder.Services.AddDbContext<UsersDbContext>(options =>
-        options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure())
+        options.UseNpgsql(
+                connectionStringBuilder.ConnectionString,
+                npgsql => npgsql.EnableRetryOnFailure(
+                    maxRetryCount: 2, maxRetryDelay: TimeSpan.FromSeconds(1), errorCodesToAdd: null))
             .UseSnakeCaseNamingConvention());
 }
+
+builder.Services.AddExceptionHandler<DatabaseUnavailableExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<UsersDbContext>("database", failureStatus: HealthStatus.Unhealthy);
@@ -58,6 +72,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "Users API v1"));
 }
 
+app.UseExceptionHandler();
 app.UseSmartCampusAuth();
 app.MapControllers();
 app.MapHealthChecks("/health");
