@@ -39,8 +39,8 @@ public class PickupDirectoryEmailSenderTests : IDisposable
         var emails = new[]
         {
             NotificationTemplates.BookingCreated(booking, "organizer@smartcampus.test"),
-            NotificationTemplates.InvitationToRegistered(invitation, booking),
-            NotificationTemplates.InvitationToUnregistered(invitation, booking),
+            NotificationTemplates.InvitationToRegistered(invitation, booking, "http://localhost:4200"),
+            NotificationTemplates.InvitationToUnregistered(invitation, booking, "http://localhost:4200"),
             NotificationTemplates.InvitationExpired(invitation, booking, invitation.Email, toOrganizer: false),
             NotificationTemplates.InvitationExpired(invitation, booking, "organizer@smartcampus.test", toOrganizer: true),
             NotificationTemplates.BookingCancelled(booking, "organizer@smartcampus.test")
@@ -105,9 +105,12 @@ public class PickupDirectoryEmailSenderTests : IDisposable
         Assert.Contains("30/03/2033 11:00 - 13:00", email.Body);
         Assert.DoesNotContain("09:00", email.Body);
 
-        var invitationEmail = NotificationTemplates.InvitationToUnregistered(invitation, booking);
+        var invitationEmail = NotificationTemplates.InvitationToUnregistered(invitation, booking, "http://localhost:4200");
         // ExpiresAt coincide con l'inizio della prenotazione: 09:00 UTC = 11:00.
-        Assert.Contains("conferma entro 11:00", invitationEmail.Body);
+        Assert.Contains("Registrati sul portale entro 11:00", invitationEmail.Body);
+        Assert.Contains(
+            "http://localhost:4200/#registrazione?returnUrl=%2Finvitations%2F" + invitation.Id,
+            invitationEmail.Body);
     }
 
     [Fact]
@@ -118,8 +121,8 @@ public class PickupDirectoryEmailSenderTests : IDisposable
         var unregistered = BookingTestData.NewInvitation(booking, userId: null, InvitationStatus.Invited);
 
         Assert.Equal("booking-created", NotificationTemplates.BookingCreated(booking, "o@smartcampus.test").Kind);
-        Assert.Equal("invitation", NotificationTemplates.InvitationToRegistered(registered, booking).Kind);
-        Assert.Equal("invitation", NotificationTemplates.InvitationToUnregistered(unregistered, booking).Kind);
+        Assert.Equal("invitation", NotificationTemplates.InvitationToRegistered(registered, booking, "http://localhost:4200").Kind);
+        Assert.Equal("invitation", NotificationTemplates.InvitationToUnregistered(unregistered, booking, "http://localhost:4200").Kind);
         Assert.Equal(
             "invitation-expired",
             NotificationTemplates.InvitationExpired(registered, booking, registered.Email, toOrganizer: false).Kind);

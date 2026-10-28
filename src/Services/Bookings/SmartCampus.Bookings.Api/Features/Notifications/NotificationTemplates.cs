@@ -27,19 +27,22 @@ public static class NotificationTemplates
         "booking-created",
         booking.Id);
 
-    public static OutgoingEmail InvitationToRegistered(Invitation invitation, Booking booking) => new(
+    public static OutgoingEmail InvitationToRegistered(Invitation invitation, Booking booking, string webAppBaseUrl) => new(
         invitation.Email,
         $"Invito alla prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}",
         $"Sei stato invitato come utente registrato alla prenotazione {booking.SpaceNameSnapshot} " +
-        $"({Period(booking)}). Conferma entro {CampusTime(invitation.ExpiresAt):HH:mm}.",
+        $"({Period(booking)}). Conferma entro {CampusTime(invitation.ExpiresAt):HH:mm}. " +
+        $"Conferma qui: {webAppBaseUrl.TrimEnd('/')}/invitations/{invitation.Id}",
         "invitation",
         booking.Id);
 
-    public static OutgoingEmail InvitationToUnregistered(Invitation invitation, Booking booking) => new(
+    public static OutgoingEmail InvitationToUnregistered(Invitation invitation, Booking booking, string webAppBaseUrl) => new(
         invitation.Email,
         $"Invito alla prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}",
         $"Sei stato invitato alla prenotazione {booking.SpaceNameSnapshot} " +
-        $"({Period(booking)}). Registrati sul portale e conferma entro {CampusTime(invitation.ExpiresAt):HH:mm}.",
+        $"({Period(booking)}). Registrati sul portale entro {CampusTime(invitation.ExpiresAt):HH:mm} " +
+        $"e conferma il tuo invito. " +
+        $"Registrati qui: {webAppBaseUrl.TrimEnd('/')}/#registrazione?returnUrl=%2Finvitations%2F{invitation.Id}",
         "invitation",
         booking.Id);
 

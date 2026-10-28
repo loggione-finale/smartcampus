@@ -34,7 +34,11 @@ public interface IEmailOutbox
     void EnqueueBookingCancelledEmails(Booking booking);
 }
 
-public sealed class EmailOutbox(BookingsDbContext dbContext, TimeProvider timeProvider, ILogger<EmailOutbox> logger)
+public sealed class EmailOutbox(
+    BookingsDbContext dbContext,
+    TimeProvider timeProvider,
+    Microsoft.Extensions.Options.IOptions<NotificationOptions> options,
+    ILogger<EmailOutbox> logger)
     : IEmailOutbox
 {
     public void EnqueueBookingCreatedEmail(Booking booking)
@@ -58,8 +62,8 @@ public sealed class EmailOutbox(BookingsDbContext dbContext, TimeProvider timePr
     public void EnqueueInvitationEmail(Invitation invitation, Booking booking)
     {
         Enqueue(invitation.UserId is null
-            ? NotificationTemplates.InvitationToUnregistered(invitation, booking)
-            : NotificationTemplates.InvitationToRegistered(invitation, booking));
+            ? NotificationTemplates.InvitationToUnregistered(invitation, booking, options.Value.WebAppBaseUrl)
+            : NotificationTemplates.InvitationToRegistered(invitation, booking, options.Value.WebAppBaseUrl));
     }
 
     public void EnqueueInvitationExpiredEmails(Invitation invitation, Booking booking)

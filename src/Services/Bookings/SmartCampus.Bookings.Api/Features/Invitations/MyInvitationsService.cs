@@ -18,10 +18,14 @@ public class MyInvitationsService(BookingsDbContext dbContext)
             .OrderBy(i => i.Period.LowerBound)
             .ToListAsync(cancellationToken);
 
-        // Pending invitations stay visible after the deadline so the user can
-        // see they were excluded; declined, cancelled and left ones disappear.
+        // Pending and expired invitations stay visible so the user can see they
+        // were excluded from the booking after the deadline; declined, cancelled
+        // and left ones disappear.
         return invitations
-            .Where(i => i.Status is InvitationStatus.Invited or InvitationStatus.Accepted)
+            .Where(i => i.Status
+                is InvitationStatus.Invited
+                or InvitationStatus.Accepted
+                or InvitationStatus.Expired)
             .Select(InvitationResponse.From)
             .ToList();
     }

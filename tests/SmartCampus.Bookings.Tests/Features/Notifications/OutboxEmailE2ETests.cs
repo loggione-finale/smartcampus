@@ -86,6 +86,26 @@ public class OutboxEmailE2ETests(BookingsApiFactory factory) : IClassFixture<Boo
         Assert.Contains("Registrati sul portale", invitationToExternal.Body);
         var invitationToRegistered = emails.Single(e => e.ToAddress == "registrata@smartcampus.test");
         Assert.Contains("utente registrato", invitationToRegistered.Body);
+
+        // L'invito al non registrato punta alla registrazione con ritorno all'invito;
+        // quello al registrato punta alla pagina di conferma.
+        var invitationIds = await dbContext.Invitations
+            .Where(i => i.BookingId == bookingId && i.Role != ParticipantRole.Organizer)
+            .ToListAsync();
+        foreach (var invitation in invitationIds)
+        {
+            var mail = emails.Single(e => e.ToAddress == invitation.Email);
+            if (invitation.UserId is null)
+            {
+                Assert.Contains(
+                    $"/#registrazione?returnUrl=%2Finvitations%2F{invitation.Id}",
+                    mail.Body);
+            }
+            else
+            {
+                Assert.Contains($"/invitations/{invitation.Id}", mail.Body);
+            }
+        }
     }
 
     private async Task RunOutboxDispatcherAsync()

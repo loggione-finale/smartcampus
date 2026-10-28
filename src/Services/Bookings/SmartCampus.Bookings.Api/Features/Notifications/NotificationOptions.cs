@@ -10,6 +10,12 @@ public class NotificationOptions
     /// </summary>
     public string PickupDirectoryLocation { get; set; } = "mail-outbox";
 
+    /// <summary>
+    /// Base URL del portale web usato nei link presenti nei corpi delle mail
+    /// (per esempio il link di conferma dell'invito).
+    /// </summary>
+    public string WebAppBaseUrl { get; set; } = "http://localhost:4200";
+
     /// <summary>Mittente delle mail di notifica.</summary>
     public string FromAddress { get; set; } = "no-reply@smartcampus.test";
 
