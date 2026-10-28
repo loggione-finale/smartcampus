@@ -2,6 +2,10 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using SmartCampus.Bookings.Api.Data;
+using SmartCampus.Bookings.Api.Domain;
 using SmartCampus.Bookings.Api.Features.Bookings;
 using SmartCampus.Bookings.Tests.Support;
 
@@ -127,5 +131,48 @@ public class CancelBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
         var response = await client.PostAsJsonAsync($"/bookings/{bookingId}/cancel", new CancelBookingRequest(new string('x', 501)));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Cancelling_stores_who_when_and_why()
+    {
+        var userId = Guid.NewGuid();
+        var client = factory.CreateAuthenticatedClient(userId);
+        var bookingId = await CreateBookingAsync(client, Guid.NewGuid(), TestSlots.Next());
+
+        var response = await client.PostAsJsonAsync($"/bookings/{bookingId}/cancel", new CancelBookingRequest("  Cambio di programma  "));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+        var booking = await db.Bookings.AsNoTracking().SingleAsync(b => b.Id == bookingId);
+        Assert.Equal(BookingStatus.Cancelled, booking.Status);
+        Assert.Equal(userId, booking.CancelledBy);
+        Assert.NotNull(booking.CancelledAt);
+        Assert.Equal("Cambio di programma", booking.CancellationReason);
+    }
+
+    [Fact]
+    public async Task Simultaneous_cancellations_let_only_one_through_and_cancel_the_invitations_once()
+    {
+        var client = factory.CreateAuthenticatedClient(Guid.NewGuid(), $"{Guid.NewGuid():N}@smartcampus.test");
+        var start = TestSlots.Next();
+        var created = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(
+            Guid.NewGuid(), start, start.AddHours(2), new[] { $"{Guid.NewGuid():N}@smartcampus.test" }));
+        created.EnsureSuccessStatusCode();
+        var bookingId = (await created.Content.ReadFromJsonAsync<JsonElement>(JsonOptions)).GetProperty("id").GetGuid();
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ =>
+            client.PostAsync($"/bookings/{bookingId}/cancel", null)));
+
+        Assert.Equal(1, responses.Count(r => r.StatusCode == HttpStatusCode.OK));
+        Assert.Equal(7, responses.Count(r => r.StatusCode == HttpStatusCode.Conflict));
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+        var booking = await db.Bookings.AsNoTracking().Include(b => b.Invitations).SingleAsync(b => b.Id == bookingId);
+        Assert.Equal(BookingStatus.Cancelled, booking.Status);
+        Assert.Equal(2, booking.Invitations.Count);
+        Assert.All(booking.Invitations, i => Assert.Equal(InvitationStatus.Cancelled, i.Status));
+        Assert.Equal(2, await db.OutboxEmails.CountAsync(e => e.BookingId == bookingId && e.Kind == "booking-cancelled"));
     }
 }
