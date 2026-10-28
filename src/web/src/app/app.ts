@@ -1,7 +1,8 @@
-import { Component, ElementRef, afterNextRender, inject, signal } from '@angular/core';
+import { Component, ElementRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { SpacesApiService } from './spaces/spaces-api.service';
 import { EquipmentCatalogItemDto, SpaceDto } from './spaces/spaces.models';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,6 +15,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { filter, map } from 'rxjs';
+import { AuthSessionService } from './auth/auth-session.service';
 
 type Health = 'checking' | 'online' | 'offline';
 
@@ -174,15 +177,31 @@ export class App {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly formBuilder = inject(FormBuilder);
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private readonly spacesApi = inject(SpacesApiService);
 
+  protected readonly session = inject(AuthSessionService);
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  protected readonly showHome = computed(() => {
+    const path = this.currentUrl().split(/[?#]/, 1)[0];
+    return path === '' || path === '/';
+  });
+
   protected readonly navLinks = [
-    { label: 'Come funziona', href: '#come-funziona', icon: 'route' },
-    { label: 'Spazi', href: '#spazi', icon: 'meeting_room' },
-    { label: 'Prenota', href: '#prenota', icon: 'event_available' },
-    { label: 'Servizi', href: '#servizi', icon: 'hub' },
-    { label: 'Registrati', href: '#registrazione', icon: 'person_add' },
-    { label: 'Contatti', href: '#contatti', icon: 'mail' },
+    { label: 'Come funziona', href: '/#come-funziona', icon: 'route' },
+    { label: 'Spazi', href: '/#spazi', icon: 'meeting_room' },
+    { label: 'Prenota', href: '/#prenota', icon: 'event_available' },
+    { label: 'Servizi', href: '/#servizi', icon: 'hub' },
+    { label: 'Registrati', href: '/#registrazione', icon: 'person_add' },
+    { label: 'Contatti', href: '/#contatti', icon: 'mail' },
   ];
 
   protected readonly heroWords = ['Cerca.', 'Prenota.', 'Studia.'];
@@ -369,6 +388,11 @@ export class App {
     this.registrationResult.set(null);
     this.registrationError.set(null);
     this.serverErrors.set({});
+  }
+
+  protected logout(): void {
+    this.session.clear();
+    void this.router.navigate(['/login'], { queryParams: { reason: 'logout' } });
   }
 
   private handleRegistrationError(error: HttpErrorResponse): void {

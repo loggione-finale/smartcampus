@@ -1,5 +1,5 @@
 <header class="topbar">
-  <a class="wordmark" href="#top" aria-label="SmartCampus, torna in cima">
+  <a class="wordmark" href="/#top" aria-label="SmartCampus, torna in cima">
     smart<span>campus</span>
   </a>
 
@@ -8,6 +8,18 @@
       <a [href]="link.href">{{ link.label }}</a>
     }
   </nav>
+
+  <div class="topbar-auth">
+    @if (session.isAuthenticated()) {
+      @if (session.isAdmin()) {
+        <a class="auth-link" href="/admin">Admin</a>
+      }
+      <a class="auth-link" href="/account">Area personale</a>
+      <button mat-button class="auth-button" type="button" (click)="logout()">Esci</button>
+    } @else {
+      <a class="auth-link" href="/login">Accedi</a>
+    }
+  </div>
 
   <button mat-icon-button class="menu-btn" [matMenuTriggerFor]="menu" aria-label="Apri il menu">
     <mat-icon>menu</mat-icon>
@@ -19,9 +31,31 @@
         <span>{{ link.label }}</span>
       </a>
     }
+    @if (session.isAuthenticated()) {
+      @if (session.isAdmin()) {
+        <a mat-menu-item href="/admin">
+          <mat-icon>admin_panel_settings</mat-icon>
+          <span>Admin</span>
+        </a>
+      }
+      <a mat-menu-item href="/account">
+        <mat-icon>account_circle</mat-icon>
+        <span>Area personale</span>
+      </a>
+      <button mat-menu-item type="button" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Esci</span>
+      </button>
+    } @else {
+      <a mat-menu-item href="/login">
+        <mat-icon>login</mat-icon>
+        <span>Accedi</span>
+      </a>
+    }
   </mat-menu>
 </header>
 
+@if (showHome()) {
 <main id="top">
   <section class="hero" aria-labelledby="hero-title">
     <img
@@ -393,5 +427,6 @@
     </p>
   </div>
 </footer>
+}
 
 <router-outlet />

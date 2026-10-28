@@ -1,0 +1,55 @@
+<section class="account-page" aria-labelledby="account-title">
+  <div class="account-hero">
+    <a class="back-link" href="/">
+      <span aria-hidden="true">←</span> Torna alla home
+    </a>
+    <p class="eyebrow">AREA PERSONALE</p>
+    <h1 id="account-title">Ciao, {{ user()?.firstName ?? 'utente' }}.</h1>
+    <p class="account-lead">
+      Qui trovi i dati del tuo profilo e il ruolo con cui accedi alle funzioni di SmartCampus.
+    </p>
+  </div>
+
+  <div class="account-content">
+    <article class="account-card" aria-labelledby="profile-title">
+      <div class="card-heading">
+        <mat-icon aria-hidden="true">account_circle</mat-icon>
+        <div>
+          <p class="section-tag">PROFILO</p>
+          <h2 id="profile-title">{{ user()?.displayName ?? 'Profilo' }}</h2>
+        </div>
+      </div>
+
+      <dl class="profile-list">
+        <div>
+          <dt>Ruolo</dt>
+          <dd>{{ roleLabel() }}</dd>
+        </div>
+        <div>
+          <dt>Email</dt>
+          <dd>{{ user()?.email ?? '—' }}</dd>
+        </div>
+        <div>
+          <dt>Matricola</dt>
+          <dd>{{ user()?.matricola ?? '—' }}</dd>
+        </div>
+        <div>
+          <dt>Telefono</dt>
+          <dd>{{ user()?.phoneNumber ?? '—' }}</dd>
+        </div>
+        <div>
+          <dt>Profilo creato il</dt>
+          <dd>{{ memberSince() }}</dd>
+        </div>
+      </dl>
+
+      <div class="account-actions">
+        <a mat-flat-button class="btn" href="/spaces">Cerca uno spazio</a>
+        @if (isAdmin()) {
+          <a mat-button class="text-action" href="/admin">Pannello amministratore</a>
+        }
+        <button mat-button class="text-action" type="button" (click)="logout()">Esci</button>
+      </div>
+    </article>
+  </div>
+</section>
