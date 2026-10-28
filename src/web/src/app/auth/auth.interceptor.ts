@@ -13,9 +13,11 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const session = inject(AuthSessionService);
   const router = inject(Router);
 
+  const isApiRequest = /^\/api(?:[/?#]|$)/.test(request.url);
   const isAuthEndpoint = AUTH_ENDPOINTS.some((pattern) => pattern.test(request.url));
-  const hadSession = !isAuthEndpoint && session.hasSession();
-  const token = isAuthEndpoint ? null : session.validToken();
+  const shouldAuthenticate = isApiRequest && !isAuthEndpoint;
+  const hadSession = shouldAuthenticate && session.hasSession();
+  const token = shouldAuthenticate ? session.validToken() : null;
   const authenticatedRequest = token
     ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : request;

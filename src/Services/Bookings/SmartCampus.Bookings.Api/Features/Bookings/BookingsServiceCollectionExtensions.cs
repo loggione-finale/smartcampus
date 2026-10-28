@@ -32,6 +32,8 @@ public static class BookingsServiceCollectionExtensions
         services.AddSingleton<ClosingCommentValidator>();
         services.AddScoped<IClosingCommentService, ClosingCommentService>();
         services.AddScoped<IEmailOutbox, EmailOutbox>();
+        services.AddScoped<INotificationSender, NotificationSender>();
+        services.AddScoped<AdminCancelBookingService>();
         services.Configure<InvitationExpiryOptions>(configuration.GetSection(InvitationExpiryOptions.SectionName));
         services.AddHostedService<InvitationExpiryBackgroundService>();
         services.AddHttpClient<ISpacesClient, SpacesClient>(client =>

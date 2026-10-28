@@ -14,6 +14,12 @@ export const routes: Routes = [
     title: 'Area personale · SmartCampus',
   },
   {
+    path: 'admin/spaces',
+    canActivate: [adminGuard],
+    loadChildren: () =>
+      import('./spaces-admin/spaces-admin.routes').then((m) => m.SPACES_ADMIN_ROUTES),
+  },
+  {
     path: 'admin',
     canActivate: [adminGuard],
     loadChildren: () => import('./admin/admin.routes').then((m) => m.ADMIN_ROUTES),
