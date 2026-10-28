@@ -69,6 +69,9 @@ degli strumenti, con indicazione di quelli già presenti nello spazio. Il fronte
 `POST /api/bookings`, mostra il codice di riferimento in caso di conferma e traduce i principali rifiuti
 del servizio in messaggi comprensibili. La creazione richiede autenticazione.
 
+Il form vive nel componente `src/app/bookings/booking-form.component.ts`, con template, stili e test
+accanto; `App` si limita a includerlo nella home con `<app-booking-form />`.
+
 ## Generazione del codice
 
 Per generare un nuovo componente:
