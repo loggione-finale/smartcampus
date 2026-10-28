@@ -80,6 +80,8 @@ public class BookingsController(
                 extensions: new Dictionary<string, object?> { ["freeSeats"] = result.FreeSeats }),
             CreateBookingOutcome.SpacesUnavailable => Problem(
                 statusCode: StatusCodes.Status503ServiceUnavailable, title: "Spaces unavailable", detail: result.Detail),
+            CreateBookingOutcome.UsersUnavailable => Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable, title: "Users unavailable", detail: result.Detail),
             _ => throw new InvalidOperationException($"Unhandled outcome {result.Outcome}.")
         };
     }

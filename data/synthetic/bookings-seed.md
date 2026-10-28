@@ -1,6 +1,6 @@
 # Seed delle prenotazioni (servizio Bookings)
 
-Il file `src/Services/Bookings/SmartCampus.Bookings.Api/Data/Seed/synthetic-bookings.json` contiene utenti, spazi e
+Il file `data/synthetic/bookings.json` contiene utenti, spazi e
 prenotazioni inventati. All'avvio in ambiente `Development` il servizio Bookings li carica se la tabella
 `bookings` è vuota; un secondo avvio non duplica nulla. Tutto avviene in una sola transazione.
 

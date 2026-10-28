@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using SmartCampus.Spaces.Api.Domain;
+using SmartCampus.Spaces.Api.Features.Equipment.Models;
 
 namespace SmartCampus.Spaces.Api.Features.Catalog.Models;
 
@@ -36,6 +37,8 @@ public sealed class SpaceSearchQuery
 
     [Range(1, MaxPageSize)]
     public int PageSize { get; init; } = DefaultPageSize;
+
+    public bool IncludeInactive { get; init; } = false;
 
     public bool TryNormalize(out SpaceSearchFilter? filter, out string? errorDetail)
     {
@@ -120,7 +123,8 @@ public sealed class SpaceSearchQuery
             Software: softwareList,
             Search: string.IsNullOrWhiteSpace(Search) ? null : Search.Trim(),
             Page: Page,
-            PageSize: PageSize);
+            PageSize: PageSize,
+            IncludeInactive: IncludeInactive);
 
         errorDetail = null;
         return true;
@@ -159,9 +163,14 @@ public sealed class SpaceSearchQuery
                     return false;
                 }
 
-                if (seen.Add(part))
+                var normalizedPart = string.Equals(paramName, "equipment", StringComparison.Ordinal)
+                    && EquipmentCatalog.TryNormalizeCode(part, out var canonicalEquipmentCode)
+                    ? canonicalEquipmentCode
+                    : part;
+
+                if (seen.Add(normalizedPart))
                 {
-                    items.Add(part);
+                    items.Add(normalizedPart);
                 }
 
                 if (items.Count > MaxListFilterItems)
@@ -186,4 +195,5 @@ public sealed record SpaceSearchFilter(
     IReadOnlyList<string> Software,
     string? Search,
     int Page = SpaceSearchQuery.DefaultPage,
-    int PageSize = SpaceSearchQuery.DefaultPageSize);
+    int PageSize = SpaceSearchQuery.DefaultPageSize,
+    bool IncludeInactive = false);

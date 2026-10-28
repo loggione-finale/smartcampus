@@ -1,0 +1,43 @@
+# Controllore delle PR
+
+**Forma:** controllo fisso in CI, senza LLM: workflow [`pr-check.yml`](../../.github/workflows/pr-check.yml),
+job "Controllo PR". Non è un agente: le regole sono sempre le stesse e non serve ragionare per applicarle
+(slide 50).
+
+## Obiettivo
+
+Fermare subito le PR con errori di forma che oggi scopriamo solo in review.
+
+## Cosa controlla
+
+| Regola | Perché | Esito se manca |
+|---|---|---|
+| Il titolo inizia con un tipo (`feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`, `ci:`) | Storia dei commit leggibile dopo lo squash | Errore |
+| Il corpo collega una issue con `Closes #N` o `Refs #N` | Board e issue si aggiornano da sole | Errore |
+| Il corpo non contiene il segnaposto `Closes #` senza numero | Modello lasciato com'era | Errore |
+| Il corpo non contiene `` `n `` o `` `r `` | Testo rovinato da PowerShell (#149) | Errore |
+| C'è una sezione con le verifiche eseguite o almeno una voce spuntata | DoD: test eseguiti, non solo scritti | Avviso |
+
+L'ultima regola è un avviso e non un errore: provata sulle ultime 40 PR, come errore ne avrebbe bloccate 13 che
+descrivevano le verifiche con parole loro. Le altre regole, sulle stesse 40 PR, non danno nessun falso errore.
+
+## Permessi
+
+Legge solo il titolo e il corpo della PR, passati come variabili d'ambiente. Non ha token con permessi di
+scrittura e non commenta la PR: l'esito si legge nel job.
+
+## Quando fermarsi
+
+Il controllo non decide niente oltre a queste regole. Se una regola blocca una PR per un buon motivo (per esempio
+una PR senza issue), si discute nel gruppo e si cambia la regola con una PR, non si aggira.
+
+## Come si verifica
+
+Lo script si prova anche in locale, senza GitHub:
+
+```bash
+PR_TITLE="feat: prova" PR_BODY="Closes #" bash .github/scripts/check-pr.sh
+```
+
+Un corpo con il modello non compilato deve fallire; lo stesso corpo con `Closes #24` e una verifica spuntata deve
+passare.

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using SmartCampus.Auth;
 using SmartCampus.Spaces.Api.Features.Catalog.Models;
 
 namespace SmartCampus.Spaces.Api.Features.Catalog;
@@ -10,16 +11,38 @@ namespace SmartCampus.Spaces.Api.Features.Catalog;
 [Route("spaces")]
 public sealed class SpaceCatalogController(
     ISpaceCatalogService catalogService,
+    IAuthorizationService authorizationService,
     ILogger<SpaceCatalogController> logger) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType<IReadOnlyList<SpaceResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> Search(
         [FromQuery] SpaceSearchQuery query,
         CancellationToken cancellationToken)
     {
+        var isAuthenticated = User.Identity?.IsAuthenticated == true;
+        var isAdmin = false;
+
+        if (isAuthenticated)
+        {
+            var authResult = await authorizationService.AuthorizeAsync(User, null, SmartCampusAuthConstants.PolicyAdmin);
+            isAdmin = authResult.Succeeded;
+        }
+
+        if (query.IncludeInactive && !isAdmin)
+        {
+            if (!isAuthenticated)
+            {
+                return Challenge();
+            }
+
+            return Forbid();
+        }
+
         if (!query.TryNormalize(out var filter, out var errorDetail))
         {
             return Problem(
@@ -28,9 +51,11 @@ public sealed class SpaceCatalogController(
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
+        filter = filter! with { IncludeInactive = query.IncludeInactive && isAdmin };
+
         try
         {
-            var spaces = await catalogService.SearchAsync(filter!, cancellationToken);
+            var spaces = await catalogService.SearchAsync(filter, cancellationToken);
             return Ok(spaces);
         }
         catch (Exception ex) when (ex is MongoException or TimeoutException)

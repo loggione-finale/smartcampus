@@ -2,6 +2,7 @@ using System.Collections;
 using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using SmartCampus.Spaces.Api.Domain;
+using SmartCampus.Spaces.Api.Features.Equipment.Models;
 
 namespace SmartCampus.Spaces.Api.Features.Catalog.Models;
 
@@ -19,6 +20,9 @@ public sealed record SpaceResponse(
     IReadOnlyList<UnavailabilityResponse> Unavailabilities,
     DateTime UpdatedAt)
 {
+    public IReadOnlyList<EquipmentCatalogItemResponse> EquipmentDetails =>
+        EquipmentCatalog.ResolveItems(Equipment);
+
     public static SpaceResponse From(Space space) =>
         new(
             Id: space.Id,
@@ -30,7 +34,9 @@ public sealed record SpaceResponse(
             Capacity: space.Capacity,
             IsActive: space.IsActive,
             Features: SanitizeFeatures(space.Features),
-            Equipment: space.Equipment?.ToList() ?? [],
+            Equipment: EquipmentCatalog.ResolveItems(space.Equipment)
+                .Select(item => item.Code)
+                .ToList(),
             Unavailabilities: space.Unavailabilities?
                 .OrderBy(u => u.Start)
                 .Select(UnavailabilityResponse.From)
