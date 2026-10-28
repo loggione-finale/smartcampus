@@ -85,6 +85,27 @@ describe('authInterceptor', () => {
     request.flush({});
   });
 
+  it('does not add the Bearer token to external URLs', () => {
+    session.store(LOGIN_RESPONSE);
+
+    http.get('https://example.test/x').subscribe();
+
+    const request = httpTesting.expectOne('https://example.test/x');
+    expect(request.request.headers.has('Authorization')).toBeFalse();
+    request.flush({});
+  });
+
+  it('does not clear session or redirect when external URL returns 401', () => {
+    session.store(LOGIN_RESPONSE);
+
+    http.get('https://example.test/x').subscribe({ error: () => undefined });
+    const request = httpTesting.expectOne('https://example.test/x');
+    request.flush({ title: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(session.isAuthenticated()).toBeTrue();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
   it('clears the session and redirects to login on a 401 from a protected call', () => {
     session.store(LOGIN_RESPONSE);
 
