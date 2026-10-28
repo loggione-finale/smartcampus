@@ -87,6 +87,8 @@ mostra la scadenza e il pulsante “Conferma invito” (`POST /api/invitations/{
 già scaduto resta visibile ma non è più confermabile. La pagina non legge il token: `authInterceptor`
 aggiunge `Authorization: Bearer` a ogni chiamata `/api`.
 
+L’organizzatore di una prenotazione futura confermata può annullarla tramite il pulsante “Annulla prenotazione” con conferma inline (`POST /api/bookings/{id}/cancel`). All’annullamento viene notificato l’evento `smartcampus:bookings-changed` su `window` per sincronizzare la disponibilità degli spazi.
+
 Si arriva alla pagina dal pulsante “Le mie prenotazioni” in `/account`.
 
 ## Errori dei servizi

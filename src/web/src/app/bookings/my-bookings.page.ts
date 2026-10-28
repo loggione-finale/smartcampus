@@ -15,6 +15,8 @@ import {
   splitBookings,
 } from './my-bookings.models';
 
+export const BOOKINGS_CHANGED_EVENT = 'smartcampus:bookings-changed';
+
 @Component({
   selector: 'app-my-bookings-page',
   imports: [MatButtonModule, MatIconModule],
@@ -27,6 +29,7 @@ export class MyBookingsPage implements OnInit {
 
   private loadSubscription: Subscription | null = null;
   private acceptSubscription: Subscription | null = null;
+  private cancelSubscription: Subscription | null = null;
 
   protected readonly statusLabels = BOOKING_STATUS_LABELS;
   protected readonly roleLabels = PARTICIPANT_ROLE_LABELS;
@@ -39,6 +42,8 @@ export class MyBookingsPage implements OnInit {
   protected readonly actionSuccess = signal<string | null>(null);
   protected readonly invitationsUnavailable = signal(false);
   protected readonly acceptingInvitationId = signal<string | null>(null);
+  protected readonly confirmingCancelBookingId = signal<string | null>(null);
+  protected readonly cancellingBookingId = signal<string | null>(null);
 
   protected readonly sections = computed(() => {
     const { upcoming, past } = splitBookings(this.bookings());
@@ -67,6 +72,7 @@ export class MyBookingsPage implements OnInit {
     this.destroyRef.onDestroy(() => {
       this.loadSubscription?.unsubscribe();
       this.acceptSubscription?.unsubscribe();
+      this.cancelSubscription?.unsubscribe();
     });
   }
 
@@ -107,6 +113,89 @@ export class MyBookingsPage implements OnInit {
 
   protected closureLink(booking: MyBookingDto): string {
     return `/closure?booking=${encodeURIComponent(booking.referenceCode)}`;
+  }
+
+  protected isEnded(booking: MyBookingDto): boolean {
+    const end = Date.parse(booking.end);
+    return !Number.isNaN(end) && end <= Date.now();
+  }
+
+  protected canCancel(booking: MyBookingDto): boolean {
+    return (
+      booking.role === 'Organizer' &&
+      booking.status === 'Confirmed' &&
+      !this.isEnded(booking)
+    );
+  }
+
+  protected promptCancel(booking: MyBookingDto): void {
+    this.actionError.set(null);
+    this.actionSuccess.set(null);
+    this.confirmingCancelBookingId.set(booking.id);
+  }
+
+  protected dismissCancel(): void {
+    this.confirmingCancelBookingId.set(null);
+  }
+
+  protected confirmCancel(booking: MyBookingDto): void {
+    if (this.cancellingBookingId() !== null) {
+      return;
+    }
+
+    this.actionError.set(null);
+    this.actionSuccess.set(null);
+    this.cancellingBookingId.set(booking.id);
+    this.cancelSubscription?.unsubscribe();
+    this.cancelSubscription = this.api.cancelBooking(booking.id).subscribe({
+      next: () => {
+        this.cancellingBookingId.set(null);
+        this.confirmingCancelBookingId.set(null);
+        this.actionSuccess.set('Prenotazione annullata. Lo spazio è di nuovo disponibile.');
+        this.load();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event(BOOKINGS_CHANGED_EVENT));
+        }
+      },
+      error: (error: unknown) => {
+        this.cancellingBookingId.set(null);
+        this.confirmingCancelBookingId.set(null);
+        this.handleCancelError(error);
+      },
+    });
+  }
+
+  private handleCancelError(error: unknown): void {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 401) {
+        this.actionError.set('La sessione è scaduta. Effettua di nuovo l’accesso.');
+        return;
+      }
+
+      if (error.status === 409) {
+        this.actionError.set('La prenotazione risulta già annullata o non più annullabile.');
+        this.load();
+        return;
+      }
+
+      if (error.status === 403) {
+        this.actionError.set('Solo l’organizzatore può annullare la prenotazione.');
+        return;
+      }
+
+      if (error.status === 404) {
+        this.actionError.set('Prenotazione non trovata.');
+        this.load();
+        return;
+      }
+
+      if (error.status === 503 || error.status === 0) {
+        this.actionError.set('Il servizio prenotazioni non è raggiungibile. Riprova tra poco.');
+        return;
+      }
+    }
+
+    this.actionError.set('Non è stato possibile annullare la prenotazione. Riprova.');
   }
 
   protected acceptInvitation(invitation: MyInvitationDto): void {

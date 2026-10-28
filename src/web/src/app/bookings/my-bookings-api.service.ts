@@ -28,4 +28,9 @@ export class MyBookingsApiService {
     const encodedId = encodeURIComponent(invitationId.trim());
     return this.http.post<MyInvitationDto>(`${INVITATIONS_BASE}/${encodedId}/accept`, null);
   }
+
+  cancelBooking(bookingId: string): Observable<unknown> {
+    const encodedId = encodeURIComponent(bookingId.trim());
+    return this.http.post(`${BOOKINGS_BASE}/${encodedId}/cancel`, {});
+  }
 }
