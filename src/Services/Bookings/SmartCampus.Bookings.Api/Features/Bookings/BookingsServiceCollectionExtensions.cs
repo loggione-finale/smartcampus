@@ -22,6 +22,7 @@ public static class BookingsServiceCollectionExtensions
         services.AddScoped<CancelBookingService>();
         services.AddScoped<AvailabilityService>();
         services.AddScoped<MyBookingsService>();
+        services.AddScoped<AdminDashboardService>();
         services.AddScoped<AcceptInvitationService>();
         services.AddScoped<MyInvitationsService>();
         services.AddScoped<IPendingClosureChecker, PendingClosureChecker>();
