@@ -1,9 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NpgsqlTypes;
+using SmartCampus.Auth;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
 using SmartCampus.Bookings.Api.Features.Bookings;
@@ -181,6 +184,55 @@ public class CreateBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         var problem = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
         Assert.Equal(pendingCode, problem.GetProperty("bookingToComment").GetString());
+    }
+
+    [Fact]
+    public async Task An_admin_creating_a_booking_gets_403_and_nothing_is_saved()
+    {
+        var adminId = Guid.NewGuid();
+        var client = factory.CreateAuthenticatedClient(adminId, role: SmartCampusAuthConstants.RoleAdmin);
+        var start = TestSlots.Next();
+
+        var response = await client.PostAsJsonAsync("/bookings", new CreateBookingRequest(Guid.NewGuid(), start, start.AddHours(1)));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(JsonOptions);
+        Assert.Equal("Admins cannot create bookings", problem!.Title);
+
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+        var bookings = await dbContext.Bookings.Where(b => b.OrganizerId == adminId).ToListAsync();
+        Assert.Empty(bookings);
+    }
+
+    [Fact]
+    public async Task Ignores_forbidden_fields_in_the_request_body()
+    {
+        var userId = Guid.NewGuid();
+        var attackerId = Guid.NewGuid();
+        var start = TestSlots.Next();
+        var client = factory.CreateAuthenticatedClient(userId);
+        var rawBody = new
+        {
+            spaceId = Guid.NewGuid(),
+            start,
+            end = start.AddHours(1),
+            organizerId = attackerId,
+            organizerEmail = "attacker@evil.test",
+            status = "Cancelled",
+            referenceCode = "SC-000000-HACK"
+        };
+
+        var response = await client.PostAsync(
+            "/bookings",
+            new StringContent(JsonSerializer.Serialize(rawBody, JsonOptions), Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var booking = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
+        Assert.Equal(userId, booking.GetProperty("organizerId").GetGuid());
+        Assert.Equal("Confirmed", booking.GetProperty("status").GetString());
+        Assert.Matches("^SC-\\d{6}-[A-Z2-9]{4}$", booking.GetProperty("referenceCode").GetString()!);
+        Assert.NotEqual("SC-000000-HACK", booking.GetProperty("referenceCode").GetString());
     }
 
     private async Task<string> SeedFinishedBookingAsync(Guid organizerId)
