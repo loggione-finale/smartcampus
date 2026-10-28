@@ -39,6 +39,28 @@ export const BOOKING_STATUS_LABELS: Readonly<Record<BookingStatus, string>> = {
   Closed: 'Chiusa',
 };
 
+export type AlertKind = 'NewBooking' | 'EquipmentRequest' | 'Maintenance' | 'ReportedIssue';
+export type AlertStatus = 'Open' | 'Handled';
+
+export interface AdminAlert {
+  id: string;
+  kind: AlertKind;
+  bookingId: string | null;
+  bookingReferenceCode: string | null;
+  message: string;
+  status: AlertStatus;
+  createdAt: string;
+  handledAt: string | null;
+  handlingNote: string | null;
+}
+
+export const ALERT_KIND_LABELS: Readonly<Record<AlertKind, string>> = {
+  NewBooking: 'Nuova prenotazione',
+  EquipmentRequest: 'Richiesta attrezzatura',
+  Maintenance: 'Manutenzione',
+  ReportedIssue: 'Problema segnalato',
+};
+
 export type StatsGroupBy = 'Space' | 'Type' | 'Building';
 
 export interface StatsGroup {
