@@ -11,17 +11,10 @@ namespace SmartCampus.Spaces.Tests;
 
 public class SpaceBookabilityMongoIntegrationTests
 {
-    private static string? GetTestConnectionString() =>
-        Environment.GetEnvironmentVariable("ConnectionStrings__SpacesTest");
-
-    [Fact]
+    [MongoIntegrationFact]
     public async Task GetBookable_OnRealMongoDb_VerifiesActiveInactiveAndMaintenanceScenarios()
     {
-        var connectionString = GetTestConnectionString();
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            return;
-        }
+        var connectionString = Environment.GetEnvironmentVariable(MongoIntegrationFactAttribute.ConnectionStringEnvVar)!;
 
         await using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {

@@ -1,7 +1,7 @@
 [
   {
     "id": "b7e1c2d3-0000-4000-8000-000000000001",
-    "matricola": "00000001",
+    "matricola": "0000000001",
     "firstName": "Admin",
     "lastName": "Campus",
     "displayName": "Admin Campus",
@@ -14,7 +14,7 @@
   },
   {
     "id": "b7e1c2d3-0000-4000-8000-000000000002",
-    "matricola": "10000001",
+    "matricola": "1000000001",
     "firstName": "Giulia",
     "lastName": "Rossi",
     "displayName": "Giulia Rossi",
@@ -27,7 +27,7 @@
   },
   {
     "id": "b7e1c2d3-0000-4000-8000-000000000003",
-    "matricola": "10000002",
+    "matricola": "1000000002",
     "firstName": "Marco",
     "lastName": "Bianchi",
     "displayName": "Marco Bianchi",
@@ -40,7 +40,7 @@
   },
   {
     "id": "b7e1c2d3-0000-4000-8000-000000000004",
-    "matricola": "10000003",
+    "matricola": "1000000003",
     "firstName": "Sara",
     "lastName": "Conti",
     "displayName": "Sara Conti",
@@ -53,7 +53,7 @@
   },
   {
     "id": "b7e1c2d3-0000-4000-8000-000000000005",
-    "matricola": "10000004",
+    "matricola": "1000000004",
     "firstName": "Luca",
     "lastName": "Ferrari",
     "displayName": "Luca Ferrari",
@@ -66,7 +66,7 @@
   },
   {
     "id": "b7e1c2d3-0000-4000-8000-000000000006",
-    "matricola": "10000005",
+    "matricola": "1000000005",
     "firstName": "Elena",
     "lastName": "Greco",
     "displayName": "Elena Greco",

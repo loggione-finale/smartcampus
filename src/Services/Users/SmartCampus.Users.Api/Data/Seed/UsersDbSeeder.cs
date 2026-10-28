@@ -44,7 +44,7 @@ public class UsersDbSeeder(
         var admin = new UserProfile
         {
             Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000001"),
-            Matricola = "00000001",
+            Matricola = "0000000001",
             FirstName = "Admin",
             LastName = "Campus",
             DisplayName = "Admin Campus",
@@ -60,7 +60,7 @@ public class UsersDbSeeder(
         var giulia = new UserProfile
         {
             Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000002"),
-            Matricola = "10000001",
+            Matricola = "1000000001",
             FirstName = "Giulia",
             LastName = "Rossi",
             DisplayName = "Giulia Rossi",
@@ -75,7 +75,7 @@ public class UsersDbSeeder(
         var marco = new UserProfile
         {
             Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000003"),
-            Matricola = "10000002",
+            Matricola = "1000000002",
             FirstName = "Marco",
             LastName = "Bianchi",
             DisplayName = "Marco Bianchi",
@@ -90,7 +90,7 @@ public class UsersDbSeeder(
         var sara = new UserProfile
         {
             Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000004"),
-            Matricola = "10000003",
+            Matricola = "1000000003",
             FirstName = "Sara",
             LastName = "Conti",
             DisplayName = "Sara Conti",
@@ -105,7 +105,7 @@ public class UsersDbSeeder(
         var luca = new UserProfile
         {
             Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000005"),
-            Matricola = "10000004",
+            Matricola = "1000000004",
             FirstName = "Luca",
             LastName = "Ferrari",
             DisplayName = "Luca Ferrari",
@@ -120,7 +120,7 @@ public class UsersDbSeeder(
         var elena = new UserProfile
         {
             Id = Guid.Parse("b7e1c2d3-0000-4000-8000-000000000006"),
-            Matricola = "10000005",
+            Matricola = "1000000005",
             FirstName = "Elena",
             LastName = "Greco",
             DisplayName = "Elena Greco",

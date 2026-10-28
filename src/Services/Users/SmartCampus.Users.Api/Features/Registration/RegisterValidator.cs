@@ -5,7 +5,7 @@ namespace SmartCampus.Users.Api.Features.Registration;
 
 public static partial class RegisterValidator
 {
-    [GeneratedRegex(@"^\d{6,10}$")]
+    [GeneratedRegex(@"^\d{10}$")]
     private static partial Regex MatricolaRegex();
 
     [GeneratedRegex(@"^[\p{L}\s'-]{2,50}$")]
@@ -34,14 +34,14 @@ public static partial class RegisterValidator
             return errors.ToDictionary(k => k.Key, v => v.Value.ToArray());
         }
 
-        // 1. Matricola (6-10 digits)
+        // 1. Matricola (exactly 10 digits)
         if (string.IsNullOrWhiteSpace(request.Matricola))
         {
             AddError(nameof(request.Matricola), "Matricola is required.");
         }
         else if (!MatricolaRegex().IsMatch(request.Matricola.Trim()))
         {
-            AddError(nameof(request.Matricola), "Matricola must be between 6 and 10 digits.");
+            AddError(nameof(request.Matricola), "Matricola must be exactly 10 digits.");
         }
 
         // 2. First Name (2-50 characters, letters, spaces, apostrophes, hyphens)

@@ -70,6 +70,10 @@ public class SpaceModelTests
         Assert.True(bsonDoc["isActive"].AsBoolean);
         Assert.Equal(2, bsonDoc["equipment"].AsBsonArray.Count);
         Assert.Single(bsonDoc["unavailabilities"].AsBsonArray);
+        Assert.True(bsonDoc["features"]["software"].IsBsonArray);
+        Assert.Equal(2, bsonDoc["features"]["software"].AsBsonArray.Count);
+        Assert.Equal("Visual Studio Code", bsonDoc["features"]["software"].AsBsonArray[0].AsString);
+        Assert.Equal("Docker", bsonDoc["features"]["software"].AsBsonArray[1].AsString);
 
         // Deserialize back
         var deserialized = BsonSerializer.Deserialize<Space>(bsonDoc);
