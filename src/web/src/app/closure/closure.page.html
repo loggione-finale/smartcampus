@@ -1,0 +1,145 @@
+<main class="closure-container">
+  <header class="closure-header">
+    <h1>Commento finale di chiusura</h1>
+    <p class="subtitle">
+      Al termine dell'orario di una prenotazione, il responsabile deve registrare un commento finale
+      sull'effettivo utilizzo dello spazio.
+    </p>
+  </header>
+
+  @if (pendingBookings().length > 0) {
+    <section class="pending-alert-banner" role="alert">
+      <div class="alert-badge">ATTENZIONE</div>
+      <div class="alert-content">
+        <strong>Commento in sospeso:</strong>
+        Hai {{ pendingBookings().length }} prenotazione/i conclusa/i in attesa di commento finale.
+        Finché non invii il commento richiesto, non potrai effettuare nuove prenotazioni nel sistema.
+      </div>
+    </section>
+  }
+
+  @if (successMessage()) {
+    <div class="message-banner success-banner" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="message-banner error-banner" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Caricamento prenotazioni in corso...</p>
+    </div>
+  } @else if (pendingBookings().length === 0) {
+    <div class="empty-state">
+      <h2>Nessun commento in sospeso</h2>
+      <p>Non hai prenotazioni in attesa di commento finale. Il tuo profilo è abilitato per nuove prenotazioni.</p>
+      <div class="actions">
+        <a mat-flat-button color="primary" routerLink="/spaces">Sfoglia catalogo spazi</a>
+      </div>
+    </div>
+  } @else {
+    <div class="closure-workspace">
+      @if (pendingBookings().length > 1) {
+        <aside class="booking-selector">
+          <h3>Prenotazioni da completare</h3>
+          <ul class="booking-list">
+            @for (booking of pendingBookings(); track booking.referenceCode) {
+              <li
+                [class.selected]="selectedBooking()?.referenceCode === booking.referenceCode"
+                (click)="selectBooking(booking)"
+              >
+                <div class="booking-code">{{ booking.referenceCode }}</div>
+                <div class="booking-space">{{ booking.spaceName }} ({{ booking.spaceBuilding }})</div>
+              </li>
+            }
+          </ul>
+        </aside>
+      }
+
+      @if (selectedBooking(); as booking) {
+        <section class="form-section">
+          <div class="selected-summary">
+            <h3>Prenotazione: <span class="code">{{ booking.referenceCode }}</span></h3>
+            <div class="meta-row">
+              <div><strong>Spazio:</strong> {{ booking.spaceName }} ({{ booking.spaceBuilding }})</div>
+              <div><strong>Conclusa il:</strong> {{ booking.end | date: 'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+          </div>
+
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="comment-form">
+            <div class="checkbox-group">
+              <mat-checkbox formControlName="spaceUsed" color="primary">
+                Lo spazio è stato effettivamente utilizzato
+              </mat-checkbox>
+            </div>
+
+            @if (form.get('spaceUsed')?.value) {
+              <mat-form-field appearance="outline" class="field-full">
+                <mat-label>Numero di presenti effettivi</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  formControlName="attendeesCount"
+                  placeholder="Es. 15"
+                />
+                @if (form.get('attendeesCount')?.hasError('required')) {
+                  <mat-error>Il numero di partecipanti presenti è obbligatorio.</mat-error>
+                }
+                @if (form.get('attendeesCount')?.hasError('min')) {
+                  <mat-error>Il numero di partecipanti non può essere negativo.</mat-error>
+                }
+              </mat-form-field>
+            }
+
+            <div class="checkbox-group">
+              <mat-checkbox formControlName="issuesReported" color="warn">
+                Segnala problemi o guasti riscontrati (verrà generato un avviso per l'amministrazione)
+              </mat-checkbox>
+            </div>
+
+            <mat-form-field appearance="outline" class="field-full">
+              <mat-label>Commento sull'utilizzo dell'aula</mat-label>
+              <textarea
+                matInput
+                rows="4"
+                formControlName="comment"
+                placeholder="Descrivi brevemente come è stato utilizzato lo spazio ed eventuali note (minimo 10 caratteri)..."
+              ></textarea>
+              <mat-hint align="end">{{ commentLength }} / 500 caratteri</mat-hint>
+              @if (form.get('comment')?.hasError('required') && form.get('comment')?.touched) {
+                <mat-error>Il testo del commento è obbligatorio.</mat-error>
+              }
+              @if (form.get('comment')?.hasError('minlength') && form.get('comment')?.touched) {
+                <mat-error>Il commento deve contenere almeno 10 caratteri.</mat-error>
+              }
+              @if (form.get('comment')?.hasError('maxlength')) {
+                <mat-error>Il commento non può superare i 500 caratteri.</mat-error>
+              }
+            </mat-form-field>
+
+            <div class="form-actions">
+              <button
+                mat-flat-button
+                color="primary"
+                type="submit"
+                [disabled]="form.invalid || submitting()"
+              >
+                @if (submitting()) {
+                  Invio in corso...
+                } @else {
+                  Invia commento finale e sblocca prenotazioni
+                }
+              </button>
+            </div>
+          </form>
+        </section>
+      }
+    </div>
+  }
+</main>
