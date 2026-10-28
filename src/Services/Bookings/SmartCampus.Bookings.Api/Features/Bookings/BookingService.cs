@@ -223,6 +223,7 @@ public class BookingService(
         dbContext.Bookings.Add(booking);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        await NotifyBookingCreatedAsync(booking, organizerName, cancellationToken);
         await EnqueueInvitationEmailsAsync(booking, cancellationToken);
 
         if (equipmentPlan.MissingItems.Count > 0 && bookingEquipmentService is not null)
@@ -285,6 +286,9 @@ public class BookingService(
             dbContext.Bookings.Add(booking);
             await dbContext.SaveChangesAsync(cancellationToken);
 
+            await transaction.CommitAsync(cancellationToken);
+
+            await NotifyBookingCreatedAsync(booking, organizerName, cancellationToken);
             await EnqueueInvitationEmailsAsync(booking, cancellationToken);
 
             if (equipmentPlan.MissingItems.Count > 0 && bookingEquipmentService is not null)
@@ -292,10 +296,19 @@ public class BookingService(
                 await bookingEquipmentService.RaiseMissingEquipmentAlertsAsync(booking, equipmentPlan, cancellationToken);
             }
 
-            await transaction.CommitAsync(cancellationToken);
-
             return CreateBookingResult.Created(booking);
         });
+    }
+
+    private async Task NotifyBookingCreatedAsync(
+        Booking booking, string organizerName, CancellationToken cancellationToken)
+    {
+        if (emailOutbox is null)
+        {
+            return;
+        }
+
+        await emailOutbox.EnqueueBookingCreatedEmailAsync(booking, organizerName, cancellationToken);
     }
 
     private async Task EnqueueInvitationEmailsAsync(Booking booking, CancellationToken cancellationToken)
