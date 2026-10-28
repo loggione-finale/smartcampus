@@ -60,7 +60,7 @@ npm test -- --watch=false
 
 ## Area personale (`/admin`)
 
-Le pagine sotto `/admin` sono per il personale (ruolo `Staff`). Finché non c'è il login (#82), la guardia
-legge il ruolo da `sessionStorage` (chiave `smartcampus.role`): per provarle in locale, dalla console del
-browser, `sessionStorage.setItem('smartcampus.role', 'Staff')`. Il file `admin-session.ts` va sostituito
+Le pagine sotto `/admin` sono per il personale (ruolo `Admin`). Finché non c'è il login (#82), la guardia
+legge il ruolo da `sessionStorage` (chiave `smartcampus.role`) e il servizio invia il JWT di `smartcampus.token` come Bearer: per provarle in locale, dalla console del
+browser, `sessionStorage.setItem('smartcampus.role', 'Admin')`. Il file `admin-session.ts` va sostituito
 con la sessione vera.

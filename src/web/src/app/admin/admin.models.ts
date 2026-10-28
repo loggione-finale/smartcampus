@@ -1,25 +1,30 @@
-export type CellStatus = 'Free' | 'Partial' | 'Booked' | 'Unavailable';
+export type BookingStatus = 'Confirmed' | 'Cancelled' | 'Closed';
 
-export interface DashboardCell {
+export interface DashboardParticipant {
+  email: string;
+  displayName: string | null;
+  role: string;
+  status: string;
+}
+
+export interface DashboardBooking {
+  referenceCode: string;
+  organizer: string;
   start: string;
   end: string;
-  status: CellStatus;
-  freeSeats: number;
+  status: BookingStatus;
+  occupiedSeats: number;
+  participants: DashboardParticipant[];
 }
 
-export interface DashboardRoom {
+// The API lists only the spaces that have bookings on the chosen day.
+export interface DashboardSpace {
   spaceId: string;
-  name: string;
-  building: string;
-  type: string;
-  mode: 'Dedicated' | 'Mixed';
+  spaceName: string;
+  spaceType: string;
+  spaceBuilding: string;
   capacity: number;
-  cells: DashboardCell[];
-}
-
-export interface DashboardDto {
-  date: string;
-  rooms: DashboardRoom[];
+  bookings: DashboardBooking[];
 }
 
 export interface DashboardParams {
@@ -28,9 +33,8 @@ export interface DashboardParams {
   type?: string;
 }
 
-export const CELL_STATUS_LABELS: Readonly<Record<CellStatus, string>> = {
-  Free: 'Libera',
-  Partial: 'Posti liberi',
-  Booked: 'Prenotata',
-  Unavailable: 'Non disponibile',
+export const BOOKING_STATUS_LABELS: Readonly<Record<BookingStatus, string>> = {
+  Confirmed: 'Prenotata',
+  Cancelled: 'Annullata',
+  Closed: 'Chiusa',
 };

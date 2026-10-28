@@ -99,20 +99,17 @@ td.mat-mdc-cell:first-child {
   font-size: 13px;
   font-weight: 600;
 
-  &[data-status='Free'] {
-    background: #d9f5e5;
-    color: #0b4a28;
+  small {
+    display: block;
+    font-weight: 400;
   }
-  &[data-status='Partial'] {
-    background: var(--cream);
-    color: #4a4100;
-  }
-  &[data-status='Booked'] {
+
+  &[data-status='Confirmed'] {
     background: var(--lilac);
     color: var(--brand);
   }
-  &[data-status='Unavailable'],
-  &[data-status='none'] {
+  &[data-status='Cancelled'],
+  &[data-status='Closed'] {
     background: #eee;
     color: #444;
   }
