@@ -40,8 +40,8 @@ flowchart TB
 | Servizio | Responsabilità | Dati di sua proprietà |
 |---|---|---|
 | **Spaces** | Catalogo di aule, laboratori e sale studio; capienza e attrezzature; indisponibilità (manutenzione, chiusure) | Spazi, attrezzature, indisponibilità |
-| **Bookings** | Disponibilità; prenotazioni singole e di gruppo; partecipanti; annullamento; check-in; **statistiche di utilizzo**. **Garantisce che né uno spazio né una persona abbiano due prenotazioni sovrapposte** | Prenotazioni, partecipanti, check-in |
-| **Users** | Profili sintetici di studenti e personale: scelta del profilo all'ingresso, ricerca dei partecipanti | Profili (nome, ruolo, email fittizia) |
+| **Bookings** | Disponibilità; prenotazioni singole e di gruppo; inviti con conferma entro due ore; annullamento; commento finale; area admin e **statistiche di utilizzo**. **Garantisce che né uno spazio né una persona abbiano due prenotazioni sovrapposte** | Prenotazioni, inviti, commenti finali, avvisi, email in uscita |
+| **Users** | Registrazione, login con email o matricola e token JWT, profili con ruolo `User` o `Admin` (ADR [0008](decisions/0008-utenti-e-accesso.md)) | Profili (matricola, nome, email, telefono, ruolo, hash della password) |
 | **Frontend** | Interfaccia per studenti e personale | Nessuno |
 
 Regola: **ogni servizio possiede il proprio database** e nessun altro servizio lo legge direttamente.
@@ -163,8 +163,8 @@ impedisce a una persona di essere in due posti alla stessa ora, qualunque sia il
 | Dato | Proprietario | Chi altro lo usa | Come |
 |---|---|---|---|
 | Spazio (`id`, nome, capienza, stato, indisponibilità) | Spaces | Bookings | `GET /spaces/{id}` alla creazione della prenotazione |
-| Profilo (`id`, nome, ruolo) | Users | Bookings, Frontend | Bookings verifica i partecipanti; il frontend mostra l'elenco all'ingresso e nella ricerca |
-| Prenotazione, partecipanti, check-in, statistiche | Bookings | Frontend | API di Bookings |
+| Profilo (`id`, email, ruolo) | Users | Bookings, Frontend | Bookings verifica quali email dei partecipanti sono registrate; ogni servizio legge `id` e ruolo dal token |
+| Prenotazione, inviti, commento finale, statistiche | Bookings | Frontend | API di Bookings |
 
 ### Che cosa succede quando un utente prenota per un gruppo
 
@@ -230,8 +230,9 @@ distribuita, nessuna saga, nessuna "mezza prenotazione".
 | Chi | Dipende da | Per quale funzione | Se la dipendenza è giù |
 |---|---|---|---|
 | Frontend | Spaces, Bookings, Users | Le rispettive pagine | Si ferma solo la parte del servizio giù |
-| Bookings | Spaces | **Solo creazione** di una prenotazione | Le nuove prenotazioni vengono rifiutate (`503`), il resto funziona |
-| Bookings | Users | **Solo creazione** di una prenotazione di gruppo | Le prenotazioni di gruppo vengono rifiutate (`503`), quelle singole funzionano |
+| Bookings | Spaces | Creazione di una prenotazione, disponibilità di un'aula, richieste di strumenti | Queste tre funzioni rispondono `503`, il resto funziona |
+| Bookings | Users | **Solo creazione** di una prenotazione di gruppo (verifica delle email dei partecipanti) | Le prenotazioni di gruppo vengono rifiutate (`503`), quelle singole funzionano |
+| Tutti i servizi | Users (indiretto) | Il token JWT si emette al login | Chi ha già un token valido (8 ore) continua: ogni servizio lo valida da solo con `SmartCampus.Auth` |
 | Spaces | MongoDB | Persistenza | Spaces risponde `503`: è come se Spaces fosse giù |
 | Bookings, Users | PostgreSQL | Persistenza | Il servizio risponde `503` e il suo health check fallisce |
 
@@ -241,11 +242,11 @@ Spaces e Users non dipendono da nessun altro servizio.
 
 | Servizio giù | Continua a funzionare | Si ferma | Cosa vede l'utente |
 |---|---|---|---|
-| **Spaces** | Le mie prenotazioni, annullamento, uscita dal gruppo, check-in, statistiche | Catalogo e ricerca, gestione spazi, **nuove prenotazioni** | "Catalogo momentaneamente non disponibile"; alla prenotazione: "Impossibile verificare lo spazio, riprova tra poco" |
-| **Users** | Chi ha già scelto il profilo continua a lavorare; catalogo; prenotazioni singole; le mie prenotazioni | Scelta del profilo all'ingresso, ricerca partecipanti, **nuove prenotazioni di gruppo** | "Elenco profili non disponibile"; nella prenotazione di gruppo: "Impossibile verificare i partecipanti" |
-| **Bookings** | Catalogo e gestione spazi, profili | Disponibilità, prenotazioni, partecipanti, check-in, statistiche | "Prenotazioni momentaneamente non disponibili" |
+| **Spaces** | Login, le mie prenotazioni, annullamento, conferma degli inviti, commento finale, area admin delle prenotazioni e statistiche | Catalogo e ricerca, gestione spazi, disponibilità di un'aula, richieste di strumenti, **nuove prenotazioni** | "Catalogo momentaneamente non disponibile"; alla prenotazione: "Impossibile verificare lo spazio, riprova tra poco" |
+| **Users** | Chi ha già fatto il login continua a lavorare finché il token è valido; catalogo; prenotazioni singole; le mie prenotazioni | Registrazione, login, **nuove prenotazioni di gruppo** | "Accesso momentaneamente non disponibile"; nella prenotazione di gruppo: "Impossibile verificare i partecipanti" |
+| **Bookings** | Catalogo e gestione spazi, registrazione e login | Disponibilità, prenotazioni, inviti, commento finale, area admin delle prenotazioni, statistiche | "Prenotazioni momentaneamente non disponibili" |
 | **MongoDB** | Come "Spaces giù" | Catalogo, gestione spazi, nuove prenotazioni | Come "Spaces giù" |
-| **PostgreSQL** | Catalogo e ricerca spazi (MongoDB) | Prenotazioni, profili, statistiche | "Servizio non raggiungibile" |
+| **PostgreSQL** | Catalogo e ricerca spazi (MongoDB) | Prenotazioni, registrazione e login, statistiche | "Servizio non raggiungibile" |
 | **Frontend** | Le API restano attive | L'interfaccia | Pagina non raggiungibile |
 
 ### Meccanismi di resilienza (solo strumenti di base)
@@ -263,14 +264,16 @@ Spaces e Users non dipendono da nessun altro servizio.
 
 - **PostgreSQL è un punto unico di guasto per Bookings e Users** (un solo container). Mitigato con riavvio automatico e health check in Compose e `EnableRetryOnFailure` in EF Core (vedi [data-model.md](data-model.md#sicurezza-dei-database)); accettabile per una dimostrazione locale.
 - **Il proxy di Angular è solo per lo sviluppo.** In produzione servirebbe un reverse proxy vero.
-- **L'identità non è verificata:** il frontend invia l'utente scelto (D8). Va dichiarato nei limiti noti.
+- **Il token resta valido fino a scadenza:** con Users giù chi ha già fatto il login continua per al massimo 8 ore;
+  un account disattivato nel frattempo non viene bloccato prima della scadenza del token (ADR
+  [0008](decisions/0008-utenti-e-accesso.md)).
 
 ### Come lo proviamo
 
 Per ogni riga della tabella "Che cosa succede se va giù un servizio": si ferma il servizio (Ctrl+C sul suo
 `dotnet run`, oppure `docker compose stop` per il database), si prova l'interfaccia, si riavvia e si verifica
-il recupero. L'esito si registra in [`evidence/`](evidence/). In più, un test automatico verifica che
-Bookings risponda `503` quando Spaces non è raggiungibile.
+il recupero. L'esito si registra in [`evidence/2026-10-28-failure-tests.md`](evidence/2026-10-28-failure-tests.md).
+In più, un test automatico verifica che Bookings risponda `503` quando Spaces non è raggiungibile.
 
 ---
 
@@ -398,6 +401,10 @@ Le slide: "l'interfaccia è utilizzabile negli ambienti proposti e la portabilit
 
 ### D8 – Utenti e ruoli
 
+> **Superata:** il PO ha approvato registrazione e login con token firmato (decisioni 14 e 17). La scelta
+> realizzata, con ruoli `User` e `Admin`, è nell'ADR [0008](decisions/0008-utenti-e-accesso.md); la tabella sotto
+> resta come storia della proposta.
+
 | Opzione | Pro | Contro |
 |---|---|---|
 | **A. Mock: profili sintetici nel servizio Users, scelti all'ingresso** (scelta per il risultato minimo) | Nessun account reale (come chiedono le slide); i profili servono anche come partecipanti dei gruppi | Non è sicurezza vera: il frontend invia l'utente scelto (header `X-User-Id`, `X-User-Role`); va dichiarato nei limiti noti |
@@ -445,9 +452,9 @@ Ruoli nel codice: `Student`, `Staff`.
 | D4 | Un database per servizio: Spaces su MongoDB, Bookings e Users su PostgreSQL |
 | D5 | Vincoli di esclusione su spazi e persone |
 | D6 | Angular + Angular Material |
-| D7 | Docker Compose solo per PostgreSQL |
-| D8 | Profili sintetici nel servizio Users |
-| D9 | xUnit + test sul PostgreSQL reale + prove di guasto |
+| D7 | Docker Compose solo per i database (PostgreSQL e MongoDB) |
+| D8 | Registrazione e login con token firmato nel servizio Users (ADR 0008) |
+| D9 | xUnit + test sui database reali + prove di guasto |
 | D10 | GitHub Actions su ogni PR |
 
 ## Requisiti su ogni macchina
