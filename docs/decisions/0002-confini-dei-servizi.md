@@ -18,6 +18,6 @@ Le statistiche stanno in Bookings perché si calcolano sulle prenotazioni e sull
 - **Spaces e Bookings, con i profili dentro Bookings:** un servizio in meno, ma i profili non c'entrano con le prenotazioni e Bookings diventa troppo grande.
 
 ## Conseguenze
-- Bookings è il servizio più grande: ha due owner (Rhaastrake, FranDeSa456) e la cartella degli inviti ha un owner dedicato.
+- Bookings è il servizio più grande: ha due owner (Rhaastrake, FranDeSa456); per la cartella degli inviti il primo owner è FranDeSa456.
 - Le viste che uniscono dati di servizi diversi usano copie salvate in Bookings o la composizione dal frontend ([data-model.md](../data-model.md#aggregare-i-dati-di-servizi-diversi)).
 - Le copie (nome, tipo, edificio dello spazio) descrivono lo spazio com'era alla prenotazione: le statistiche lo dichiarano nei limiti.

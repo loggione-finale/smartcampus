@@ -1,7 +1,8 @@
 # Architettura di SmartCampus
 
-> **Stato: proposta da rivedere insieme.** Ogni scelta riporta opzioni, pro, contro e una raccomandazione.
-> Quando il gruppo concorda, la scelta diventa un ADR in [`decisions/`](decisions/).
+> **Stato: scelte decise.** Le decisioni sono registrate come ADR in [`decisions/`](decisions/README.md); questo
+> documento resta il confronto di opzioni, pro e contro. Dove la realizzazione è cambiata rispetto alla proposta
+> (accesso con login, inviti per email, MongoDB 7.0) lo dice l'ADR e una nota nella sezione.
 > Le slide chiedono di **motivare** ogni scelta: "Quale scelta serve al prodotto? Quale aggiungerebbe
 > soltanto complessità?". Per questo usiamo **solo strumenti già visti durante il corso**.
 
@@ -52,8 +53,8 @@ avrebbe dovuto tenerne una copia sincronizzata, con più codice e più punti di 
 | Rotta usata dal frontend | Inoltrata a | Esempi |
 |---|---|---|
 | `/api/spaces/**` | Spaces `http://localhost:5101` | `GET /spaces`, `GET /spaces/{id}`, `POST /spaces/{id}/unavailabilities` |
-| `/api/bookings/**` | Bookings `http://localhost:5102` | `POST /bookings`, `POST /bookings/availability`, `GET /bookings/mine`, `POST /bookings/{id}/leave`, `GET /bookings/stats` |
-| `/api/users/**` | Users `http://localhost:5103` | `GET /users`, `GET /users?search=`, `GET /users/{id}` |
+| `/api/bookings/**` | Bookings `http://localhost:5102` | `POST /bookings`, `GET /bookings/mine`, `POST /bookings/{id}/cancel`, `GET /bookings/availability/{spaceId}`, `POST /invitations/{id}/accept`, `GET /admin/dashboard` |
+| `/api/users/**` | Users `http://localhost:5103` | `POST /auth/register`, `POST /auth/login`, `GET /users?emails=`, `GET /users/{id}` |
 
 L'inoltro lo fa il **proxy di sviluppo di Angular** (`proxy.conf.json`): il browser parla solo con
 `localhost:4200`, quindi non servono gateway né configurazioni CORS.
@@ -63,7 +64,7 @@ L'inoltro lo fa il **proxy di sviluppo di Angular** (`proxy.conf.json`): il brow
 ```
 docker-compose.yml                 # MongoDB (spaces) e PostgreSQL (bookings, users)
 .env.example                       # variabili d'esempio, senza valori reali
-infra/postgres/init.sql            # crea i database bookings, users e quelli di test
+infra/postgres/init.sh             # crea i database bookings, users e quelli di test
 infra/mongo/init.js                # crea l'utente applicativo di spaces
 src/
   Services/
@@ -95,9 +96,9 @@ profili del servizio Users.
 | Lo spazio non ha due prenotazioni confermate sovrapposte | Vincolo di esclusione su `bookings` (D5) |
 | **Una persona non è in due prenotazioni confermate sovrapposte**, né come organizzatore né come partecipante | Vincolo di esclusione su `booking_participants` (D5) |
 | Organizzatore + partecipanti non superano la capienza dello spazio | Bookings legge la capienza da Spaces prima di salvare |
-| I partecipanti esistono | Bookings li verifica con Users prima di salvare |
-| I partecipanti li aggiunge l'organizzatore, senza invito da accettare | Compaiono subito in "Le mie prenotazioni" dei partecipanti |
-| Un partecipante può uscire dalla prenotazione | `POST /bookings/{id}/leave`: la sua riga diventa "uscito" e il posto si libera |
+| I partecipanti si invitano per email | Bookings chiede a Users quali email sono registrate (`GET /users?emails=`); chi non è registrato riceve comunque l'invito |
+| Ogni invitato conferma entro due ore, o entro l'inizio se arriva prima (decisione 21) | `POST /invitations/{id}/accept`; un servizio in background porta a scaduto chi non conferma e libera il posto |
+| Un partecipante può uscire dalla prenotazione | Stato `Left` previsto nel modello dei dati; nessuna API ancora su `main` |
 | Solo l'organizzatore annulla l'intera prenotazione | Bookings confronta l'utente con `organizer_id` |
 
 ## Relazioni tra i dati dei servizi
@@ -106,6 +107,10 @@ Con un database per servizio **non esistono foreign key tra database diversi**: 
 verificare che un `space_id` salvato in `bookings` esista davvero in `spaces`. Le relazioni diventano
 **riferimenti logici** (si salva solo l'identificativo) e la loro coerenza è garantita dai servizi,
 non dal database.
+
+> Diagramma della proposta. Nello schema realizzato i partecipanti sono righe della tabella `invitations`
+> (invitati per email, con stato e scadenza) e non c'è il check-in: lo schema vero è nelle migrazioni di Bookings
+> (`src/Services/Bookings/SmartCampus.Bookings.Api/Migrations`).
 
 ```mermaid
 erDiagram
@@ -135,7 +140,6 @@ erDiagram
         uuid organizer_id
         tstzrange period
         string status
-        timestamptz checked_in_at
     }
     BOOKING_PARTICIPANT {
         uuid booking_id
@@ -177,17 +181,17 @@ sequenceDiagram
     participant U as Users
     participant DB as db bookings
     O->>W: sceglie spazio, fascia e partecipanti
-    W->>B: POST /api/bookings (participantIds)
+    W->>B: POST /api/bookings (participantEmails)
     B->>B: valida la fascia (fine dopo inizio, non nel passato)
-    B->>SP: GET /spaces/{id} (timeout 3 s)
+    B->>SP: GET /spaces/{id}/bookable (timeout configurabile)
     alt Spaces non risponde
-        B-->>W: 503 "impossibile verificare lo spazio"
+        B-->>W: 503 "The Spaces service is not reachable. Try again later."
     else spazio inesistente, disattivato, indisponibile o troppo piccolo
         B-->>W: 422 con il motivo
     else spazio prenotabile
-        B->>U: GET /users?ids=... (timeout 3 s)
+        B->>U: GET /users?emails=... (timeout configurabile)
         alt Users non risponde
-            B-->>W: 503 "impossibile verificare i partecipanti"
+            B-->>W: 503 "The Users service is not reachable. Try again later."
         else un partecipante non esiste
             B-->>W: 422 con il nome mancante
         else partecipanti validi
@@ -248,6 +252,9 @@ Spaces e Users non dipendono da nessun altro servizio.
 | **MongoDB** | Come "Spaces giù" | Catalogo, gestione spazi, nuove prenotazioni | Come "Spaces giù" |
 | **PostgreSQL** | Catalogo e ricerca spazi (MongoDB) | Prenotazioni, registrazione e login, statistiche | "Servizio non raggiungibile" |
 | **Frontend** | Le API restano attive | L'interfaccia | Pagina non raggiungibile |
+
+I messaggi in italiano della tabella sono quelli che deve mostrare l'interfaccia; le API rispondono `503` con il
+campo `detail` in inglese (per esempio "The Spaces service is not reachable. Try again later.").
 
 ### Meccanismi di resilienza (solo strumenti di base)
 

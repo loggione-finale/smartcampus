@@ -1,6 +1,6 @@
 # 0010 – Integrazione continua: GitHub Actions su ogni PR
 
-- Data: 26/10/2026, aggiornata il 28/10/2026
+- Data: 26/10/2026 (aggiornata il 28/10/2026)
 - Stato: accettata
 
 ## Contesto
