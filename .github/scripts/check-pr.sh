@@ -3,6 +3,8 @@
 # Legge titolo, corpo, branch e messaggi di commit solo dalle variabili d'ambiente PR_TITLE, PR_BODY, PR_BRANCH e
 # PR_COMMITS (un messaggio per riga): non vanno mai scritti dentro lo script.
 set -uo pipefail
+# Locale UTF-8 esplicito: le lettere accentate contano come lettere anche nel confronto delle parole vietate
+export LC_ALL=C.UTF-8
 
 title="${PR_TITLE:-}"
 body="$(printf '%s' "${PR_BODY:-}" | tr -d '\r')"
@@ -28,8 +30,9 @@ if grep -qE '`[nr]($|[[:space:]-])' <<<"$body"; then
   errors+=("Il corpo contiene \`n o \`r: il testo è stato rovinato da PowerShell (usa gh pr edit --body-file)")
 fi
 
-# Nome del branch: <tipo>/<numero-issue>-<descrizione> (CONTRIBUTING.md, sezione 2)
-if [ -n "$branch" ] && ! grep -qE '^(feature|fix|docs|test|chore)/[0-9]+-[a-z0-9]+(-[a-z0-9]+)*$' <<<"$branch"; then
+# Nome del branch: <tipo>/<numero-issue>-<descrizione> (CONTRIBUTING.md, sezione 2).
+# Eccezione: i branch creati da Dependabot (dependabot/...), se un giorno lo attiviamo.
+if [ -n "$branch" ] && [[ "$branch" != dependabot/* ]] && ! grep -qE '^(feature|fix|docs|test|chore)/[0-9]+-[a-z0-9]+(-[a-z0-9]+)*$' <<<"$branch"; then
   errors+=("Il branch '$branch' non segue <tipo>/<numero-issue>-<descrizione> in minuscolo (CONTRIBUTING.md, sezione 2)")
 fi
 

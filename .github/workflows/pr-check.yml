@@ -31,11 +31,13 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        # Delimitatore casuale: un messaggio di commit uguale al delimitatore non può chiudere l'output in anticipo
         run: |
+          delimiter="COMMITS_$(openssl rand -hex 16)"
           {
-            echo 'list<<END_OF_COMMITS'
+            echo "list<<$delimiter"
             git log --format=%s "$BASE_SHA..$HEAD_SHA"
-            echo 'END_OF_COMMITS'
+            echo "$delimiter"
           } >> "$GITHUB_OUTPUT"
 
       - name: Titolo, issue collegata, nomi e verifiche

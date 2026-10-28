@@ -28,7 +28,12 @@ davvero non seguono la convenzione (`docs/evidence-booking-concurrency-36`, `fea
 PR; gli avvisi segnalano solo corpi davvero rovinati (#141, #175) e la frase che ha chiuso per sbaglio la #171.
 
 L'elenco delle parole vietate si confronta su parole intere: "cazzuola" o "shift" non fanno scattare il controllo.
-Per aggiungere una parola si modifica `.github/scripts/blocked-words.txt` con una PR.
+Per aggiungere una parola si modifica `.github/scripts/blocked-words.txt` con una PR. Il confronto usa la locale
+UTF-8, quindi le lettere accentate contano come lettere e non come separatori.
+
+**Branch dei bot:** i branch che iniziano con `dependabot/` sono esclusi dalla regola sul nome, così Dependabot
+funziona se un giorno lo attiviamo. Il cloud agent di Copilot non si usa, quindi i branch `copilot/...` restano
+vietati: se comparissero, il controllo li fermerebbe.
 
 ## Permessi
 
