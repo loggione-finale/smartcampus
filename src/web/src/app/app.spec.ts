@@ -2,11 +2,12 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { FormControl, FormGroup } from '@angular/forms';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { AuthSessionService } from './auth/auth-session.service';
 import { LoginResponse } from './auth/auth.models';
 import { App } from './app';
+import { routes } from './app.routes';
 import { SpacesApiService } from './spaces/spaces-api.service';
 import { EquipmentCatalogItemDto, SpaceAvailabilityDto, SpaceDto } from './spaces/spaces.models';
 
@@ -69,7 +70,7 @@ describe('App', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([]),
+        provideRouter(routes),
         { provide: SpacesApiService, useValue: spacesApiStub },
       ],
     }).compileComponents();
@@ -151,6 +152,93 @@ describe('App', () => {
 
     expect(fixture.nativeElement.textContent).toContain('Email is already registered.');
     expect(fixture.nativeElement.textContent).toContain('Esiste già un account');
+  });
+
+  it('navigates to the login with returnUrl after registration without a session', async () => {
+    // Link dalla mail all'invitato non registrato (#233): la query sta prima del frammento.
+    window.history.replaceState({}, '', '/?returnUrl=%2Finvitations%2Fabc');
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as unknown as RegistrationTestApp;
+    fixture.detectChanges();
+
+    app.registrationForm.setValue({
+      matricola: '1234567890',
+      firstName: 'Mario',
+      lastName: 'Rossi',
+      email: 'mario@example.test',
+      phoneNumber: '+393331234567',
+      password: 'Password123',
+    });
+    app.submitRegistration();
+
+    const request = httpTesting.expectOne('/api/users/auth/register');
+    expect(request.request.method).toBe('POST');
+    // La rotta /invitations è protetta: senza sessione l'authGuard manda al login con returnUrl.
+    request.flush({}, { status: 201, statusText: 'Created' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(TestBed.inject(Router).url).toBe('/login?returnUrl=%2Finvitations%2Fabc');
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('navigates to the invitation after registration with a session', async () => {
+    // Come sopra, ma con la sessione attiva: si atterra direttamente sull'invito.
+    const session = TestBed.inject(AuthSessionService);
+    session.store(LOGIN_RESPONSE);
+    window.history.replaceState({}, '', '/?returnUrl=%2Finvitations%2Fabc');
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as unknown as RegistrationTestApp;
+    fixture.detectChanges();
+
+    app.registrationForm.setValue({
+      matricola: '1234567890',
+      firstName: 'Mario',
+      lastName: 'Rossi',
+      email: 'mario@example.test',
+      phoneNumber: '+393331234567',
+      password: 'Password123',
+    });
+    app.submitRegistration();
+
+    const request = httpTesting.expectOne('/api/users/auth/register');
+    expect(request.request.method).toBe('POST');
+    request.flush({}, { status: 201, statusText: 'Created' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(TestBed.inject(Router).url).toBe('/invitations/abc');
+    // La pagina inviti caricata dalla rotta fa la sua GET: la chiudiamo qui.
+    httpTesting.match((r) => r.url.endsWith('/api/invitations/mine')).forEach((r) => r.flush([]));
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('stays on the home after registration when returnUrl is external', async () => {
+    // returnUrl esterno (//host): safeReturnUrl lo scarta, si resta sulla home.
+    window.history.replaceState({}, '', '/?returnUrl=%2F%2Fevil.example');
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance as unknown as RegistrationTestApp;
+    fixture.detectChanges();
+
+    app.registrationForm.setValue({
+      matricola: '1234567890',
+      firstName: 'Mario',
+      lastName: 'Rossi',
+      email: 'mario@example.test',
+      phoneNumber: '+393331234567',
+      password: 'Password123',
+    });
+    app.submitRegistration();
+
+    const request = httpTesting.expectOne('/api/users/auth/register');
+    expect(request.request.method).toBe('POST');
+    request.flush({}, { status: 201, statusText: 'Created' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(TestBed.inject(Router).url).toBe('/');
+    expect(fixture.nativeElement.textContent).toContain('Il tuo account è stato creato');
+    window.history.replaceState({}, '', '/');
   });
 
   it('shows the login entry when anonymous and the personal area when authenticated', () => {

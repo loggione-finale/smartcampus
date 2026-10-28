@@ -11,6 +11,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { filter, map } from 'rxjs';
 import { AuthSessionService } from './auth/auth-session.service';
+import { safeReturnUrl } from './auth/return-url';
 
 type Health = 'checking' | 'online' | 'offline';
 
@@ -232,9 +233,10 @@ export class App {
         // Chi arriva dal link di registrazione della mail di invito torna
         // all'invito dopo l'iscrizione (la rotta /invitations è protetta:
         // se non ha ancora la sessione passa dal login con returnUrl).
-        const returnUrl = this.registrationReturnUrl();
-        if (returnUrl !== null && returnUrl.startsWith('/')) {
-          void this.router.navigate([returnUrl]);
+        // safeReturnUrl scarta i percorsi esterni (//host, backslash, /login).
+        const returnUrl = safeReturnUrl(this.registrationReturnUrl());
+        if (returnUrl) {
+          void this.router.navigateByUrl(returnUrl);
           return;
         }
         this.registrationResult.set('created');
