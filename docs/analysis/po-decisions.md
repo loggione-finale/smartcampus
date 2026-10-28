@@ -43,9 +43,9 @@ Incontro con il PO del **27/10/2026** (task #85). Le domande sono quelle prepara
 
 | Questione | Da chiarire quando |
 |---|---|
-| Anticipo massimo di una prenotazione (proposta: 14 giorni) | Review di oggi |
-| Orari delle fasce e regole 25–27 | Review di oggi |
-| Riformulazione dello Sprint Goal 2 senza il rilascio automatico | Review di oggi |
+| Anticipo massimo di una prenotazione (proposta: 14 giorni) | Review del 29/10 ([scaletta](po-meeting-2026-10-29.md)) |
+| Orari delle fasce e regole 25–27 | Review del 29/10 |
+| Riformulazione dello Sprint Goal 2 senza il rilascio automatico | Review del 29/10 |
 
 ## Richieste di revisione dopo le review
 

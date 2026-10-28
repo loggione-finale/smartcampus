@@ -46,7 +46,8 @@ Dichiarati come chiede la slide 32 ("pratiche adattate non equivalgono all'adozi
 ## Sprint 1: Review e Retrospective
 
 **Review con il PO:** non fatta il 27/10, perché il professore ha usato la giornata per il Modulo 3 (agenti e
-workflow). Da recuperare al primo confronto con il PO, insieme a queste questioni aperte:
+workflow). Da recuperare al primo confronto con il PO, insieme a queste questioni aperte (scaletta del 29/10 in
+[po-meeting-2026-10-29.md](analysis/po-meeting-2026-10-29.md)):
 
 - conferma delle fasce orarie e delle regole 25–27 (già nel codice con la #153);
 - anticipo massimo di una prenotazione (proposta: 14 giorni);
