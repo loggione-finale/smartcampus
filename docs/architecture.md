@@ -11,7 +11,7 @@
 ```mermaid
 flowchart TB
     U[Studente / Personale<br/>browser] --> W[Frontend<br/>Angular Material]
-    W -- "proxy di sviluppo Angular<br/>/api/spaces · /api/bookings · /api/users" --> S[Spaces API]
+    W -- "proxy di sviluppo Angular<br/>/api/spaces · /api/bookings · /api/invitations · /api/users" --> S[Spaces API]
     W --> B[Bookings API]
     W --> US[Users API]
     B -- "REST: lo spazio esiste, è attivo,<br/>ha capienza sufficiente?" --> S
@@ -53,7 +53,8 @@ avrebbe dovuto tenerne una copia sincronizzata, con più codice e più punti di 
 | Rotta usata dal frontend | Inoltrata a | Esempi |
 |---|---|---|
 | `/api/spaces/**` | Spaces `http://localhost:5101` | `GET /spaces`, `GET /spaces/{id}`, `POST /spaces/{id}/unavailabilities` |
-| `/api/bookings/**` | Bookings `http://localhost:5102` | `POST /bookings`, `GET /bookings/mine`, `POST /bookings/{id}/cancel`, `GET /bookings/availability/{spaceId}`, `POST /invitations/{id}/accept`, `GET /admin/dashboard`, `GET /admin/stats` |
+| `/api/bookings/**` | Bookings `http://localhost:5102` | `POST /bookings`, `GET /bookings/mine`, `POST /bookings/{id}/cancel`, `GET /bookings/availability/{spaceId}`, `GET /admin/dashboard`, `GET /admin/stats` |
+| `/api/invitations/**` | Bookings `http://localhost:5102` | `GET /invitations/mine`, `POST /invitations/{id}/accept` |
 | `/api/users/**` | Users `http://localhost:5103` | `POST /auth/register`, `POST /auth/login`, `GET /users?emails=`, `GET /users/{id}` |
 
 L'inoltro lo fa il **proxy di sviluppo di Angular** (`proxy.conf.json`): il browser parla solo con

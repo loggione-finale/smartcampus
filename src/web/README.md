@@ -17,6 +17,7 @@ richieste locali ai tre servizi:
 | --- | --- | --- |
 | `/api/spaces/*` | Spaces | `5101` |
 | `/api/bookings/*` | Bookings | `5102` |
+| `/api/invitations/*` | Bookings | `5102` |
 | `/api/users/*` | Users | `5103` |
 
 Per esempio, `/api/spaces/health` viene inoltrato a `http://localhost:5101/health`.
@@ -53,7 +54,8 @@ matricola e la password di un account del seed; le credenziali demo sono in
 - Il pulsante **Esci** cancella la sessione e riporta al login con `reason=logout`. Il logout è
   solo lato client: il token resta valido sul server fino alla sua scadenza di 8 ore.
 
-I test coprono sessione, interceptor, guard, form di login, area personale e area admin:
+I test coprono sessione, interceptor, guard, form di login, area personale, prenotazioni personali
+e area admin:
 
 ```bash
 npm test -- --watch=false --browsers=ChromeHeadless
@@ -71,6 +73,21 @@ del servizio in messaggi comprensibili. La creazione richiede autenticazione.
 
 Il form vive nel componente `src/app/bookings/booking-form.component.ts`, con template, stili e test
 accanto; `App` si limita a includerlo nella home con `<app-booking-form />`.
+
+## Le mie prenotazioni (`/bookings`)
+
+La pagina, protetta da `authGuard`, legge `GET /api/bookings/mine`: le prenotazioni in cui l’utente è
+organizzatore o partecipante, con spazio, edificio, data, fascia, ruolo e stato (`Confermata`,
+`Annullata`, `Conclusa`, `Da commentare`). Le prenotazioni future compaiono prima delle passate, le
+annullate restano visibili con lo stato ben evidente e quelle concluse senza commento finale sono
+evidenziate con il link a `/closure?booking=<codice>`.
+
+Se almeno una prenotazione ha un invito in attesa, la pagina legge `GET /api/invitations/mine` e
+mostra la scadenza e il pulsante “Conferma invito” (`POST /api/invitations/{id}/accept`). Un invito
+già scaduto resta visibile ma non è più confermabile. La pagina non legge il token: `authInterceptor`
+aggiunge `Authorization: Bearer` a ogni chiamata `/api`.
+
+Si arriva alla pagina dal pulsante “Le mie prenotazioni” in `/account`.
 
 ## Generazione del codice
 
