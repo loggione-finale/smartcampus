@@ -103,6 +103,46 @@ public class AdminCancelBookingEndpointTests(BookingsApiFactory factory) : IClas
         Assert.Equal(HttpStatusCode.Conflict, twice.StatusCode);
     }
 
+    [Fact]
+    public async Task Concurrent_cancellation_requests_only_one_succeeds_and_emails_queued_once()
+    {
+        var organizer = "organizer-concurrent@smartcampus.test";
+        var guests = new[] { "uno-concurrent@smartcampus.test", "due-concurrent@smartcampus.test" };
+        var (id, code) = await CreateGroupBookingAsync(organizer, guests);
+
+        const int concurrency = 8;
+        var startSignal = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var tasks = Enumerable.Range(0, concurrency).Select(async _ =>
+        {
+            var admin = AdminClient();
+            await startSignal.Task;
+            return await admin.PostAsJsonAsync(
+                $"/admin/bookings/{code}/cancel",
+                new AdminCancelBookingRequest("Annullamento simultaneo"));
+        }).ToArray();
+
+        startSignal.SetResult();
+        var responses = await Task.WhenAll(tasks);
+
+        Assert.Single(responses, r => r.StatusCode == HttpStatusCode.OK);
+        Assert.Equal(concurrency - 1, responses.Count(r => r.StatusCode == HttpStatusCode.Conflict));
+
+        var booking = await LoadBookingAsync(id);
+        Assert.Equal(BookingStatus.Cancelled, booking.Status);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+        var emails = await db.OutboxEmails
+            .Where(e => e.BookingId == id && e.Kind == "booking-cancelled")
+            .ToListAsync();
+
+        Assert.Equal(3, emails.Count);
+        Assert.Equal(
+            new[] { organizer, guests[0], guests[1] }.Order(),
+            emails.Select(e => e.ToAddress).Order());
+    }
+
     private async Task<Booking> LoadBookingAsync(Guid id)
     {
         await using var scope = factory.Services.CreateAsyncScope();

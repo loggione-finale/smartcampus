@@ -12,46 +12,58 @@ public class AdminCancelBookingService(
     public async Task<CancelBookingResult> CancelAsync(
         string referenceCode, Guid adminId, string reason, CancellationToken cancellationToken)
     {
-        var booking = await dbContext.Bookings
-            .Include(b => b.Invitations)
-            .SingleOrDefaultAsync(b => b.ReferenceCode == referenceCode, cancellationToken);
-
-        if (booking is null)
+        var strategy = dbContext.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            return CancelBookingResult.Failed(CancelBookingOutcome.NotFound);
-        }
+            dbContext.ChangeTracker.Clear();
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        if (booking.Status == BookingStatus.Cancelled)
-        {
-            return CancelBookingResult.Failed(CancelBookingOutcome.AlreadyCancelled);
-        }
+            await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT pg_advisory_xact_lock(hashtextextended({referenceCode}, 0))", cancellationToken);
 
-        var now = timeProvider.GetUtcNow().UtcDateTime;
-        if (booking.Status == BookingStatus.Closed || booking.Period.UpperBound <= now)
-        {
-            return CancelBookingResult.Failed(CancelBookingOutcome.AlreadyEnded);
-        }
+            var booking = await dbContext.Bookings
+                .Include(b => b.Invitations)
+                .SingleOrDefaultAsync(b => b.ReferenceCode == referenceCode, cancellationToken);
 
-        booking.Status = BookingStatus.Cancelled;
-        booking.CancelledAt = now;
-        booking.CancelledBy = adminId;
-        booking.CancellationReason = reason.Trim();
-        booking.UpdatedAt = now;
+            if (booking is null)
+            {
+                return CancelBookingResult.Failed(CancelBookingOutcome.NotFound);
+            }
 
-        var subject = $"Prenotazione {booking.ReferenceCode} annullata";
-        var body = $"La prenotazione di {booking.SpaceNameSnapshot} del " +
-                   $"{booking.Period.LowerBound:dd/MM/yyyy HH:mm} è stata annullata dall'amministrazione. " +
-                   $"Motivo: {booking.CancellationReason}";
+            if (booking.Status == BookingStatus.Cancelled)
+            {
+                return CancelBookingResult.Failed(CancelBookingOutcome.AlreadyCancelled);
+            }
 
-        foreach (var invitation in booking.Invitations
-                     .Where(i => i.Status is InvitationStatus.Invited or InvitationStatus.Accepted))
-        {
-            invitation.Status = InvitationStatus.Cancelled;
-            invitation.RespondedAt ??= now;
-            notificationSender.QueueEmail(invitation.Email, subject, body, "booking-cancelled", booking.Id);
-        }
+            var now = timeProvider.GetUtcNow().UtcDateTime;
+            if (booking.Status == BookingStatus.Closed || booking.Period.UpperBound <= now)
+            {
+                return CancelBookingResult.Failed(CancelBookingOutcome.AlreadyEnded);
+            }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return CancelBookingResult.Cancelled(booking);
+            booking.Status = BookingStatus.Cancelled;
+            booking.CancelledAt = now;
+            booking.CancelledBy = adminId;
+            booking.CancellationReason = reason.Trim();
+            booking.UpdatedAt = now;
+
+            var subject = $"Prenotazione {booking.ReferenceCode} annullata";
+            var body = $"La prenotazione di {booking.SpaceNameSnapshot} del " +
+                       $"{booking.Period.LowerBound:dd/MM/yyyy HH:mm} è stata annullata dall'amministrazione. " +
+                       $"Motivo: {booking.CancellationReason}";
+
+            foreach (var invitation in booking.Invitations
+                         .Where(i => i.Status is InvitationStatus.Invited or InvitationStatus.Accepted))
+            {
+                invitation.Status = InvitationStatus.Cancelled;
+                invitation.RespondedAt ??= now;
+                notificationSender.QueueEmail(invitation.Email, subject, body, "booking-cancelled", booking.Id);
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return CancelBookingResult.Cancelled(booking);
+        });
     }
 }
