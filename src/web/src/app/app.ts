@@ -1,12 +1,15 @@
-import { Component, ElementRef, afterNextRender, inject, signal } from '@angular/core';
+import { Component, ElementRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { filter, map } from 'rxjs';
+import { AuthSessionService } from './auth/auth-session.service';
 
 type Health = 'checking' | 'online' | 'offline';
 
@@ -59,13 +62,29 @@ export class App {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly formBuilder = inject(FormBuilder);
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+
+  protected readonly session = inject(AuthSessionService);
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  protected readonly showHome = computed(() => {
+    const path = this.currentUrl().split(/[?#]/, 1)[0];
+    return path === '' || path === '/';
+  });
 
   protected readonly navLinks = [
-    { label: 'Come funziona', href: '#come-funziona', icon: 'route' },
-    { label: 'Spazi', href: '#spazi', icon: 'meeting_room' },
-    { label: 'Servizi', href: '#servizi', icon: 'hub' },
-    { label: 'Registrati', href: '#registrazione', icon: 'person_add' },
-    { label: 'Contatti', href: '#contatti', icon: 'mail' },
+    { label: 'Come funziona', href: '/#come-funziona', icon: 'route' },
+    { label: 'Spazi', href: '/#spazi', icon: 'meeting_room' },
+    { label: 'Servizi', href: '/#servizi', icon: 'hub' },
+    { label: 'Registrati', href: '/#registrazione', icon: 'person_add' },
+    { label: 'Contatti', href: '/#contatti', icon: 'mail' },
   ];
 
   protected readonly heroWords = ['Cerca.', 'Prenota.', 'Studia.'];
@@ -222,6 +241,11 @@ export class App {
     this.registrationResult.set(null);
     this.registrationError.set(null);
     this.serverErrors.set({});
+  }
+
+  protected logout(): void {
+    this.session.clear();
+    void this.router.navigate(['/login'], { queryParams: { reason: 'logout' } });
   }
 
   private handleRegistrationError(error: HttpErrorResponse): void {

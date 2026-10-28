@@ -16,6 +16,7 @@
   align-items: center;
   justify-content: space-between;
   height: 72px;
+  gap: 24px;
   padding-inline: var(--gutter);
   background: var(--night);
 }
@@ -67,23 +68,40 @@
   }
 }
 
+.topbar-auth {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.5vw, 24px);
+}
+
+.auth-link {
+  color: var(--cream);
+  font-size: 17px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+}
+
+.auth-button.mat-mdc-button {
+  --mat-button-text-label-text-color: var(--cream);
+  --mat-button-text-label-text-font: var(--font-sans);
+  --mat-button-text-label-text-size: 17px;
+  --mat-button-text-label-text-weight: 500;
+  min-height: 44px;
+  padding-inline: 0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 .menu-btn.mat-mdc-icon-button {
   display: none;
   color: var(--cream);
-}
-
-.menu-symbol {
-  font-size: 24px;
-  line-height: 1;
-}
-
-.nav-symbol {
-  display: inline-grid;
-  width: 24px;
-  margin-right: 12px;
-  place-items: center;
-  color: var(--cream);
-  font-weight: 800;
 }
 
 // Hero: indigo field, the library photo pressed into it, the words stacked on a rule
@@ -679,7 +697,8 @@ h1 {
 }
 
 @media (max-width: 860px) {
-  .topnav {
+  .topnav,
+  .topbar-auth {
     display: none;
   }
 
