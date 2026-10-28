@@ -2,10 +2,38 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, RouterStateSnapshot, provideRouter } from '@angular/router';
+import { routes } from '../app.routes';
+import { AuthSessionService } from '../auth/auth-session.service';
+import { adminGuard } from '../auth/auth.guard';
+import { LoginResponse } from '../auth/auth.models';
 import { SpaceDto } from '../spaces/spaces.models';
 import { SpaceFormPage } from './space-form.page';
 import { SpacesAdminListPage } from './spaces-admin-list.page';
-import { StaffAccess, adminGuard } from './staff-access';
+import { SPACES_ADMIN_ROUTES } from './spaces-admin.routes';
+
+const USER_SESSION: LoginResponse = {
+  token: 'user-token',
+  tokenType: 'Bearer',
+  expiresIn: 3600,
+  expiresAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+  user: {
+    id: 'user-1',
+    matricola: '1000000001',
+    firstName: 'Mario',
+    lastName: 'Rossi',
+    displayName: 'Mario Rossi',
+    email: 'mario.rossi@smartcampus.test',
+    phoneNumber: '+393331122334',
+    role: 'User',
+    createdAt: '2026-10-27T10:00:00Z',
+  },
+};
+
+const ADMIN_SESSION: LoginResponse = {
+  ...USER_SESSION,
+  token: 'admin-token',
+  user: { ...USER_SESSION.user, role: 'Admin' },
+};
 
 const SPACE: SpaceDto = {
   id: 'space-1',
@@ -23,27 +51,55 @@ const SPACE: SpaceDto = {
 };
 
 describe('adminGuard', () => {
-  beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter([])] }));
+  let session: AuthSessionService;
+  let router: Router;
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    session = TestBed.inject(AuthSessionService);
+    router = TestBed.inject(Router);
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
+  });
 
   function runGuard() {
     return TestBed.runInInjectionContext(() =>
-      adminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+      adminGuard(
+        {} as ActivatedRouteSnapshot,
+        { url: '/admin/spaces' } as RouterStateSnapshot,
+      ),
     );
   }
 
-  it('redirects to home when there is no role', () => {
+  it('redirects an unauthenticated visitor to login', () => {
     const result = runGuard();
-    expect(TestBed.inject(Router).serializeUrl(result as never)).toBe('/');
+    expect(router.serializeUrl(result as never)).toBe('/login?returnUrl=%2Fadmin%2Fspaces');
   });
 
-  it('redirects a student', () => {
-    TestBed.inject(StaffAccess).role.set('User');
-    expect(runGuard()).not.toBe(true);
+  it('redirects a student to /forbidden', () => {
+    session.store(USER_SESSION);
+    const result = runGuard();
+    expect(router.serializeUrl(result as never)).toBe('/forbidden');
   });
 
   it('lets an admin through', () => {
-    TestBed.inject(StaffAccess).role.set('Admin');
+    session.store(ADMIN_SESSION);
     expect(runGuard()).toBe(true);
+  });
+});
+
+describe('admin/spaces routing', () => {
+  it('has admin/spaces route registered in app routes and protected by adminGuard', () => {
+    const adminSpacesRoute = routes.find((r) => r.path === 'admin/spaces');
+    expect(adminSpacesRoute).toBeDefined();
+    expect(adminSpacesRoute?.canActivate).toContain(adminGuard);
+  });
+
+  it('protects spaces admin child routes with adminGuard', () => {
+    expect(SPACES_ADMIN_ROUTES[0].canActivate).toContain(adminGuard);
   });
 });
 
