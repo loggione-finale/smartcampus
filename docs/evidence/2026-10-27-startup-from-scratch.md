@@ -27,6 +27,21 @@
 | 27/10/2026 | asprenolapo | Windows 11 | 10.0.401 | 29.8.0 | Volumi creati da zero, entrambi `Healthy` | 0 errori, 3 test superati | `Healthy` e Swagger su 5101, 5102, 5103 | 1° tentativo: `.env` copiato con password vuote, `docker compose` si ferma con `required variable ... is missing a value`. Poi `.env` sovrascritto rilanciando `cp .env.example .env`: database ricreati con `down -v`. Entrambi i casi chiariti nel README |
 | | | macOS o Linux | | | | | | |
 
+## Avvio con un comando (#2)
+
+Passi: `.env` con le 5 password e `JWT_SECRET` vuota, poi `scripts/dev-up` (sezione 3 del README), poi
+`scripts/dev-down`.
+
+Esito atteso: `JWT_SECRET` generata nel `.env`; `OK` per Spaces, Bookings, Users e frontend; login da
+`http://localhost:4200/api/users/auth/login` e `GET /api/bookings/mine` con quel token `200` (stessa chiave sui tre
+servizi); dopo `dev-down` nessuna porta tra 5101, 5102, 5103 e 4200 risponde.
+
+| Data | Chi | Sistema operativo | Comando | Esito | Note |
+|---|---|---|---|---|---|
+| 28/10/2026 | asprenolapo | Windows 11, PowerShell 5.1, .NET SDK 10.0.401, Docker 29.8.0 | `.\scripts\dev-up.ps1` | `JWT_SECRET` generata; 4 `OK`; login e `bookings/mine` `200` tramite il proxy; dopo `dev-down.ps1` nessuna porta risponde | Checkout nuovo da `main` senza `node_modules` (il 1° avvio esegue `npm ci`), volumi dei database già esistenti. 2° avvio: build in 2,4 s e tutto `OK` in meno di un minuto |
+| | | macOS o Linux | `./scripts/dev-up.sh` | | |
+
 ## Limiti noti
 
 - Il README non è ancora stato provato con il frontend: si aggiorna questa prova dopo #19.
+- `dev-up.sh` non è ancora stato eseguito su macOS o Linux: la riga sopra è da compilare.

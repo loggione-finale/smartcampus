@@ -24,7 +24,7 @@ Il cuore del prodotto in tre regole:
 | Bookings (prenotazioni, gruppi, check-in, statistiche) | ASP.NET Core Web API + EF Core + **PostgreSQL** |
 | Users (profili sintetici, accesso) | ASP.NET Core Web API + EF Core + **PostgreSQL** |
 | Frontend | **Angular + Angular Material**, con proxy di sviluppo verso i servizi |
-| Avvio | `docker compose up -d` per i database, `dotnet run` per i servizi, `ng serve` per il frontend |
+| Avvio | `scripts/dev-up` avvia tutto con un comando; a mano: `docker compose up -d` per i database, `dotnet run` per i servizi, `npm start` per il frontend |
 
 Solo strumenti visti nel corso. Perché: [architecture.md](architecture.md). Dati: [data-model.md](data-model.md).
 

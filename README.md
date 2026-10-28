@@ -63,17 +63,46 @@ cd smartcampus
 git config core.longpaths true   # solo su Windows
 ```
 
-### 2. Avvia i database
+### 2. Prepara il file `.env` (una volta per PC)
 
 ```bash
 cp .env.example .env              # solo la prima volta: rilanciarlo cancella le tue password
 notepad .env                      # compila le 5 password vuote e salva (Mac/Linux: nano .env)
+```
+
+`JWT_SECRET` può restare vuota: lo script del passo 3 ne genera una e la scrive nel `.env`.
+Dettagli, utenti e comandi utili dei database: [infra/README.md](infra/README.md).
+
+### 3. Avvia tutto con un comando
+
+```powershell
+.\scripts\dev-up.ps1              # Windows, da PowerShell nella cartella del repository
+```
+
+```bash
+./scripts/dev-up.sh               # macOS e Linux
+```
+
+Lo script legge il `.env`, avvia i database con `docker compose up -d --wait`, compila la soluzione, avvia i tre
+servizi e il frontend in background e aspetta che rispondano. Alla fine stampa `OK` per ognuno e
+`Sistema avviato: apri http://localhost:4200`. I log sono in `.dev/` (escluso dal repository).
+Al primo avvio ci vogliono alcuni minuti (build e `npm ci`).
+
+Per fermare tutto: `.\scripts\dev-down.ps1` (Windows) o `./scripts/dev-down.sh`; i dati dei database restano.
+Con `-KeepDb` (Windows) o `--keep-db` i database restano accesi.
+
+Se PowerShell risponde che l'esecuzione di script è disabilitata:
+`powershell -ExecutionPolicy Bypass -File .\scripts\dev-up.ps1` (vale solo per quel comando).
+
+### Avvio a mano, un componente per terminale
+
+Serve per lavorare su un solo servizio o per leggere i log dal vivo. Database:
+
+```bash
 docker compose up -d --wait       # PostgreSQL e MongoDB, attesi "Healthy"
 ```
 
-Dettagli, utenti e comandi utili: [infra/README.md](infra/README.md).
-
-### 3. Imposta le stringhe di connessione (una volta per PC)
+#### Stringhe di connessione e chiave JWT (una volta per PC)
 
 Le password stanno solo nel tuo `.env` e nei *user secrets* di .NET, mai in `appsettings*.json`.
 Per ogni servizio, con le password del tuo `.env`:
@@ -91,7 +120,19 @@ dotnet user-secrets set "ConnectionStrings:Bookings" "Host=localhost;Port=5432;D
 I valori completi sono in [infra/README.md](infra/README.md). In CI le stesse chiavi arrivano come variabili
 d'ambiente (`ConnectionStrings__BookingsTest`…).
 
-### 4. Avvia i servizi
+I tre servizi devono firmare e controllare i token con **la stessa chiave** (almeno 32 caratteri).
+Usa il valore di `JWT_SECRET` del tuo `.env` per tutti e tre:
+
+```bash
+dotnet user-secrets set "Jwt:SigningKey" "<JWT_SECRET>" --project src/Services/Spaces/SmartCampus.Spaces.Api
+dotnet user-secrets set "Jwt:SigningKey" "<JWT_SECRET>" --project src/Services/Bookings/SmartCampus.Bookings.Api
+dotnet user-secrets set "Jwt:SigningKey" "<JWT_SECRET>" --project src/Services/Users/SmartCampus.Users.Api
+```
+
+Senza chiave Bookings non parte; Spaces e Users in sviluppo usano una chiave di ripiego, ma allora i token di Users
+non valgono per Bookings (`401`).
+
+#### Servizi
 
 Un terminale per servizio:
 
@@ -103,15 +144,15 @@ dotnet run --project src/Services/Users/SmartCampus.Users.Api        # http://lo
 
 Per ogni servizio: `/health` risponde `Healthy` e `/swagger` mostra le API.
 
-### 5. Avvia il frontend
+#### Frontend
 
 ```bash
 cd src/web
 npm ci
-ng serve                          # http://localhost:4200
+npm start                         # http://localhost:4200, con il proxy verso i tre servizi
 ```
 
-### 6. Esegui i test
+### 4. Esegui i test
 
 ```bash
 docker compose up -d --wait       # i test di integrazione usano i database reali
@@ -128,6 +169,9 @@ cd src/web && npm test -- --watch=false
 | Porta 5432 o 27017 già occupata | Cambia `POSTGRES_PORT` o `MONGO_PORT` nel `.env` e la porta nella stringa di connessione |
 | `Filename too long` (Windows) | `git config core.longpaths true` |
 | Hai rilanciato `cp .env.example .env` o cambiato le password dopo il primo avvio | `docker compose down -v` e di nuovo `up` (cancella i dati locali): utenti e password dei database si creano solo al primo avvio |
+| `JWT signing key is not configured` (Bookings) | Manca la chiave: lancia `scripts/dev-up`, oppure imposta `Jwt:SigningKey` come sopra |
+| `401` sulle prenotazioni dopo un login riuscito | Users e Bookings hanno chiavi JWT diverse: usa lo stesso `JWT_SECRET` per tutti e tre |
+| `NO <servizio> non risponde` alla fine di `dev-up` | Leggi `.dev/<servizio>.log` e `.dev/<servizio>.log.err`; di solito è una porta occupata o una password del `.env` cambiata dopo il primo avvio |
 | `Could not find a UserSecretsId` | Il proprietario del servizio non ha ancora eseguito `dotnet user-secrets init`: va fatto una volta, nel suo task |
 
 Prove di avvio da zero: [docs/evidence/2026-10-27-startup-from-scratch.md](docs/evidence/2026-10-27-startup-from-scratch.md).
