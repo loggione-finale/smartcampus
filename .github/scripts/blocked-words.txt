@@ -1,0 +1,21 @@
+# Parole vietate in nomi di branch, titoli delle PR e messaggi di commit (docs/agents/pr-checker.md).
+# Una espressione regolare estesa per riga, confrontata senza distinguere maiuscole e minuscole e solo su parole intere.
+# Le righe che iniziano con # sono commenti.
+cazz(o|i|ata|ate|ut[oaie]|egg[a-z]*)
+merd[aei]
+stronz[a-z]*
+vaffancul[a-z]*
+fancul[a-z]*
+minchi[a-z]*
+coglion[a-z]*
+puttan[a-z]*
+troi[ae]
+porc[oa][ -]?(dio|madonna)
+fott[a-z]*
+fuck[a-z]*
+shit[a-z]*
+bitch[a-z]*
+asshole[a-z]*
+bastard[a-z]*
+cunt[a-z]*
+wtf

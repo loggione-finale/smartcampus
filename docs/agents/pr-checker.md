@@ -16,14 +16,23 @@ Fermare subito le PR con errori di forma che oggi scopriamo solo in review.
 | Il corpo collega una issue con `Closes #N` o `Refs #N` | Board e issue si aggiornano da sole | Errore |
 | Il corpo non contiene il segnaposto `Closes #` senza numero | Modello lasciato com'era | Errore |
 | Il corpo non contiene `` `n `` o `` `r `` | Testo rovinato da PowerShell (#149) | Errore |
+| Il branch segue `<tipo>/<numero-issue>-<descrizione>` in minuscolo | `CONTRIBUTING.md`, sezione 2 | Errore |
+| Branch, titolo e messaggi di commit non contengono parole offensive ([elenco](../../.github/scripts/blocked-words.txt)) | Nomi che restano nella storia del repository | Errore |
+| Il corpo non ha nomi tra `` o caratteri di controllo al posto dei backtick | Testo passato da PowerShell (#128, #175) | Avviso |
+| "Closes #N" non compare dentro una frase | Con lo squash il corpo diventa il messaggio di commit e chiude la issue (#171) | Avviso |
 | C'è una sezione con le verifiche eseguite o almeno una voce spuntata | DoD: test eseguiti, non solo scritti | Avviso |
 
-L'ultima regola è un avviso e non un errore: provata sulle ultime 40 PR, come errore ne avrebbe bloccate 13 che
-descrivevano le verifiche con parole loro. Le altre regole, sulle stesse 40 PR, non danno nessun falso errore.
+La regola sulle verifiche è un avviso e non un errore: provata sulle ultime 40 PR, come errore ne avrebbe bloccate 13
+che descrivevano le verifiche con parole loro. Sulle ultime 45 PR le regole di errore fermano solo due branch che
+davvero non seguono la convenzione (`docs/evidence-booking-concurrency-36`, `feature/agentic-workflow`) e nessun'altra
+PR; gli avvisi segnalano solo corpi davvero rovinati (#141, #175) e la frase che ha chiuso per sbaglio la #171.
+
+L'elenco delle parole vietate si confronta su parole intere: "cazzuola" o "shift" non fanno scattare il controllo.
+Per aggiungere una parola si modifica `.github/scripts/blocked-words.txt` con una PR.
 
 ## Permessi
 
-Legge solo il titolo e il corpo della PR, passati come variabili d'ambiente. Non ha token con permessi di
+Legge solo titolo, corpo, nome del branch e messaggi di commit della PR, passati come variabili d'ambiente. Non ha token con permessi di
 scrittura e non commenta la PR: l'esito si legge nel job.
 
 ## Quando fermarsi

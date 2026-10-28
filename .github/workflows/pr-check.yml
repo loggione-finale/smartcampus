@@ -6,7 +6,7 @@ on:
     branches: [main]
     types: [opened, edited, synchronize, reopened]
 
-# Sola lettura: serve solo a scaricare lo script
+# Sola lettura: serve solo a scaricare lo script e la storia dei commit della PR
 permissions:
   contents: read
 
@@ -18,16 +18,30 @@ jobs:
   check:
     name: Controllo PR
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v5
         with:
-          sparse-checkout: .github/scripts
+          fetch-depth: 0
           persist-credentials: false
 
-      # Titolo e corpo passano come variabili d'ambiente, così il testo della PR non può diventare un comando
-      - name: Titolo, issue collegata e verifiche
+      # Titolo, corpo, branch e commit passano come variabili d'ambiente, così il testo della PR non può diventare un comando
+      - name: Messaggi di commit della PR
+        id: commits
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          {
+            echo 'list<<END_OF_COMMITS'
+            git log --format=%s "$BASE_SHA..$HEAD_SHA"
+            echo 'END_OF_COMMITS'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Titolo, issue collegata, nomi e verifiche
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_COMMITS: ${{ steps.commits.outputs.list }}
         run: bash .github/scripts/check-pr.sh
