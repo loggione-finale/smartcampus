@@ -118,11 +118,11 @@ public class AdminStatsEndpointTests(BookingsApiFactory factory) : IClassFixture
         var day = DateTime.UtcNow.Date.AddDays(-1000 - Random.Shared.Next(0, 3000)).AddHours(8);
         var future = TestSlots.Next().UtcDateTime;
 
-        // Finished and no comment: 2 (one still marked Confirmed, one Closed).
+        // Finished and no comment: 2 (both remain Confirmed: bookings transition to Closed strictly upon comment submission).
         // Not counted: Closed with comment, Cancelled, and a future booking.
         await Save(
             Seed(space, "Aula", "Edificio Y", day, BookingStatus.Confirmed, null),
-            Seed(space, "Aula", "Edificio Y", day.AddHours(1), BookingStatus.Closed, null),
+            Seed(space, "Aula", "Edificio Y", day.AddHours(1), BookingStatus.Confirmed, null),
             Seed(space, "Aula", "Edificio Y", day.AddHours(2), BookingStatus.Closed, Comment(true, 3, false)),
             Seed(space, "Aula", "Edificio Y", day.AddHours(3), BookingStatus.Cancelled, null),
             Seed(space, "Aula", "Edificio Y", future, BookingStatus.Confirmed, null));
@@ -133,6 +133,11 @@ public class AdminStatsEndpointTests(BookingsApiFactory factory) : IClassFixture
         var upcoming = await Group(AdminClient(), futureDay, "space", space.ToString());
 
         Assert.Equal(4, past.GetProperty("totalBookings").GetInt32());
+        Assert.Equal(2, past.GetProperty("confirmed").GetInt32());
+        Assert.Equal(1, past.GetProperty("cancelled").GetInt32());
+        Assert.Equal(1, past.GetProperty("closed").GetInt32());
+        Assert.Equal(1, past.GetProperty("spaceUsed").GetInt32());
+        Assert.Equal(0, past.GetProperty("spaceNotUsed").GetInt32());
         Assert.Equal(2, past.GetProperty("withoutComment").GetInt32());
         Assert.Equal(0, upcoming.GetProperty("withoutComment").GetInt32());
     }

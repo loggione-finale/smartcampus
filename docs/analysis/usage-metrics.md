@@ -22,18 +22,19 @@ Ogni elemento della risposta contiene:
 | Campo | Cosa conta |
 |---|---|
 | `totalBookings` | Tutte le prenotazioni del gruppo nel periodo, in qualunque stato (annullate comprese). |
-| `confirmed` | Prenotazioni in stato `Confirmed`: future, oppure già finite ma **senza commento finale**. |
+| `confirmed` | Prenotazioni in stato `Confirmed`: future, oppure già finite ma ancora **senza commento finale**. |
 | `cancelled` | Prenotazioni in stato `Cancelled`. |
-| `closed` | Prenotazioni **concluse**: in stato `Closed`, cioè con commento finale inviato. |
+| `closed` | Prenotazioni in stato `Closed`: la transizione a `Closed` avviene **esclusivamente all'invio del commento finale**. |
 | `spaceUsed` | Commenti finali con "spazio usato" = sì. |
 | `spaceNotUsed` | Commenti finali con "spazio usato" = no. |
-| `withoutComment` | Prenotazioni **concluse senza commento**: non annullate, con fine già passata e senza commento finale. |
+| `withoutComment` | Prenotazioni **terminate senza commento**: non annullate, con fine già passata e senza commento finale inviato (nel sistema permangono in stato `Confirmed`). |
 | `totalAttendees` | Somma delle **presenze dichiarate** nei commenti finali (0 se lo spazio non è stato usato). |
 | `issuesReported` | Commenti finali che segnalano un problema. |
 
-Relazioni sempre vere: `totalBookings = confirmed + cancelled + closed` e `closed = spaceUsed + spaceNotUsed`
-(ogni prenotazione chiusa ha esattamente un commento). Inoltre `withoutComment <= confirmed + closed`: sono le
-prenotazioni non annullate già finite, quasi sempre ancora `Confirmed`.
+Relazioni e invarianti sempre veri:
+- `totalBookings = confirmed + cancelled + closed`: partizione esatta delle prenotazioni del gruppo nel periodo tra i tre stati del dominio.
+- `closed = spaceUsed + spaceNotUsed`: **invariante stretta**, perché nel dominio una prenotazione passa allo stato `Closed` unicamente all'atto dell'invio del commento finale (`ClosingComment`), che specifica sempre in modo dicotomico se lo spazio è stato usato o meno. Ogni prenotazione chiusa ha esattamente un commento; non possono esistere prenotazioni `Closed` senza commento.
+- `withoutComment <= confirmed`: le prenotazioni non annullate già terminate che non hanno ancora ricevuto un commento rimangono nello stato `Confirmed` in attesa di chiusura. Non essendo né `Closed` né `Cancelled`, sono un sottoinsieme delle prenotazioni `confirmed` del periodo (in particolare, ne rappresentano la quota già conclusa nel tempo).
 
 ### Misure derivate (non sono nella risposta)
 
@@ -76,10 +77,7 @@ Calcolo per edificio (tutte e 5 le prenotazioni):
 Per solo laboratorio (`groupBy=Space`): `totalBookings` 4, `confirmed` 0, `totalAttendees` 14. Per il tipo dell'aula:
 `totalBookings` 1, `confirmed` 1, `spaceUsed` 0, `totalAttendees` 0. Sono gli stessi valori che il test verifica.
 
-Un test a parte verifica `withoutComment` su uno spazio con 5 prenotazioni: una `Confirmed` passata senza commento, una
-`Closed` passata senza commento, una `Closed` con commento, una `Cancelled`, una `Confirmed` futura. Nel giorno passato
-`totalBookings` = 4 e `withoutComment` = 2 (le prime due); la futura e la annullata non contano, quella con commento
-nemmeno. Nel giorno della futura `withoutComment` = 0.
+Un test a parte verifica `withoutComment` su uno spazio con 5 prenotazioni: due `Confirmed` passate senza commento (rimaste in stato `Confirmed` in attesa del commento di chiusura), una `Closed` con commento, una `Cancelled`, una `Confirmed` futura. Nel giorno passato `totalBookings` = 4, `confirmed` = 2, `cancelled` = 1, `closed` = 1, `spaceUsed` = 1 e `withoutComment` = 2; l'invariante `closed = spaceUsed + spaceNotUsed` (1 = 1 + 0) e la relazione `withoutComment <= confirmed` (2 <= 2) sono pienamente verificate. La futura e la annullata non contano in `withoutComment`, né quella già chiusa con commento. Nel giorno della futura `withoutComment` = 0.
 
 ## Esempio 2: i dati del seed di Bookings
 
@@ -112,18 +110,18 @@ Edificio A; Laboratorio Informatica 2 è in Edificio B.
 
 Passaggi per Edificio A: prenotazioni 0009 (Closed) e 0011 (Confirmed) danno `total` = 2, `confirmed` = 1, `closed` = 1.
 Solo 0009 ha il commento: `spaceUsed` = 1, `totalAttendees` = 18, nessun problema. La 0011 è finita e senza commento:
-`withoutComment` = 1. Per Edificio B: solo 0010, `total` = 1,
-`closed` = 1, `spaceUsed` = 1, `withoutComment` = 0, `totalAttendees` = 9, `issuesReported` = 1.
+rimane in stato `Confirmed` ed è contata in `withoutComment` = 1 (rispettando `withoutComment <= confirmed`). Per Edificio B: solo 0010, `total` = 1,
+`closed` = 1, `spaceUsed` = 1, `withoutComment` = 0, `totalAttendees` = 9, `issuesReported` = 1 (anche qui `closed = spaceUsed + spaceNotUsed`).
 Stesso periodo con `groupBy=Type`: `Classroom` ha gli stessi numeri di Edificio A, `Lab` quelli di Edificio B.
 Con `groupBy=Space` si ottengono Aula 101 (come Edificio A) e Laboratorio Informatica 2 (come Edificio B).
 
 Derivate: usate su concluse = 1/1 per entrambi gli edifici. La prenotazione senza commento è la 0011, finita ieri (è
-quella che blocca le nuove prenotazioni di Elena Greco): ora il report la conta in `withoutComment`.
+quella che blocca le nuove prenotazioni di Elena Greco): nel sistema è ancora in stato `Confirmed` e ora il report la conta in `withoutComment`.
 
 **Periodo completo** (da oggi - 7 a oggi + 6, tutte le 13): Edificio A ha `total` 11, `confirmed` 9, `cancelled` 1,
 `closed` 1, `spaceUsed` 1, `withoutComment` 1, `totalAttendees` 18; Edificio B ha `total` 2, `confirmed` 1, `closed` 1,
 `withoutComment` 0, `totalAttendees` 9, `issuesReported` 1. Qui `confirmed` mescola 8 prenotazioni future con la 0011:
-`withoutComment` le distingue (solo la 0011 è finita).
+`withoutComment` le distingue (solo la 0011 è finita) e rispetta `withoutComment <= confirmed` (1 <= 9).
 
 Verifica: i numeri dell'esempio 1 coincidono con le asserzioni di `AdminStatsEndpointTests` (7 test su 7 superati in
 locale, su PostgreSQL reale; 174/174 sull'intero progetto di test). L'esempio 2 è calcolato a mano dal file JSON; non è stato confrontato con una chiamata
@@ -135,8 +133,8 @@ all'endpoint sul seed.
   o controllo accessi li conferma. Possono essere sbagliati o arrotondati.
 - **Senza commento non vuol dire non usato.** Le prenotazioni senza commento non hanno `spaceUsed` né presenze: non
   vengono contate né come usate né come non usate, ma separatamente in `withoutComment`. L'assenza di dati non prova che lo spazio fosse libero.
-- **Il commento arriva dopo.** Una prenotazione appena finita resta in `confirmed` finché non viene chiusa; i numeri di
-  `closed`, `spaceUsed` e `totalAttendees` dei giorni recenti possono crescere nei giorni successivi.
+- **Il commento arriva dopo.** Una prenotazione appena finita resta in `confirmed` finché non viene chiusa con l'invio del commento finale; i numeri di
+  `closed`, `spaceUsed` e `totalAttendees` dei giorni recenti possono crescere nei giorni successivi (e specularmente diminuire `withoutComment` e `confirmed`).
 - **Le annullate fanno parte di `totalBookings`.** Per un tasso di utilizzo conviene usare `closed` come denominatore.
 - **Presenze rispetto ai previsti non disponibile.** Il report ha solo le presenze dichiarate; senza un numero di
   partecipanti previsti affidabile il rapporto non si può calcolare.
