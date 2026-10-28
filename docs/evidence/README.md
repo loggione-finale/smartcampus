@@ -20,6 +20,7 @@ Distinguiamo sempre ciò che è stato provato da ciò che è soltanto ipotizzato
 - [Prove di guasto per ogni servizio](2026-10-28-failure-tests.md) (SC-01.T6, #66)
 - [Blocco nuove prenotazioni con commento di chiusura in sospeso](2026-10-28-pending-closure-blocking.md) (SC-29.T3, #115)
 - [Login, interceptor e guard nel frontend](2026-10-28-login-frontend.md) (SC-25.T3, #82)
+- [Email dei partecipanti nel form di prenotazione](2026-10-28-booking-participants-frontend.md) (SC-16.T5, #63)
 - [Percorso della demo sull'API](2026-10-28-demo-rehearsal-api.md) (SC-23.T2, #51 / #93)
 
 ## Limiti noti
