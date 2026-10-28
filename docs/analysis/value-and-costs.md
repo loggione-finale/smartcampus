@@ -21,7 +21,7 @@ Il valore del sistema si misura nella capacità di risolvere le inefficienze ril
 * **Trasparenza su dotazioni e capienze**: conoscere in anticipo la presenza di videoproiettori, lavagne multimediali, prese elettriche o kit audio consente di pianificare sessioni di studio individuale o di gruppo in aule adeguate.
 * **Collaborazione e gruppi di studio**: la funzionalità di invito per partecipanti registrati e contatti esterni permette di coordinare il lavoro comune senza sovrapposizioni e con un unico responsabile della prenotazione.
 * **Equità nell'accesso alle risorse**: i vincoli di un'unica prenotazione per fascia oraria per persona ([ADR 0005](../decisions/0005-vincoli-di-esclusione.md)) e la durata massima contingentata prevengono l'accaparramento seriale di posti da parte di singoli utenti a scapito degli altri.
-* **Responsabilizzazione dell'uso**: l'obbligo del commento finale di chiusura ([SC-29](../decisions/0008-utenti-e-accesso.md)) induce a rilasciare informazioni trasparenti sull'effettivo utilizzo e a segnalare tempestivamente guasti per i colleghi successivi.
+* **Responsabilizzazione dell'uso**: l'obbligo del commento finale di chiusura ([SC-29](https://github.com/loggione-finale/smartcampus/issues/112)) induce a rilasciare informazioni trasparenti sull'effettivo utilizzo e a segnalare tempestivamente guasti per i colleghi successivi.
 
 ### 2.2 Per il personale e l'amministrazione del campus
 * **Supervisione operativa centralizzata**: la dashboard in tempo reale (`GET /admin/dashboard`) offre una vista aggregata per edificio e tipologia delle aule occupate, dei partecipanti e dei responsabili, superando fogli cartacei o registri frammentati.
@@ -33,49 +33,54 @@ Il valore del sistema si misura nella capacità di risolvere le inefficienze ril
 
 ## 3. Analisi dei costi infrastrutturali e operativi
 
-L'architettura realizzata comprende tre servizi backend in .NET 10 (Bookings, Spaces, Users), un'applicazione frontend Angular e due istanze di database (PostgreSQL 17 e MongoDB 7.0). Di seguito si riporta la stima dei costi operativi per un ateneo o polo universitario di medie dimensioni (2.000–5.000 utenti attivi, 50–100 aule e spazi prenotabili).
+L'architettura realizzata comprende tre servizi backend in .NET 10 (Bookings, Spaces, Users), un'applicazione frontend Angular e due istanze di database (PostgreSQL 17 e MongoDB 7.0). Di seguito si riporta una **stima teorica e preliminare** dei costi operativi e del fabbisogno hardware per un ateneo o polo universitario di medie dimensioni (2.000–5.000 utenti registrati, 50–100 aule e spazi prenotabili).
+
+> [!NOTE]
+> In conformità con la premessa metodologica, tutti i valori quantitativi (RAM, traffico, log, ore/uomo) sono **stime progettuali basate su ipotesi di carico e ordini di grandezza tipici**, non dati empirici misurati in produzione. Dove disponibili, sono esplicitate le misure reali rilevate nei test di sviluppo in locale.
 
 ### 3.1 Risorse di calcolo (Compute)
 * **Microservizi .NET (Spaces, Users, Bookings)**:
-  * Ciascun container backend compilato in modalità Release occupa a riposo circa **120–180 MB di RAM** e picchi di frazioni minime di vCPU per la gestione delle richieste JSON.
-  * In uno scenario di produzione a campus singolo, un totale di **2 vCPU e 2 GB di RAM** dedicati ai tre servizi applicativi è ampiamente sufficiente per gestire carichi nell'ordine di decine di richieste al secondo durante i picchi dei cambi d'ora.
+  * In assenza di profilazione sotto stress prolungato, stimiamo a riposo un'allocazione prudenziale di **circa 80–150 MB di RAM per container** (ordine di grandezza tipico per microservizi .NET 10 Web API con runtime containerizzato su Alpine/Debian-slim), con consumo CPU trascurabile durante la normale ricezione di richieste JSON.
+  * In uno scenario di dimensionamento per un campus singolo, stimiamo che un'allocazione complessiva di **2 vCPU e 2 GB di RAM** per i tre microservizi sia adeguata a gestire decine di richieste al secondo nei picchi dei cambi d'ora (ipotesi di progetto da convalidare con benchmark).
 * **Database PostgreSQL 17 (Bookings e Users)**:
-  * Richiede **2 vCPU e 2–4 GB di RAM** con buffer di memoria dimensionati per mantenere in cache gli indici GiST su intervalli temporali (`tsrange`) e gestire pool di connessioni tipici di EF Core (~50–100 connessioni simultanee).
+  * Misura reale in locale (`docker stats --no-stream`, 28/10/2026): container `smartcampus-postgres` a riposo consuma **~51 MiB di RAM**.
+  * Per un ambiente di esercizio stimiamo un fabbisogno di **2 vCPU e 2–4 GB di RAM** con buffer di memoria dimensionati per mantenere in cache gli indici GiST su intervalli temporali (`tstzrange`) e gestire pool di connessioni tipici di EF Core (~50–100 connessioni simultanee).
 * **Database MongoDB 7.0 (Spaces)**:
-  * Il volume documentale del catalogo spazi e delle indisponibilità manutentive è molto contenuto; **1–2 vCPU e 2 GB di RAM** (con WiredTiger cache limitata) bastano a garantire risposte sub-millisecondo.
+  * Misura reale in locale (`docker stats --no-stream`, 28/10/2026): container `smartcampus-mongo` a riposo con dati sintetici consuma **~191 MiB di RAM**.
+  * Il volume documentale del catalogo spazi e delle indisponibilità manutentive è molto contenuto; stimiamo che **1–2 vCPU e 2 GB di RAM** (con cache WiredTiger limitata) garantiscano tempi di risposta nell'ordine di pochi millisecondi in rete locale per letture per `spaceId`, senza necessità di cache esterna.
 * **Frontend Web (Angular SPA)**:
-  * I file statici (HTML, JS, CSS, immagini) vengono distribuiti da un web server leggero (Nginx) o archiviati su storage statico; il consumo di CPU/RAM lato server è trascurabile.
+  * I file statici (HTML, JS, CSS) vengono distribuiti da un web server Nginx o servizio statico; l'impatto di CPU/RAM lato server è trascurabile.
 
 ### 3.2 Storage e persistenza
 * **PostgreSQL**:
-  * Un anno accademico con 50.000 prenotazioni, comprensive di inviti, audit log e commenti finali, genera un volume dati effettivo compreso tra **500 MB e 2 GB** (inclusi indici B-Tree e GiST).
-  * La dimensione dei log di transazione (WAL) dipende dalla frequenza di checkpointing; uno storage SSD da **20–50 GB** garantisce anni di operatività con ampio margine per snapshot e indici.
+  * Ipotizzando un volume indicativo di 50.000 prenotazioni/anno (stima di ~250 prenotazioni al giorno su 200 giorni accademici, ciascuna con inviti, audit log e commenti finali), si stima un incremento di storage compreso tra **500 MB e 2 GB** annui (ipotizzando prudenzialmente 10–40 kB per prenotazione comprensivi di indici `tstzrange` e B-Tree).
+  * La dimensione dei log di transazione (WAL) dipende dalla frequenza dei checkpoint; uno storage disco dedicato di **20–50 GB** rappresenta una stima precauzionale adeguata per gestire snapshot, indici e storico per più anni.
 * **MongoDB**:
-  * Per un ateneo con 100 spazi e storicizzazione delle indisponibilità manutentive, il database non supera qualche centinaio di megabyte (**< 500 MB**).
+  * Per un ateneo con 100 spazi e la registrazione di indisponibilità manutentive, stimiamo che l'ingombro su disco rimanga contenuto entro poche centinaia di megabyte (**< 500 MB**).
 * **Politiche di backup e archiviazione**:
-  * Backup giornalieri logici (`pg_dump` compresso e `mongodump`) pesano poche decine di megabyte al giorno; i costi di conservazione su storage a lungo termine (es. NAS locale o cold storage) sono minimi.
+  * I backup giornalieri logici (`pg_dump` e `mongodump` compressi) sono stimati nell'ordine di decine di megabyte al giorno; i costi di archiviazione (su storage NAS interno o secondario) sono minimi.
 
 ### 3.3 Traffico di rete (Network/Bandwidth)
 * **Traffico client-server**:
   * Le chiamate API sono compatti scambi JSON REST sincroni (in media 1–5 kB per richiesta/risposta).
-  * Il bundle frontend iniziale pesa circa **600 kB** e viene scaricato solo alla prima visita del browser, grazie al caching HTTP aggressivo. I moduli lazy (`spaces`, `closure`, `admin`) vengono scaricati on-demand (30–80 kB ciascuno).
-  * Per 50.000 prenotazioni/anno e relative consultazioni, il traffico di rete globale stimato è inferiore a **15–30 GB/mese**.
+  * Misura da build di produzione (`npm run build`, 28/10/2026): il bundle frontend iniziale pesa **~814 kB** (comprensivo di Angular Material e runtime) e viene scaricato solo al primo caricamento nel browser grazie al caching HTTP. I moduli caricati in lazy loading hanno dimensioni ridotte: `closure` (~43 kB), `spaces` (~35 kB), `admin` (~40 kB).
+  * Per un'ipotesi di 50.000 prenotazioni/anno e relative consultazioni (ipotizzando 5–10 visualizzazioni per prenotazione), stimiamo teoricamente un traffico di rete in uscita nell'ordine di **15–30 GB/mese** (stima teorica derivata da frequenza presunta, non da misurazione effettiva).
 * **Traffico interno (inter-service)**:
-  * Le comunicazioni sincrone HTTP tra Bookings e Spaces/Users avvengono sulla rete locale/container (`127.0.0.1` o Docker bridge network) e non generano costi di banda né consumo di connettività esterna.
+  * Le comunicazioni sincrone HTTP tra Bookings e Spaces/Users avvengono su rete interna/container (`127.0.0.1` o Docker network) e non generano consumo di banda verso l'esterno.
 
 ### 3.4 Log, diagnostica e tracciabilità
 * **Volumi di log**:
-  * I tre microservizi producono log strutturati su console. Al livello informativo standard (`Information`), ogni prenotazione genera circa 5–8 righe di log (ricezione, validazione, transazione DB, notifica outbox).
-  * Generazione stimata di circa **10–20 MB di log di testo al giorno**, facilmente gestibili tramite rotazione locale dei file (`logrotate`) o inoltro a uno stack centrale leggero (Vector/Loki/Syslog).
+  * I tre microservizi producono log strutturati su console. Al livello informativo standard (`Information`), ipotizzando 5–8 righe per prenotazione (ricezione, validazione, transazione DB, outbox), stimiamo una produzione teorica di circa **10–20 MB di log di testo al giorno** in periodi di normale attività (stima dedotta dal flusso applicativo, non da telemetria su carichi reali).
+  * La gestione è affidata a rotazione locale standard (`logrotate`) o inoltro a uno stack leggero (Vector/Loki/Syslog).
 * **Esclusione di telemetria pesante**:
   * Come deciso nell'[ADR 0011](../decisions/0011-strumenti-esclusi.md), non vengono adottati agenti APM commerciali o sistemi di distributed tracing ad alto campionamento (OpenTelemetry con backend SaaS), azzerando i costi di licenza o di storage ingestion.
 
 ### 3.5 Manutenzione e supporto operativo
 * **Aggiornamento e patching**:
-  * Applicazione di aggiornamenti semestrali su framework LTS (.NET e Angular) e patch di sicurezza su container database.
+  * Applicazione periodica di aggiornamenti semestrali di runtime (.NET e Angular) e aggiornamento delle immagini dei database.
 * **Operazioni ordinarie**:
-  * Monitoraggio degli endpoint di salute (`/health`), verifica dello spazio disco per i volumi PostgreSQL, rotazione annuale della chiave di firma dei token JWT.
-  * Stima dell'impegno sistemistico: **2–4 ore/mese** di personale IT di ateneo già in organico.
+  * Monitoraggio degli endpoint `/health`, controllo dello spazio disco e rotazione annuale della chiave di firma dei token JWT.
+  * **Stima presunta dell'impegno**: circa **2–4 ore/mese** di personale IT di ateneo già in organico (stima di massima per interventi ordinari, soggetta a verifica operativa).
 
 ---
 
@@ -124,12 +129,12 @@ L'architettura attuale è modulare e disaccoppiata per contesto ([ADR 0002](../d
 
 ## 6. Indicatori di revisione architetturale
 
-Le scelte correnti del sistema SmartCampus rimangono valide ed economicamente ottimali finché si mantengono i seguenti parametri operativi:
+Le scelte correnti del sistema SmartCampus rimangono valide ed economicamente convenienti finché si mantengono i seguenti parametri operativi (espressi come **soglie stimate di progetto**, non come limiti massimi provati su test di stress estremi):
 
-| Parametro / Metrica | Soglia dell'Architettura Attuale | Segnale di revisione / Nuovo approccio |
+| Parametro / Metrica | Soglia stimata dell'architettura attuale | Segnale di revisione / Nuovo approccio |
 |---|---|---|
-| **Volume utenti contemporanei** | < 500 connessioni simultanee | Oltre tale soglia: scalare Bookings orizzontalmente con Load Balancer. |
-| **Tempo di risposta del catalogo** | < 100 ms | Se supera 500 ms: caching distribuito (Redis) per la disponibilità giornaliera. |
+| **Volume utenti contemporanei** | Stima: < 500 connessioni simultanee | Oltre tale soglia: scalare Bookings orizzontalmente con Load Balancer. |
+| **Tempo di risposta del catalogo** | Obiettivo stimato: < 100 ms su rete locale | Se supera 500 ms: caching distribuito (Redis) per la disponibilità giornaliera. |
 | **Volume telemetrico sensori** | Nessun sensore (solo commenti manuali) | Con sensori IoT: broker MQTT e serie temporali, superando il solo REST sincrono. |
 | **Distribuzione geografica** | Polo singolo / Campus locale | Sedi multiple con latenza elevata: partizionamento database per sede o cluster managed. |
 
@@ -137,7 +142,7 @@ Le scelte correnti del sistema SmartCampus rimangono valide ed economicamente ot
 
 ## 7. Sintesi per il Product Owner
 
-L'architettura sviluppata massimizza il ritorno sull'investimento (ROI) per il contesto universitario di riferimento:
+L'architettura sviluppata garantisce **costi bassi per la demo e per un primo pilota** (da verificare poi sul campo con dati reali):
 1. **Investimento iniziale e ricorrente ridotto al minimo**: zero licenze software, zero costi di account cloud per la demo e l'esercizio pilota locale, adozione di tecnologie open-source e standard (.NET 10, PostgreSQL, MongoDB, Angular).
 2. **Affidabilità e consistenza**: i vincoli di non sovrapposizione e capienza sono garantiti nativamente dal motore relazionale di PostgreSQL ([ADR 0005](../decisions/0005-vincoli-di-esclusione.md)), senza la fragilità di complessi meccanismi di sincronizzazione distribuiti.
 3. **Evolutività trasparente**: la separazione netta tra i tre contesti di dominio consente di estendere singole funzionalità (come l'integrazione di sensori o il passaggio al Single Sign-On) senza riscrivere l'intero sistema.
