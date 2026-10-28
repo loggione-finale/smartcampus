@@ -60,3 +60,31 @@ export const ALERT_KIND_LABELS: Readonly<Record<AlertKind, string>> = {
   Maintenance: 'Manutenzione',
   ReportedIssue: 'Problema segnalato',
 };
+
+export type StatsGroupBy = 'Space' | 'Type' | 'Building';
+
+export interface StatsGroup {
+  key: string;
+  label: string;
+  totalBookings: number;
+  confirmed: number;
+  cancelled: number;
+  closed: number;
+  spaceUsed: number;
+  spaceNotUsed: number;
+  withoutComment: number;
+  totalAttendees: number;
+  issuesReported: number;
+}
+
+export interface StatsParams {
+  from: string;
+  to: string;
+  groupBy: StatsGroupBy;
+}
+
+export const GROUP_BY_OPTIONS: ReadonlyArray<{ value: StatsGroupBy; label: string }> = [
+  { value: 'Space', label: 'Aula' },
+  { value: 'Type', label: 'Tipo di spazio' },
+  { value: 'Building', label: 'Edificio' },
+];

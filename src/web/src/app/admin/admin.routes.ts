@@ -9,4 +9,9 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./alerts.page').then((m) => m.AlertsPage),
     title: 'Avvisi · SmartCampus',
   },
+  {
+    path: 'report',
+    loadComponent: () => import('./report.page').then((m) => m.ReportPage),
+    title: 'Report · SmartCampus',
+  },
 ];

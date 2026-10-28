@@ -27,7 +27,7 @@ flowchart TD
     M --> N1[Annulla<br/>solo organizzatore]
     M --> N2[Esci dal gruppo<br/>solo partecipante]
     M --> O[Check-in all'inizio]
-    P1 --> P2[Report di utilizzo<br/>GET /api/bookings/stats]
+    P1 --> P2[Report di utilizzo<br/>GET /api/admin/stats]
     O -.->|alimenta| P2
     N1 -.->|alimenta| P2
 

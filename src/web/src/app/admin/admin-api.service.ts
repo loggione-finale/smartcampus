@@ -2,7 +2,14 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { currentToken } from './admin-session';
-import { AdminAlert, AlertStatus, DashboardParams, DashboardSpace } from './admin.models';
+import {
+  AdminAlert,
+  AlertStatus,
+  DashboardParams,
+  DashboardSpace,
+  StatsGroup,
+  StatsParams,
+} from './admin.models';
 
 const BASE = '/api/bookings/admin';
 
@@ -43,6 +50,17 @@ export class AdminApiService {
       { reason: reason.trim() },
       { headers: this.headers() },
     );
+  }
+
+  getStats(params: StatsParams): Observable<StatsGroup[]> {
+    const httpParams = new HttpParams()
+      .set('from', params.from)
+      .set('to', params.to)
+      .set('groupBy', params.groupBy);
+    return this.http.get<StatsGroup[]>(`${BASE}/stats`, {
+      params: httpParams,
+      headers: this.headers(),
+    });
   }
 
   private headers(): HttpHeaders {

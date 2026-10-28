@@ -61,7 +61,7 @@
 
 | Rischio | Contromisura |
 |---|---|
-| Uno studente crea, modifica o disattiva spazi | Controllo del ruolo `Staff` su ogni endpoint di scrittura (`403` altrimenti) |
+| Uno studente crea, modifica o disattiva spazi | Controllo del ruolo `Admin` su ogni endpoint di scrittura (`403` altrimenti) |
 | Dati non validi (capienza negativa, nome vuoto, testo enorme) | Data Annotations sui DTO, `400` con `ProblemDetails` |
 | Iniezione nelle query (SQL o MongoDB) | EF Core usa query parametrizzate; con MongoDB solo filtri tipizzati (`Builders<T>.Filter`), mai query costruite concatenando stringhe |
 | Cancellazione che rompe i riferimenti di Bookings | Nessun `DELETE`: solo disattivazione |
@@ -89,7 +89,7 @@
 | Il client invia campi che non gli spettano (`status`, `organizerId`, `checkedInAt`) | DTO di input senza questi campi; l'organizzatore è sempre l'utente corrente |
 | Prenotazioni sovrapposte per richieste simultanee | Vincoli di esclusione nel database (spazio e persona) |
 | Abuso delle prenotazioni di gruppo (W6) | Il partecipante può uscire; proposta: limite di prenotazioni future per persona |
-| Statistiche viste da uno studente | `GET /bookings/stats` solo per `Staff` |
+| Statistiche viste da uno studente | `GET /admin/stats` solo per `Admin` |
 | Dati personali nelle statistiche | Le statistiche restituiscono conteggi, non elenchi di persone |
 | Servizio lento o giù che blocca Bookings | Timeout di 3 s sulle chiamate a Spaces e Users, `503` chiaro |
 
