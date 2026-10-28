@@ -23,6 +23,10 @@ public class InvitationExpiryBackgroundServiceTests(BookingsApiFactory factory)
         invitation.ExpiresAt = expiresAt ?? Now.AddHours(-1);
         invitation.Status = status;
         booking.Invitations.Add(invitation);
+        var organizerInvitation = BookingTestData.NewInvitation(
+            booking, booking.OrganizerId, InvitationStatus.Accepted, ParticipantRole.Organizer);
+        organizerInvitation.Email = "organizer@smartcampus.test";
+        booking.Invitations.Add(organizerInvitation);
         dbContext.Bookings.Add(booking);
         await dbContext.SaveChangesAsync();
         return invitation;

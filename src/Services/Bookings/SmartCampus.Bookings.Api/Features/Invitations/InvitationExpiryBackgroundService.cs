@@ -48,6 +48,7 @@ public class InvitationExpiryBackgroundService(
 
         var dueInvitations = await dbContext.Invitations
             .Include(i => i.Booking)
+            .ThenInclude(b => b.Invitations)
             .Where(i => i.Status == InvitationStatus.Invited && i.ExpiresAt <= now)
             .OrderBy(i => i.ExpiresAt)
             .ToListAsync(cancellationToken)
@@ -60,12 +61,15 @@ public class InvitationExpiryBackgroundService(
             var strategy = dbContext.Database.CreateExecutionStrategy();
             try
             {
-                await strategy.ExecuteAsync<object?>(
-                    cancellationToken => ExpireSingleInvitationAsync(
+                // Clear() all'inizio: un nuovo tentativo non si porta dietro
+                // le mail tracciate dal tentativo precedente fallito.
+                await strategy.ExecuteAsync(async cancellationToken =>
+                {
+                    dbContext.ChangeTracker.Clear();
+                    await ExpireSingleInvitationAsync(
                             dbContext, scope, invitation, now, cancellationToken)
-                        .ContinueWith<object?>(_ => null, CancellationToken.None),
-                    cancellationToken)
-                    .ConfigureAwait(false);
+                        .ConfigureAwait(false);
+                }, cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {

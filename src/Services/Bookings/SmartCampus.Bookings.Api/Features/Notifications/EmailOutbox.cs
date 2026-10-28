@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
 
@@ -20,10 +21,6 @@ public sealed class EmailOutbox(BookingsDbContext dbContext, TimeProvider timePr
             $"Sei stato invitato alla prenotazione {booking.SpaceNameSnapshot} " +
             $"({booking.Period.LowerBound:dd/MM/yyyy HH:mm} - {booking.Period.UpperBound:HH:mm}). " +
             $"Conferma entro {invitation.ExpiresAt:HH:mm}.";
-        if (body.Length > 8000)
-        {
-            body = body[..8000];
-        }
 
         dbContext.OutboxEmails.Add(new OutboxEmail
         {
@@ -44,8 +41,18 @@ public sealed class EmailOutbox(BookingsDbContext dbContext, TimeProvider timePr
         Invitation invitation, Booking booking, CancellationToken cancellationToken = default)
     {
         var expiryEmail = BuildExpiredEmail(invitation, booking, toOrganizer: false);
-        var organizerInvitation = new Invitation { Email = booking.OrganizerNameSnapshot };
-        var organizerEmail = BuildExpiredEmail(organizerInvitation, booking, toOrganizer: true);
+
+        // L'email del responsabile sta nell'invito con Role == Organizer:
+        // OrganizerNameSnapshot contiene il nome, non un indirizzo.
+        var organizerInvitation = booking.Invitations
+            .FirstOrDefault(i => i.Role == ParticipantRole.Organizer);
+        if (organizerInvitation is null)
+        {
+            return;
+        }
+
+        var organizerEmail = BuildExpiredEmail(invitation, booking, toOrganizer: true);
+        organizerEmail.ToAddress = organizerInvitation.Email;
 
         dbContext.OutboxEmails.AddRange(expiryEmail, organizerEmail);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -62,15 +69,10 @@ public sealed class EmailOutbox(BookingsDbContext dbContext, TimeProvider timePr
               $"({booking.Period.LowerBound:dd/MM/yyyy HH:mm} - {booking.Period.UpperBound:HH:mm}) " +
               $"è scaduto alle {invitation.ExpiresAt:HH:mm} senza conferma.";
 
-        if (body.Length > 8000)
-        {
-            body = body[..8000];
-        }
-
         return new OutboxEmail
         {
             Id = Guid.NewGuid(),
-            ToAddress = toOrganizer ? booking.OrganizerNameSnapshot : invitation.Email,
+            ToAddress = invitation.Email,
             Subject = subject,
             Body = body,
             Kind = "invitation-expired",
