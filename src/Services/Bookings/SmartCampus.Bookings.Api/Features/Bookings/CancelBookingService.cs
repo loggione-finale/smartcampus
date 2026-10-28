@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
+using SmartCampus.Bookings.Api.Features.Notifications;
 
 namespace SmartCampus.Bookings.Api.Features.Bookings;
 
-public class CancelBookingService(BookingsDbContext dbContext, TimeProvider timeProvider)
+public class CancelBookingService(BookingsDbContext dbContext, TimeProvider timeProvider, IEmailOutbox emailOutbox)
 {
     public async Task<CancelBookingResult> CancelAsync(
         Guid bookingId, Guid userId, string? reason, CancellationToken cancellationToken)
@@ -47,7 +48,12 @@ public class CancelBookingService(BookingsDbContext dbContext, TimeProvider time
             invitation.RespondedAt ??= now;
         }
 
+        // Le code delle mail vengono salvate insieme all'annullamento:
+        // la scrittura dei .eml avviene nel dispatcher in background.
+        emailOutbox.EnqueueBookingCancelledEmails(booking);
+
         await dbContext.SaveChangesAsync(cancellationToken);
+
         return CancelBookingResult.Cancelled(booking);
     }
 }

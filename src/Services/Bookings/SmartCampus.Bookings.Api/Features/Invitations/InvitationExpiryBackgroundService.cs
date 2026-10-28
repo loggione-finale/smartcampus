@@ -110,9 +110,8 @@ public class InvitationExpiryBackgroundService(
         {
             var emailOutbox = scope.ServiceProvider
                 .GetRequiredService<Notifications.IEmailOutbox>();
-            await emailOutbox.EnqueueInvitationExpiredEmailAsync(
-                invitation, invitation.Booking, cancellationToken)
-                .ConfigureAwait(false);
+            emailOutbox.EnqueueInvitationExpiredEmails(invitation, invitation.Booking);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);

@@ -15,6 +15,7 @@ using SmartCampus.Bookings.Api.Features.Bookings;
 using SmartCampus.Bookings.Api.Features.Bookings.Closure;
 using SmartCampus.Bookings.Api.Features.Bookings.Spaces;
 using SmartCampus.Bookings.Api.Features.Equipment;
+using SmartCampus.Bookings.Api.Features.Notifications;
 using SmartCampus.Bookings.Tests.Support;
 
 namespace SmartCampus.Bookings.Tests.Features.Equipment;
@@ -283,12 +284,13 @@ public class EquipmentRequestValidationAndHttpTests
             new FakeSpacesClient(),
             new NoPendingClosureChecker(),
             timeProvider,
+            new StubEmailOutbox(),
             bookingEquipmentService: new StubBookingEquipmentService());
 
         var start = new DateTimeOffset(2026, 10, 29, 9, 0, 0, TimeSpan.Zero);
         var result = await bookingService.CreateAsync(
             Guid.NewGuid(),
-            "Giulia Rossi",
+            "giulia.rossi@smartcampus.test",
             "giulia.rossi@smartcampus.test",
             new CreateBookingRequest(
                 Guid.NewGuid(),
@@ -406,6 +408,17 @@ public class EquipmentRequestValidationAndHttpTests
     {
         public Task<string?> GetPendingReferenceCodeAsync(Guid organizerId, CancellationToken cancellationToken) =>
             Task.FromResult<string?>(null);
+    }
+
+    private sealed class StubEmailOutbox : IEmailOutbox
+    {
+        public void EnqueueBookingCreatedEmail(Booking booking) { }
+
+        public void EnqueueInvitationEmail(Invitation invitation, Booking booking) { }
+
+        public void EnqueueInvitationExpiredEmails(Invitation invitation, Booking booking) { }
+
+        public void EnqueueBookingCancelledEmails(Booking booking) { }
     }
 
     private sealed class SpyAdminAlerts(List<(AdminAlertKind Kind, Guid BookingId, string Message)> sink) : IAdminAlerts

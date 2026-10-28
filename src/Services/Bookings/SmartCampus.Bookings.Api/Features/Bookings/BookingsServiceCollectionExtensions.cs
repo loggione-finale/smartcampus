@@ -31,8 +31,10 @@ public static class BookingsServiceCollectionExtensions
         services.AddScoped<IAdminAlerts, AdminAlertsService>();
         services.AddSingleton<ClosingCommentValidator>();
         services.AddScoped<IClosingCommentService, ClosingCommentService>();
+        services.Configure<NotificationOptions>(configuration.GetSection(NotificationOptions.SectionName));
+        services.AddScoped<INotificationSender, PickupDirectoryEmailSender>();
         services.AddScoped<IEmailOutbox, EmailOutbox>();
-        services.AddScoped<INotificationSender, NotificationSender>();
+        services.AddHostedService<EmailOutboxDispatcher>();
         services.AddScoped<AdminCancelBookingService>();
         services.Configure<InvitationExpiryOptions>(configuration.GetSection(InvitationExpiryOptions.SectionName));
         services.AddHostedService<InvitationExpiryBackgroundService>();

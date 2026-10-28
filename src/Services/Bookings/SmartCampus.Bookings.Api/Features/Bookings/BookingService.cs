@@ -18,10 +18,10 @@ public class BookingService(
     ISpacesClient spacesClient,
     IPendingClosureChecker pendingClosureChecker,
     TimeProvider timeProvider,
+    IEmailOutbox emailOutbox,
+    IAdminAlerts? adminAlerts = null,
     IUsersClient? usersClient = null,
-    IBookingEquipmentService? bookingEquipmentService = null,
-    IEmailOutbox? emailOutbox = null,
-    IAdminAlerts? adminAlerts = null)
+    IBookingEquipmentService? bookingEquipmentService = null)
 {
     private const string SpaceOverlapConstraint = "ex_bookings_dedicated_space_no_overlap";
     private const string PersonOverlapConstraint = "ex_invitations_person_no_overlap";
@@ -227,9 +227,10 @@ public class BookingService(
             equipmentPlan);
 
         dbContext.Bookings.Add(booking);
+        NotifyBookingCreated(booking);
+        EnqueueInvitationEmails(booking);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await EnqueueInvitationEmailsAsync(booking, cancellationToken);
         await RaiseNewBookingAlertAsync(booking, cancellationToken);
 
         if (equipmentPlan.MissingItems.Count > 0 && bookingEquipmentService is not null)
@@ -254,7 +255,7 @@ public class BookingService(
             cancellationToken);
     }
 
-    private Task<CreateBookingResult> InsertInMixedSpaceAsync(
+    private async Task<CreateBookingResult> InsertInMixedSpaceAsync(
         Guid organizerId,
         string organizerName,
         string organizerEmail,
@@ -270,7 +271,9 @@ public class BookingService(
     {
         var strategy = dbContext.Database.CreateExecutionStrategy();
 
-        return strategy.ExecuteAsync(async () =>
+        // Solo il salvataggio è nella strategia di retry: le code delle mail restano fuori,
+        // così un tentativo della strategia non può accodare due volte le notifiche.
+        var created = await strategy.ExecuteAsync(async () =>
         {
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -289,10 +292,10 @@ public class BookingService(
             var freeSeats = space.Capacity - occupiedSeats;
             if (freeSeats < seatsRequested)
             {
-                return CreateBookingResult.NoSeatsLeft(Math.Max(freeSeats, 0));
+                return null;
             }
 
-            var booking = BuildBooking(
+            var created = BuildBooking(
                 organizerId,
                 organizerName,
                 organizerEmail,
@@ -305,34 +308,41 @@ public class BookingService(
                 registeredParticipants,
                 equipmentPlan);
 
-            dbContext.Bookings.Add(booking);
+            dbContext.Bookings.Add(created);
+            NotifyBookingCreated(created);
+            EnqueueInvitationEmails(created);
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            await EnqueueInvitationEmailsAsync(booking, cancellationToken);
-            await RaiseNewBookingAlertAsync(booking, cancellationToken);
-
-            if (equipmentPlan.MissingItems.Count > 0 && bookingEquipmentService is not null)
-            {
-                await bookingEquipmentService.RaiseMissingEquipmentAlertsAsync(booking, equipmentPlan, cancellationToken);
-            }
+            await RaiseNewBookingAlertAsync(created, cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
+            return created;
+        }).ConfigureAwait(false);
 
-            return CreateBookingResult.Created(booking);
-        });
-    }
-
-    private async Task EnqueueInvitationEmailsAsync(Booking booking, CancellationToken cancellationToken)
-    {
-        if (emailOutbox is null)
+        if (created is null)
         {
-            return;
+            return CreateBookingResult.NoSeatsLeft(0);
         }
 
+        if (equipmentPlan.MissingItems.Count > 0 && bookingEquipmentService is not null)
+        {
+            await bookingEquipmentService.RaiseMissingEquipmentAlertsAsync(created, equipmentPlan, cancellationToken);
+        }
+
+        return CreateBookingResult.Created(created);
+    }
+
+    private void NotifyBookingCreated(Booking booking)
+    {
+        emailOutbox.EnqueueBookingCreatedEmail(booking);
+    }
+
+    private void EnqueueInvitationEmails(Booking booking)
+    {
         foreach (var invitation in booking.Invitations
                      .Where(i => i.Role == ParticipantRole.Participant && i.Status == InvitationStatus.Invited))
         {
-            await emailOutbox.EnqueueInvitationEmailAsync(invitation, booking, cancellationToken);
+            emailOutbox.EnqueueInvitationEmail(invitation, booking);
         }
     }
 

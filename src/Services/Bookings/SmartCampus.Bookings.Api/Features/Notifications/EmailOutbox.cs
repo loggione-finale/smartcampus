@@ -1,84 +1,124 @@
-using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
+using Microsoft.Extensions.Logging;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
 
 namespace SmartCampus.Bookings.Api.Features.Notifications;
 
+/// <summary>
+/// Accoda le mail di notifica come righe in stato <see cref="OutboxEmailStatus.Pending"/>.
+/// Nessuna scrittura su disco qui: i file .eml li scrive <see cref="EmailOutboxDispatcher"/>
+/// fuori dalla richiesta HTTP, così un problema della pickup directory non fa fallire
+/// un'operazione già salvata.
+/// I metodi di accodamento sono sincroni e senza SaveChanges: aggiungono le righe al cambio
+/// di traccia e il chiamante le salva con la sua operazione.
+/// </summary>
 public interface IEmailOutbox
 {
-    Task EnqueueInvitationEmailAsync(Invitation invitation, Booking booking, CancellationToken cancellationToken = default);
+    /// <summary>Accoda la mail di prenotazione creata al responsabile. Nessun indirizzo valido: nessuna mail.</summary>
+    void EnqueueBookingCreatedEmail(Booking booking);
 
-    Task EnqueueInvitationExpiredEmailAsync(Invitation invitation, Booking booking, CancellationToken cancellationToken = default);
+    /// <summary>Accoda la mail di invito a un partecipante.</summary>
+    void EnqueueInvitationEmail(Invitation invitation, Booking booking);
+
+    /// <summary>
+    /// Accoda le mail di invito scaduto: all'invitato e al responsabile
+    /// (il cui indirizzo sta nell'invito con Role == Organizer).
+    /// </summary>
+    void EnqueueInvitationExpiredEmails(Invitation invitation, Booking booking);
+
+    /// <summary>
+    /// Accoda le mail di annullamento: al responsabile (indirizzo nell'invito con Role == Organizer,
+    /// OrganizerNameSnapshot contiene il nome, non un indirizzo) e ai partecipanti appena annullati.
+    /// </summary>
+    void EnqueueBookingCancelledEmails(Booking booking);
 }
 
-public sealed class EmailOutbox(BookingsDbContext dbContext, TimeProvider timeProvider) : IEmailOutbox
+public sealed class EmailOutbox(BookingsDbContext dbContext, TimeProvider timeProvider, ILogger<EmailOutbox> logger)
+    : IEmailOutbox
 {
-    public async Task EnqueueInvitationEmailAsync(
-        Invitation invitation, Booking booking, CancellationToken cancellationToken = default)
+    public void EnqueueBookingCreatedEmail(Booking booking)
     {
-        var subject = $"Invito alla prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}";
-        var body =
-            $"Sei stato invitato alla prenotazione {booking.SpaceNameSnapshot} " +
-            $"({booking.Period.LowerBound:dd/MM/yyyy HH:mm} - {booking.Period.UpperBound:HH:mm}). " +
-            $"Conferma entro {invitation.ExpiresAt:HH:mm}.";
-
-        dbContext.OutboxEmails.Add(new OutboxEmail
+        // L'indirizzo del responsabile sta nell'invito con Role == Organizer:
+        // OrganizerNameSnapshot contiene il nome visualizzato, non un indirizzo.
+        var organizerInvitation = booking.Invitations
+            .FirstOrDefault(i => i.Role == ParticipantRole.Organizer);
+        if (organizerInvitation is null
+            || !MailAddress.TryCreate(organizerInvitation.Email, out _))
         {
-            Id = Guid.NewGuid(),
-            ToAddress = invitation.Email,
-            Subject = subject,
-            Body = body,
-            Kind = "invitation",
-            BookingId = booking.Id,
-            Status = OutboxEmailStatus.Pending,
-            CreatedAt = timeProvider.GetUtcNow().UtcDateTime
-        });
+            logger.LogWarning(
+                "Booking {BookingId}: no valid organizer email in the organizer invitation; skipping the booking-created email.",
+                booking.Id);
+            return;
+        }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        Enqueue(NotificationTemplates.BookingCreated(booking, organizerInvitation.Email));
     }
 
-    public async Task EnqueueInvitationExpiredEmailAsync(
-        Invitation invitation, Booking booking, CancellationToken cancellationToken = default)
+    public void EnqueueInvitationEmail(Invitation invitation, Booking booking)
     {
-        var expiryEmail = BuildExpiredEmail(invitation, booking, toOrganizer: false);
+        Enqueue(invitation.UserId is null
+            ? NotificationTemplates.InvitationToUnregistered(invitation, booking)
+            : NotificationTemplates.InvitationToRegistered(invitation, booking));
+    }
+
+    public void EnqueueInvitationExpiredEmails(Invitation invitation, Booking booking)
+    {
+        if (MailAddress.TryCreate(invitation.Email, out _))
+        {
+            Enqueue(
+                NotificationTemplates.InvitationExpired(invitation, booking, invitation.Email, toOrganizer: false));
+        }
 
         // L'email del responsabile sta nell'invito con Role == Organizer:
         // OrganizerNameSnapshot contiene il nome, non un indirizzo.
         var organizerInvitation = booking.Invitations
             .FirstOrDefault(i => i.Role == ParticipantRole.Organizer);
-        if (organizerInvitation is null)
+        if (organizerInvitation is not null && MailAddress.TryCreate(organizerInvitation.Email, out _))
         {
-            return;
+            Enqueue(
+                NotificationTemplates.InvitationExpired(
+                    invitation, booking, organizerInvitation.Email, toOrganizer: true));
         }
-
-        var organizerEmail = BuildExpiredEmail(invitation, booking, toOrganizer: true);
-        organizerEmail.ToAddress = organizerInvitation.Email;
-
-        dbContext.OutboxEmails.AddRange(expiryEmail, organizerEmail);
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private OutboxEmail BuildExpiredEmail(Invitation invitation, Booking booking, bool toOrganizer)
+    public void EnqueueBookingCancelledEmails(Booking booking)
     {
-        var subject = $"Invito scaduto - prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}";
-        var body = toOrganizer
-            ? $"L'invito per {invitation.Email} alla prenotazione {booking.SpaceNameSnapshot} " +
-              $"({booking.Period.LowerBound:dd/MM/yyyy HH:mm} - {booking.Period.UpperBound:HH:mm}) " +
-              $"è scaduto alle {invitation.ExpiresAt:HH:mm} senza conferma."
-            : $"Il tuo invito alla prenotazione {booking.SpaceNameSnapshot} " +
-              $"({booking.Period.LowerBound:dd/MM/yyyy HH:mm} - {booking.Period.UpperBound:HH:mm}) " +
-              $"è scaduto alle {invitation.ExpiresAt:HH:mm} senza conferma.";
+        // Come sopra: il destinatario del responsabile è l'invito con Role == Organizer.
+        var organizerInvitation = booking.Invitations
+            .FirstOrDefault(i => i.Role == ParticipantRole.Organizer);
+        if (organizerInvitation is not null && MailAddress.TryCreate(organizerInvitation.Email, out _))
+        {
+            Enqueue(NotificationTemplates.BookingCancelled(booking, organizerInvitation.Email));
+        }
+        else
+        {
+            logger.LogWarning(
+                "Booking {BookingId}: no valid organizer email in the organizer invitation; skipping the organizer booking-cancelled email.",
+                booking.Id);
+        }
 
-        return new OutboxEmail
+        foreach (var invitation in booking.Invitations
+                     .Where(i => i.Role == ParticipantRole.Participant
+                         && i.Status == InvitationStatus.Cancelled
+                         && MailAddress.TryCreate(i.Email, out _)))
+        {
+            Enqueue(NotificationTemplates.BookingCancelled(booking, invitation.Email));
+        }
+    }
+
+    private void Enqueue(OutgoingEmail template)
+    {
+        dbContext.OutboxEmails.Add(new OutboxEmail
         {
             Id = Guid.NewGuid(),
-            ToAddress = invitation.Email,
-            Subject = subject,
-            Body = body,
-            Kind = "invitation-expired",
-            BookingId = booking.Id,
+            ToAddress = template.ToAddress,
+            Subject = template.Subject,
+            Body = template.Body,
+            Kind = template.Kind,
+            BookingId = template.BookingId,
             Status = OutboxEmailStatus.Pending,
             CreatedAt = timeProvider.GetUtcNow().UtcDateTime
-        };
+        });
     }
 }
