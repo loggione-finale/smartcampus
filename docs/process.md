@@ -53,8 +53,12 @@ workflow). Da recuperare al primo confronto con il PO, insieme a queste question
 - anticipo massimo di una prenotazione (proposta: 14 giorni);
 - nuova formulazione dello Sprint Goal 2 (sopra).
 
-**Retrospective (#87):** _da compilare dopo la retrospettiva del gruppo_.
+**Retrospective (#87):** svolta il 27/10/2026 dal gruppo. Sintesi di cosa ha funzionato, dei punti critici emersi e delle azioni correttive concordate e applicate nello Sprint 2.
 
-| Cosa ha funzionato | Cosa cambiare | Azione | Chi |
-|---|---|---|---|
-| | | | |
+| Cosa ha funzionato | Cosa cambiare | Azione | Chi | Stato Sprint 2 |
+|---|---|---|---|---|
+| Dati sintetici condivisi hanno accelerato lo sviluppo parallelo | Seed duplicati e disallineati tra Bookings e Users | Unificare generatore e sorgente unica del seed di test (`#158`, `#187`) | fedeericodl, Rhaastrake | Applicata |
+| Suite di test d'integrazione con database reali (PostgreSQL, MongoDB) | Test fragili per dipendenza dall'ora del giorno e isolamento dello stato | Rendere i test indipendenti dall'orario di sistema e garantire isolamento (`#154`, `#155`, `#207`) | FranDeSa456, fedeericodl | Applicata |
+| Flusso di PR snello e rapido | PR con descrizioni eterogenee, checklist mancanti o formattazione alterata | Automatizzare il controllo fisso delle PR in CI con regole sintattiche e di processo (`check-pr.sh`, `#187`) | asprenolapo | Applicata |
+| Componenti Angular modulari | Disallineamento tra validazioni client e contratti API backend (regole aule miste, formati) | Allineamento sistematico dei contratti OpenAPI/DTO e validazioni contestuali prima del merge (`#160`, `#163`, `#210`) | AldAndrew0, Leo-prova | Applicata |
+| Adozione di strumenti di supporto AI per velocizzare review e test | Uso non regolamentato con rischio di allucinazioni o introduzione di regressioni | Definire un flusso agentico controllato con 7 ruoli, permessi espliciti, no segreti e schede di evidenza in `docs/evidence/agentic/` (`#171`, `#187`) | asprenolapo, Rhaastrake, antoStr | Applicata |
