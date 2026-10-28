@@ -56,5 +56,8 @@ Se due fonti sono in disaccordo e non è chiaro quale sia quella giusta: lo deci
 
 ## Come si verifica
 
-La persona apre i due file per almeno una differenza segnalata. Quando il controllo diventa stabile, il primo
-task dell'[agente di implementazione](implementer.md) lo trasforma in un test che gira in CI.
+La persona apre i due file per almeno una differenza segnalata.
+
+Le regole fisse girano anche in CI, senza LLM: il progetto `tests/SmartCampus.SyntheticData.Tests` (8 test, nessun
+database) confronta utenti, spazi, prenotazioni, tabelle del README, matricole, email e copie doppie. L'agente serve
+per ciò che i test non coprono e per spiegare una differenza quando un test fallisce.

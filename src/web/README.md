@@ -59,6 +59,14 @@ I test coprono sessione, interceptor, guard, form di login, area personale e are
 npm test -- --watch=false --browsers=ChromeHeadless
 ```
 
+## Prenotare uno spazio
+
+La form è disponibile nella sezione `#prenota`: seleziona spazio, data e fascia oraria, poi aggiungi
+facoltativamente le email dei partecipanti. Con almeno un partecipante compare la selezione degli
+strumenti, con indicazione di quelli già presenti nello spazio. Il frontend invia questi dati a
+`POST /api/bookings`, mostra il codice di riferimento in caso di conferma e traduce i principali rifiuti
+del servizio in messaggi comprensibili. La creazione richiede autenticazione.
+
 ## Generazione del codice
 
 Per generare un nuovo componente:
