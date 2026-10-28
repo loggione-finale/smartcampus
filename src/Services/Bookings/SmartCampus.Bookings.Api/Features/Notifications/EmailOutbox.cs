@@ -6,41 +6,41 @@ namespace SmartCampus.Bookings.Api.Features.Notifications;
 
 public interface IEmailOutbox
 {
+    Task EnqueueBookingCreatedEmailAsync(Booking booking, string organizerEmail, CancellationToken cancellationToken = default);
+
     Task EnqueueInvitationEmailAsync(Invitation invitation, Booking booking, CancellationToken cancellationToken = default);
 
     Task EnqueueInvitationExpiredEmailAsync(Invitation invitation, Booking booking, CancellationToken cancellationToken = default);
+
+    Task EnqueueBookingCancelledEmailAsync(Booking booking, string toAddress, CancellationToken cancellationToken = default);
 }
 
-public sealed class EmailOutbox(BookingsDbContext dbContext, TimeProvider timeProvider) : IEmailOutbox
+public sealed class EmailOutbox(BookingsDbContext dbContext, TimeProvider timeProvider, INotificationSender sender)
+    : IEmailOutbox
 {
+    public async Task EnqueueBookingCreatedEmailAsync(
+        Booking booking, string organizerEmail, CancellationToken cancellationToken = default)
+    {
+        await EnqueueAsync(
+            NotificationTemplates.BookingCreated(booking, organizerEmail), cancellationToken);
+    }
+
     public async Task EnqueueInvitationEmailAsync(
         Invitation invitation, Booking booking, CancellationToken cancellationToken = default)
     {
-        var subject = $"Invito alla prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}";
-        var body =
-            $"Sei stato invitato alla prenotazione {booking.SpaceNameSnapshot} " +
-            $"({booking.Period.LowerBound:dd/MM/yyyy HH:mm} - {booking.Period.UpperBound:HH:mm}). " +
-            $"Conferma entro {invitation.ExpiresAt:HH:mm}.";
+        var template = invitation.UserId is null
+            ? NotificationTemplates.InvitationToUnregistered(invitation, booking)
+            : NotificationTemplates.InvitationToRegistered(invitation, booking);
 
-        dbContext.OutboxEmails.Add(new OutboxEmail
-        {
-            Id = Guid.NewGuid(),
-            ToAddress = invitation.Email,
-            Subject = subject,
-            Body = body,
-            Kind = "invitation",
-            BookingId = booking.Id,
-            Status = OutboxEmailStatus.Pending,
-            CreatedAt = timeProvider.GetUtcNow().UtcDateTime
-        });
-
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await EnqueueAsync(template, cancellationToken);
     }
 
     public async Task EnqueueInvitationExpiredEmailAsync(
         Invitation invitation, Booking booking, CancellationToken cancellationToken = default)
     {
-        var expiryEmail = BuildExpiredEmail(invitation, booking, toOrganizer: false);
+        await EnqueueAsync(
+            NotificationTemplates.InvitationExpired(invitation, booking, invitation.Email, toOrganizer: false),
+            cancellationToken);
 
         // L'email del responsabile sta nell'invito con Role == Organizer:
         // OrganizerNameSnapshot contiene il nome, non un indirizzo.
@@ -51,34 +51,43 @@ public sealed class EmailOutbox(BookingsDbContext dbContext, TimeProvider timePr
             return;
         }
 
-        var organizerEmail = BuildExpiredEmail(invitation, booking, toOrganizer: true);
-        organizerEmail.ToAddress = organizerInvitation.Email;
-
-        dbContext.OutboxEmails.AddRange(expiryEmail, organizerEmail);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await EnqueueAsync(
+            NotificationTemplates.InvitationExpired(
+                invitation, booking, organizerInvitation.Email, toOrganizer: true),
+            cancellationToken);
     }
 
-    private OutboxEmail BuildExpiredEmail(Invitation invitation, Booking booking, bool toOrganizer)
+    public async Task EnqueueBookingCancelledEmailAsync(
+        Booking booking, string toAddress, CancellationToken cancellationToken = default)
     {
-        var subject = $"Invito scaduto - prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}";
-        var body = toOrganizer
-            ? $"L'invito per {invitation.Email} alla prenotazione {booking.SpaceNameSnapshot} " +
-              $"({booking.Period.LowerBound:dd/MM/yyyy HH:mm} - {booking.Period.UpperBound:HH:mm}) " +
-              $"è scaduto alle {invitation.ExpiresAt:HH:mm} senza conferma."
-            : $"Il tuo invito alla prenotazione {booking.SpaceNameSnapshot} " +
-              $"({booking.Period.LowerBound:dd/MM/yyyy HH:mm} - {booking.Period.UpperBound:HH:mm}) " +
-              $"è scaduto alle {invitation.ExpiresAt:HH:mm} senza conferma.";
+        await EnqueueAsync(
+            NotificationTemplates.BookingCancelled(booking, toAddress), cancellationToken);
+    }
 
-        return new OutboxEmail
+    private async Task EnqueueAsync(OutgoingEmail template, CancellationToken cancellationToken)
+    {
+        var outboxEmail = new OutboxEmail
         {
             Id = Guid.NewGuid(),
-            ToAddress = invitation.Email,
-            Subject = subject,
-            Body = body,
-            Kind = "invitation-expired",
-            BookingId = booking.Id,
+            ToAddress = template.ToAddress,
+            Subject = template.Subject,
+            Body = template.Body,
+            Kind = template.Kind,
+            BookingId = template.BookingId,
             Status = OutboxEmailStatus.Pending,
             CreatedAt = timeProvider.GetUtcNow().UtcDateTime
         };
+
+        dbContext.OutboxEmails.Add(outboxEmail);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Invio in pickup directory: diventa un file .eml, mai una mail verso un server reale.
+        await sender.SendAsync(
+            template,
+            cancellationToken);
+
+        outboxEmail.Status = OutboxEmailStatus.Sent;
+        outboxEmail.SentAt = timeProvider.GetUtcNow().UtcDateTime;
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
