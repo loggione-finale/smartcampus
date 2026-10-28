@@ -67,12 +67,23 @@
     <form class="booking-form" [formGroup]="bookingForm" (ngSubmit)="submitBooking()" novalidate data-reveal>
       <mat-form-field appearance="outline">
         <mat-label>Spazio</mat-label>
-        <mat-select formControlName="spaceId" (selectionChange)="bookingForm.controls.equipment.setValue([])">
-          @for (space of bookingSpaces; track space.id) {
+        <mat-select
+          formControlName="spaceId"
+          (selectionChange)="bookingForm.controls.equipment.setValue([])"
+        >
+          @for (space of bookingSpaces(); track space.id) {
             <mat-option [value]="space.id">{{ space.name }} · {{ space.detail }}</mat-option>
           }
         </mat-select>
+        @if (bookingSpacesLoading()) { <mat-hint>Caricamento degli spazi…</mat-hint> }
+        @if (bookingFieldError('spaceId'); as error) { <mat-error>{{ error }}</mat-error> }
       </mat-form-field>
+      @if (bookingSpacesError(); as error) {
+        <p class="form-alert booking-alert" role="alert">
+          {{ error }}
+          <button mat-button type="button" (click)="retryBookingSpaces()">Riprova</button>
+        </p>
+      }
 
       <mat-form-field appearance="outline" class="participant-field">
         <mat-label>Email dei partecipanti</mat-label>
@@ -88,29 +99,67 @@
             (matChipInputTokenEnd)="addParticipant($event)" />
         </mat-chip-grid>
         <mat-hint>Aggiungi gli invitati uno alla volta. Il responsabile non va inserito.</mat-hint>
-        @if (participantError()) { <mat-error>{{ participantError() }}</mat-error> }
       </mat-form-field>
+      @if (participantError(); as error) { <p class="field-error" role="alert">{{ error }}</p> }
 
       @if (participantEmails().length > 0) {
-        <mat-form-field appearance="outline" class="equipment-field">
-          <mat-label>Strumenti richiesti</mat-label>
-          <mat-select formControlName="equipment" multiple>
-            @for (equipment of equipmentForSelectedSpace(); track equipment.name) {
-              <mat-option [value]="equipment.name">{{ equipment.name }}{{ equipment.available ? ' · già presente' : ' · da preparare' }}</mat-option>
+        <fieldset class="equipment-field">
+          <legend>Strumenti richiesti</legend>
+          <p class="equipment-hint">
+            Seleziona ciò che serve all’aula: “già presente” vuol dire che lo spazio lo ha già,
+            “da preparare” che va portato.
+          </p>
+          <div class="equipment-options">
+            @for (equipment of equipmentForSelectedSpace(); track equipment.code) {
+              <mat-checkbox
+                [checked]="isEquipmentSelected(equipment.code)"
+                (change)="toggleEquipment(equipment.code, $event.checked)"
+              >
+                <span class="equipment-name">{{ equipment.name }}</span>
+                <span class="equipment-state" [class.available]="equipment.available">
+                  {{ equipment.available ? 'già presente' : 'da preparare' }}
+                </span>
+              </mat-checkbox>
             }
-          </mat-select>
-          <mat-hint>Disponibile solo per le prenotazioni di gruppo.</mat-hint>
-        </mat-form-field>
+          </div>
+          @if (equipmentError(); as error) { <p class="field-error" role="alert">{{ error }}</p> }
+        </fieldset>
       }
 
       <mat-form-field appearance="outline">
         <mat-label>Data</mat-label>
         <input matInput type="date" formControlName="date" [min]="minimumBookingDate" />
+        @if (bookingFieldError('date'); as error) { <mat-error>{{ error }}</mat-error> }
       </mat-form-field>
       <div class="booking-times">
-        <mat-form-field appearance="outline"><mat-label>Inizio</mat-label><input matInput type="time" step="900" formControlName="start" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Fine</mat-label><input matInput type="time" step="900" formControlName="end" /></mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Inizio</mat-label>
+          <input matInput type="time" step="900" formControlName="start" />
+          @if (bookingFieldError('start'); as error) { <mat-error>{{ error }}</mat-error> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fine</mat-label>
+          <input matInput type="time" step="900" formControlName="end" />
+          @if (bookingFieldError('end'); as error) { <mat-error>{{ error }}</mat-error> }
+        </mat-form-field>
       </div>
+
+      <div class="duration-field">
+        <div class="duration-head">
+          <span>Durata</span>
+          <strong>{{ bookingDuration() }} minuti</strong>
+        </div>
+        <mat-slider min="30" max="240" step="15" discrete showTickMarks>
+          <input
+            matSliderThumb
+            [value]="bookingDuration()"
+            (valueChange)="setBookingDuration($event)"
+            aria-label="Durata della prenotazione in minuti"
+          />
+        </mat-slider>
+        <p class="duration-hint">Da 30 minuti a 4 ore, a passi di 15 minuti.</p>
+      </div>
+
       <button mat-flat-button class="booking-submit" type="submit" [disabled]="bookingState() === 'submitting'">
         {{ bookingState() === 'submitting' ? 'Invio in corso…' : 'Conferma prenotazione' }}
       </button>
