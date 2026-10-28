@@ -10,7 +10,7 @@ public class CancelBookingService(BookingsDbContext dbContext, TimeProvider time
         Guid bookingId, Guid userId, string? reason, CancellationToken cancellationToken)
     {
         var booking = await dbContext.Bookings
-            .Include(b => b.Invitations)
+            .AsNoTracking()
             .SingleOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
 
         if (booking is null)
@@ -34,20 +34,54 @@ public class CancelBookingService(BookingsDbContext dbContext, TimeProvider time
             return CancelBookingResult.Failed(CancelBookingOutcome.AlreadyEnded);
         }
 
-        booking.Status = BookingStatus.Cancelled;
-        booking.CancelledAt = now;
-        booking.CancelledBy = userId;
-        booking.CancellationReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
-        booking.UpdatedAt = now;
+        var trimmedReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
 
-        foreach (var invitation in booking.Invitations
-                     .Where(i => i.Status is InvitationStatus.Invited or InvitationStatus.Accepted))
+        var strategy = dbContext.Database.CreateExecutionStrategy();
+        var cancelled = await strategy.ExecuteAsync(async () =>
         {
-            invitation.Status = InvitationStatus.Cancelled;
-            invitation.RespondedAt ??= now;
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            var affected = await dbContext.Bookings
+                .Where(b => b.Id == bookingId && b.Status == BookingStatus.Confirmed)
+                .ExecuteUpdateAsync(
+                    update => update
+                        .SetProperty(b => b.Status, BookingStatus.Cancelled)
+                        .SetProperty(b => b.CancelledAt, now)
+                        .SetProperty(b => b.CancelledBy, userId)
+                        .SetProperty(b => b.CancellationReason, trimmedReason)
+                        .SetProperty(b => b.UpdatedAt, now),
+                    cancellationToken);
+
+            if (affected == 0)
+            {
+                return false;
+            }
+
+            await dbContext.Invitations
+                .Where(i => i.BookingId == bookingId
+                    && (i.Status == InvitationStatus.Invited || i.Status == InvitationStatus.Accepted))
+                .ExecuteUpdateAsync(
+                    update => update
+                        .SetProperty(i => i.Status, InvitationStatus.Cancelled)
+                        .SetProperty(i => i.RespondedAt, i => i.RespondedAt ?? now),
+                    cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+            return true;
+        });
+
+        var current = await dbContext.Bookings
+            .AsNoTracking()
+            .Include(b => b.Invitations)
+            .SingleAsync(b => b.Id == bookingId, cancellationToken);
+
+        if (cancelled)
+        {
+            return CancelBookingResult.Cancelled(current);
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return CancelBookingResult.Cancelled(booking);
+        return CancelBookingResult.Failed(current.Status == BookingStatus.Cancelled
+            ? CancelBookingOutcome.AlreadyCancelled
+            : CancelBookingOutcome.AlreadyEnded);
     }
 }
