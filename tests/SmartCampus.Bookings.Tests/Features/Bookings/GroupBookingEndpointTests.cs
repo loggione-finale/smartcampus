@@ -114,8 +114,10 @@ public class GroupBookingEndpointTests(BookingsApiFactory factory) : IClassFixtu
             .OrderBy(e => e.ToAddress)
             .ToListAsync();
 
-        Assert.Equal(["esterna@libero.test", "registrata@smartcampus.test"], emails.Select(e => e.ToAddress));
-        Assert.All(emails, e => Assert.Equal(OutboxEmailStatus.Pending, e.Status));
+        Assert.Equal(
+            ["esterna@libero.test", "organizer@smartcampus.test", "registrata@smartcampus.test"],
+            emails.Select(e => e.ToAddress));
+        Assert.All(emails, e => Assert.Equal(OutboxEmailStatus.Sent, e.Status));
     }
 
     [Fact]
