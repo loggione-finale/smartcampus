@@ -17,21 +17,28 @@ public record MyBookingResponse(
     DateTime? InvitationExpiresAt)
 {
     public static MyBookingResponse From(
-        Booking booking, ParticipantRole role, DateTime? invitationExpiresAt, DateTime now) => new(
-        booking.Id,
-        booking.ReferenceCode,
-        booking.SpaceId,
-        booking.SpaceNameSnapshot,
-        booking.SpaceBuildingSnapshot,
-        booking.Period.LowerBound,
-        booking.Period.UpperBound,
-        booking.Status,
-        role,
-        // "Concluded without comment" per SC-08: ended but still confirmed,
-        // i.e. the organizer has not filled the closing comment yet.
-        HasPendingClosureComment: booking.Status == BookingStatus.Confirmed
+        Booking booking, ParticipantRole role, DateTime? invitationExpiresAt, DateTime now)
+    {
+        var hasPendingClosure = (booking.Status is BookingStatus.Confirmed or BookingStatus.AwaitingComment)
             && booking.Period.UpperBound <= now
-            && booking.ClosingComment == null,
-        HasPendingInvitation: invitationExpiresAt is not null,
-        InvitationExpiresAt: invitationExpiresAt);
+            && booking.ClosingComment == null;
+
+        var status = hasPendingClosure && booking.Status == BookingStatus.Confirmed
+            ? BookingStatus.AwaitingComment
+            : booking.Status;
+
+        return new(
+            booking.Id,
+            booking.ReferenceCode,
+            booking.SpaceId,
+            booking.SpaceNameSnapshot,
+            booking.SpaceBuildingSnapshot,
+            booking.Period.LowerBound,
+            booking.Period.UpperBound,
+            status,
+            role,
+            HasPendingClosureComment: hasPendingClosure,
+            HasPendingInvitation: invitationExpiresAt is not null,
+            InvitationExpiresAt: invitationExpiresAt);
+    }
 }

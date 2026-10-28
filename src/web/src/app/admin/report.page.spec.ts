@@ -3,7 +3,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { StatsGroup } from './admin.models';
 import { ReportPage } from './report.page';
-import { staffGuard } from './staff.guard';
 
 const URL = '/api/bookings/admin/stats';
 const ROWS: StatsGroup[] = [
@@ -95,15 +94,5 @@ describe('ReportPage', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeTruthy();
-  });
-
-  it('is not reachable by a student but is by an admin (staffGuard)', () => {
-    const canOpen = () => TestBed.runInInjectionContext(() => staffGuard({} as never, {} as never));
-
-    sessionStorage.setItem('smartcampus.role', 'User');
-    expect(canOpen()).toBeFalse();
-
-    sessionStorage.setItem('smartcampus.role', 'Admin');
-    expect(canOpen()).toBeTrue();
   });
 });

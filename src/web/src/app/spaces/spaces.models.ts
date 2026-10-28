@@ -24,6 +24,14 @@ export interface SpaceDto {
   updatedAt: string;
 }
 
+export interface EquipmentCatalogItemDto {
+  code: string;
+  name: string;
+  description: string;
+  isStandard: boolean;
+  requiresNotes: boolean;
+}
+
 export interface SpaceSearchParams {
   search?: string;
   type?: SpaceType | '';

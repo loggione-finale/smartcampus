@@ -16,6 +16,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/SmartCampus.Bookings.Tests/SmartCampus.Bookings.Tests.csproj" />
     <Project Path="tests/SmartCampus.Spaces.Tests/SmartCampus.Spaces.Tests.csproj" />
+    <Project Path="tests/SmartCampus.SyntheticData.Tests/SmartCampus.SyntheticData.Tests.csproj" />
     <Project Path="tests/SmartCampus.Users.Tests/SmartCampus.Users.Tests.csproj" />
   </Folder>
 </Solution>
