@@ -100,21 +100,8 @@ public class ClosingCommentService(
 
     private static bool IsClosingCommentUniqueViolation(DbUpdateException ex)
     {
-        if (ex.InnerException is PostgresException postgres)
-        {
-            if (postgres.ConstraintName == ClosingCommentUniqueIndex)
-            {
-                return true;
-            }
-
-            if (postgres.SqlState == PostgresErrorCodes.UniqueViolation &&
-                (postgres.MessageText.Contains("closing_comments", StringComparison.OrdinalIgnoreCase) ||
-                 postgres.ConstraintName?.Contains("closing_comments", StringComparison.OrdinalIgnoreCase) == true))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return ex.InnerException is PostgresException postgres &&
+               postgres.SqlState == PostgresErrorCodes.UniqueViolation &&
+               postgres.ConstraintName == ClosingCommentUniqueIndex;
     }
 }
