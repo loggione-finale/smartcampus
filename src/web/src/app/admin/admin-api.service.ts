@@ -2,7 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { currentToken } from './admin-session';
-import { DashboardParams, DashboardSpace } from './admin.models';
+import { AdminAlert, AlertStatus, DashboardParams, DashboardSpace } from './admin.models';
 
 const BASE = '/api/bookings/admin';
 
@@ -22,6 +22,27 @@ export class AdminApiService {
       params: httpParams,
       headers: this.headers(),
     });
+  }
+
+  getAlerts(status?: AlertStatus): Observable<AdminAlert[]> {
+    const params = status ? new HttpParams().set('status', status) : new HttpParams();
+    return this.http.get<AdminAlert[]>(`${BASE}/alerts`, { params, headers: this.headers() });
+  }
+
+  resolveAlert(id: string, note: string): Observable<AdminAlert> {
+    return this.http.post<AdminAlert>(
+      `${BASE}/alerts/${id}/resolve`,
+      { note: note.trim() || null },
+      { headers: this.headers() },
+    );
+  }
+
+  cancelBooking(code: string, reason: string): Observable<unknown> {
+    return this.http.post(
+      `${BASE}/bookings/${encodeURIComponent(code)}/cancel`,
+      { reason: reason.trim() },
+      { headers: this.headers() },
+    );
   }
 
   private headers(): HttpHeaders {

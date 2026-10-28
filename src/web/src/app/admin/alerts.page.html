@@ -1,0 +1,95 @@
+<div class="admin-shell">
+  <header class="admin-head">
+    <p class="eyebrow">AREA PERSONALE</p>
+    <h1>Avvisi ed eccezioni</h1>
+  </header>
+
+  <form class="filters" (ngSubmit)="load()" aria-label="Filtri avvisi">
+    <label>
+      Stato
+      <select name="status" [(ngModel)]="statusFilter" (ngModelChange)="load()">
+        <option value="Open">Aperti</option>
+        <option value="Handled">Gestiti</option>
+        <option value="">Tutti</option>
+      </select>
+    </label>
+    <label>
+      Tipo
+      <select name="kind" [ngModel]="kindFilter()" (ngModelChange)="kindFilter.set($event)">
+        <option value="">Tutti</option>
+        @for (k of kinds; track k) {
+          <option [value]="k">{{ kindLabels[k] }}</option>
+        }
+      </select>
+    </label>
+    <button type="submit" class="btn" [disabled]="loading()">Aggiorna</button>
+  </form>
+
+  <p class="feedback" role="status">{{ feedback() }}</p>
+
+  <div aria-live="polite">
+    @if (loading()) {
+      <p class="state">Caricamento in corso…</p>
+    } @else if (error(); as message) {
+      <p class="state state-error" role="alert">{{ message }}</p>
+    } @else if (visible().length === 0) {
+      <p class="state">Nessun avviso corrisponde ai filtri.</p>
+    } @else {
+      <ul class="alert-list">
+        @for (a of visible(); track a.id) {
+          <li class="alert" [class.alert-open]="a.status === 'Open'">
+            <div class="alert-head">
+              <span class="badge" [attr.data-status]="a.status">{{ a.status === 'Open' ? 'Aperto' : 'Gestito' }}</span>
+              <strong>{{ kindLabels[a.kind] }}</strong>
+              <time [attr.datetime]="a.createdAt">{{ a.createdAt | date: 'dd/MM/yyyy HH:mm' }}</time>
+            </div>
+            <p>{{ a.message }}</p>
+
+            <details>
+              <summary>Dettaglio e azioni</summary>
+              <dl>
+                <dt>Prenotazione</dt>
+                <dd>{{ a.bookingReferenceCode ?? 'Nessuna prenotazione collegata' }}</dd>
+                @if (a.handledAt) {
+                  <dt>Gestito il</dt>
+                  <dd>{{ a.handledAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+                }
+                @if (a.handlingNote) {
+                  <dt>Nota</dt>
+                  <dd>{{ a.handlingNote }}</dd>
+                }
+              </dl>
+
+              @if (a.status === 'Open') {
+                <div class="action">
+                  <label>
+                    Nota (facoltativa)
+                    <input type="text" maxlength="500" [name]="'note-' + a.id" [(ngModel)]="notes[a.id]" />
+                  </label>
+                  <button type="button" class="btn" [disabled]="busyId() === a.id" (click)="resolve(a)">Risolvi</button>
+                </div>
+              }
+
+              @if (a.bookingReferenceCode) {
+                <div class="action">
+                  <label>
+                    Motivo dell’annullamento (obbligatorio)
+                    <input type="text" maxlength="500" [name]="'reason-' + a.id" [(ngModel)]="reasons[a.id]" />
+                  </label>
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    [disabled]="busyId() === a.id || !reasons[a.id]?.trim()"
+                    (click)="cancelBooking(a)"
+                  >
+                    Annulla prenotazione
+                  </button>
+                </div>
+              }
+            </details>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>
