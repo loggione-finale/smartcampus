@@ -25,6 +25,8 @@ public static class BookingsServiceCollectionExtensions
         services.AddScoped<MyInvitationsService>();
         services.AddScoped<IPendingClosureChecker, PendingClosureChecker>();
         services.AddScoped<IEmailOutbox, EmailOutbox>();
+        services.Configure<InvitationExpiryOptions>(configuration.GetSection(InvitationExpiryOptions.SectionName));
+        services.AddHostedService<InvitationExpiryBackgroundService>();
         services.AddHttpClient<ISpacesClient, SpacesClient>(client =>
         {
             client.BaseAddress = new Uri(spacesOptions.BaseUrl.TrimEnd('/') + "/");
