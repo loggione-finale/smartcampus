@@ -87,6 +87,16 @@ dd {
   }
 }
 
+.sc-snackbar.mat-mdc-snack-bar-container {
+  --mat-snack-bar-container-color: var(--night);
+  --mat-snack-bar-supporting-text-color: var(--cream);
+  --mat-snack-bar-button-color: var(--cream);
+  --mat-snack-bar-container-shape: 0;
+  --mat-snack-bar-supporting-text-font: var(--font-sans);
+  --mat-snack-bar-supporting-text-size: 16px;
+  --mat-snack-bar-supporting-text-weight: 500;
+}
+
 .sc-menu.mat-mdc-menu-panel {
   --mat-menu-container-color: var(--night);
   --mat-menu-container-shape: 0;

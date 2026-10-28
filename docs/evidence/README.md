@@ -22,6 +22,7 @@ Distinguiamo sempre ciò che è stato provato da ciò che è soltanto ipotizzato
 - [Login, interceptor e guard nel frontend](2026-10-28-login-frontend.md) (SC-25.T3, #82)
 - [Email dei partecipanti nel form di prenotazione](2026-10-28-booking-participants-frontend.md) (SC-16.T5, #63)
 - [Pagina “Le mie prenotazioni”](2026-10-28-my-bookings-page.md) (SC-08.T2, #38)
+- [Messaggi di servizio non disponibile nel frontend](2026-10-28-service-unavailable-snackbar.md) (SC-01.T5, #65)
 - [Percorso della demo sull'API](2026-10-28-demo-rehearsal-api.md) (SC-23.T2, #51 / #93)
 
 ## Limiti noti
