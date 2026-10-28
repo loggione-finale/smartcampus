@@ -1,5 +1,6 @@
-// Temporary: replace with the real login/session service (#82) when it lands in main.
-// The role and the JWT issued by login are read from sessionStorage.
+// The login flow (#82) keeps these legacy keys in sync with the smartcampus.auth.* keys,
+// while authInterceptor adds the Bearer header to /api calls. Remove these helpers when
+// every admin page reads the session from AuthSessionService.
 function read(key: string): string | null {
   try {
     return sessionStorage.getItem(key);

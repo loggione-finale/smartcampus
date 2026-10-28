@@ -190,7 +190,7 @@ describe('SpaceAvailabilityPage', () => {
     httpTesting
       .expectOne(
         (req) =>
-          req.url === `/api/bookings/bookings/availability/${MIXED_SPACE.id}` &&
+          req.url === `/api/bookings/availability/${MIXED_SPACE.id}` &&
           req.params.get('date') === '2026-10-28',
       )
       .flush({
@@ -228,7 +228,7 @@ describe('SpaceAvailabilityPage', () => {
     httpTesting
       .expectOne(
         (req) =>
-          req.url === `/api/bookings/bookings/availability/${DEDICATED_SPACE.id}` &&
+          req.url === `/api/bookings/availability/${DEDICATED_SPACE.id}` &&
           req.params.get('date') === '2026-10-28',
       )
       .flush({
@@ -259,7 +259,7 @@ describe('SpaceAvailabilityPage', () => {
     httpTesting
       .expectOne(
         (req) =>
-          req.url === `/api/bookings/bookings/availability/${DEDICATED_SPACE.id}` &&
+          req.url === `/api/bookings/availability/${DEDICATED_SPACE.id}` &&
           req.params.get('date') === '2026-10-28',
       )
       .flush({
@@ -283,7 +283,7 @@ describe('SpaceAvailabilityPage', () => {
 
     const spaceReq = httpTesting.expectOne(`/api/spaces/spaces/${MIXED_SPACE.id}`);
     const availReq = httpTesting.expectOne(
-      (req) => req.url === `/api/bookings/bookings/availability/${MIXED_SPACE.id}`,
+      (req) => req.url === `/api/bookings/availability/${MIXED_SPACE.id}`,
     );
 
     spaceReq.flush({ title: 'Space not found' }, { status: 404, statusText: 'Not Found' });
@@ -302,7 +302,7 @@ describe('SpaceAvailabilityPage', () => {
 
     const retrySpaceReq = httpTesting.expectOne(`/api/spaces/spaces/${MIXED_SPACE.id}`);
     const retryAvailReq = httpTesting.expectOne(
-      (req) => req.url === `/api/bookings/bookings/availability/${MIXED_SPACE.id}`,
+      (req) => req.url === `/api/bookings/availability/${MIXED_SPACE.id}`,
     );
     retrySpaceReq.flush(MIXED_SPACE);
     retryAvailReq.flush(
