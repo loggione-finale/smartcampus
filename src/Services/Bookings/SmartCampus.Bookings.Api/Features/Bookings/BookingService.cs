@@ -3,6 +3,7 @@ using Npgsql;
 using NpgsqlTypes;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
+using SmartCampus.Bookings.Api.Features.Admin;
 using SmartCampus.Bookings.Api.Features.Bookings.Closure;
 using SmartCampus.Bookings.Api.Features.Bookings.Spaces;
 using SmartCampus.Bookings.Api.Features.Bookings.Users;
@@ -18,6 +19,7 @@ public class BookingService(
     IPendingClosureChecker pendingClosureChecker,
     TimeProvider timeProvider,
     IEmailOutbox emailOutbox,
+    IAdminAlerts? adminAlerts = null,
     IUsersClient? usersClient = null,
     IBookingEquipmentService? bookingEquipmentService = null)
 {
@@ -229,6 +231,8 @@ public class BookingService(
         EnqueueInvitationEmails(booking);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        await RaiseNewBookingAlertAsync(booking, cancellationToken);
+
         if (equipmentPlan.MissingItems.Count > 0 && bookingEquipmentService is not null)
         {
             await bookingEquipmentService.RaiseMissingEquipmentAlertsAsync(booking, equipmentPlan, cancellationToken);
@@ -237,7 +241,7 @@ public class BookingService(
         return CreateBookingResult.Created(booking);
     }
 
-    private async Task<CreateBookingResult> InsertInMixedSpaceAsync(
+    private async Task RaiseNewBookingAlertAsync(Booking booking, CancellationToken cancellationToken)
         Guid organizerId,
         string organizerName,
         string organizerEmail,
@@ -294,6 +298,8 @@ public class BookingService(
             NotifyBookingCreated(created);
             EnqueueInvitationEmails(created);
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            await RaiseNewBookingAlertAsync(created, cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
             return created;

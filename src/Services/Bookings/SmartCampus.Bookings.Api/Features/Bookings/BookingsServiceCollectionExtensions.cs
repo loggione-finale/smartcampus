@@ -22,6 +22,8 @@ public static class BookingsServiceCollectionExtensions
         services.AddScoped<CancelBookingService>();
         services.AddScoped<AvailabilityService>();
         services.AddScoped<MyBookingsService>();
+        services.AddScoped<AdminStatsService>();
+        services.AddScoped<AdminAlertsReviewService>();
         services.AddScoped<AdminDashboardService>();
         services.AddScoped<AcceptInvitationService>();
         services.AddScoped<MyInvitationsService>();
@@ -33,6 +35,7 @@ public static class BookingsServiceCollectionExtensions
         services.AddScoped<INotificationSender, PickupDirectoryEmailSender>();
         services.AddScoped<IEmailOutbox, EmailOutbox>();
         services.AddHostedService<EmailOutboxDispatcher>();
+        services.AddScoped<AdminCancelBookingService>();
         services.Configure<InvitationExpiryOptions>(configuration.GetSection(InvitationExpiryOptions.SectionName));
         services.AddHostedService<InvitationExpiryBackgroundService>();
         services.AddHttpClient<ISpacesClient, SpacesClient>(client =>

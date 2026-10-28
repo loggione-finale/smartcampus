@@ -18,4 +18,4 @@ La proposta iniziale (in [architecture.md](../architecture.md), D8) era un profi
 ## Conseguenze
 - Più facile: ruoli e permessi veri su ogni endpoint (`401`/`403` provati nei test).
 - Più difficile: la chiave di firma va gestita come segreto (`dotnet user-secrets` o variabili d'ambiente, mai nel repository).
-- Da aggiornare: la sezione D8 di `architecture.md` descrive ancora i profili sintetici e i ruoli `Student`/`Staff`.
+- La sezione D8 di `architecture.md` resta come storia della proposta ed è segnata come superata da questo ADR.

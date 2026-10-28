@@ -1,6 +1,6 @@
 # 0004 – Database: Spaces su MongoDB, Bookings e Users su PostgreSQL
 
-- Data: 26/10/2026, aggiornata il 27/10/2026
+- Data: 26/10/2026 (aggiornata il 27/10/2026)
 - Stato: accettata
 
 ## Contesto

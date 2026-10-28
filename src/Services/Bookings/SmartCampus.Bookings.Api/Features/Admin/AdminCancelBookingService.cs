@@ -1,0 +1,65 @@
+using Microsoft.EntityFrameworkCore;
+using SmartCampus.Bookings.Api.Data;
+using SmartCampus.Bookings.Api.Domain;
+using SmartCampus.Bookings.Api.Features.Bookings;
+using SmartCampus.Bookings.Api.Features.Notifications;
+
+namespace SmartCampus.Bookings.Api.Features.Admin;
+
+public class AdminCancelBookingService(
+    BookingsDbContext dbContext, IEmailOutbox emailOutbox, TimeProvider timeProvider)
+{
+    public async Task<CancelBookingResult> CancelAsync(
+        string referenceCode, Guid adminId, string reason, CancellationToken cancellationToken)
+    {
+        var strategy = dbContext.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            dbContext.ChangeTracker.Clear();
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT pg_advisory_xact_lock(hashtextextended({referenceCode}, 0))", cancellationToken);
+
+            var booking = await dbContext.Bookings
+                .Include(b => b.Invitations)
+                .SingleOrDefaultAsync(b => b.ReferenceCode == referenceCode, cancellationToken);
+
+            if (booking is null)
+            {
+                return CancelBookingResult.Failed(CancelBookingOutcome.NotFound);
+            }
+
+            if (booking.Status == BookingStatus.Cancelled)
+            {
+                return CancelBookingResult.Failed(CancelBookingOutcome.AlreadyCancelled);
+            }
+
+            var now = timeProvider.GetUtcNow().UtcDateTime;
+            if (booking.Status == BookingStatus.Closed || booking.Period.UpperBound <= now)
+            {
+                return CancelBookingResult.Failed(CancelBookingOutcome.AlreadyEnded);
+            }
+
+            booking.Status = BookingStatus.Cancelled;
+            booking.CancelledAt = now;
+            booking.CancelledBy = adminId;
+            booking.CancellationReason = reason.Trim();
+            booking.UpdatedAt = now;
+
+            foreach (var invitation in booking.Invitations
+                         .Where(i => i.Status is InvitationStatus.Invited or InvitationStatus.Accepted))
+            {
+                invitation.Status = InvitationStatus.Cancelled;
+                invitation.RespondedAt ??= now;
+            }
+
+            emailOutbox.EnqueueBookingCancelledEmails(booking);
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return CancelBookingResult.Cancelled(booking);
+        });
+    }
+}

@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from '../auth/auth.guard';
 import { SpaceFormPage } from './space-form.page';
 import { SpacesAdminListPage } from './spaces-admin-list.page';
-import { adminGuard } from './staff-access';
 
 export const SPACES_ADMIN_ROUTES: Routes = [
   {

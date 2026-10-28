@@ -20,7 +20,9 @@ Restano fuori dal progetto:
 | **Testcontainers** | Il database di Docker Compose è già reale ([0009](0009-test.md)) |
 
 ## Alternative considerate
-Per ciascuno l'alternativa scelta è nell'ADR collegato.
+- **Cloud:** al suo posto la demo in locale con Docker Compose ([0007](0007-avvio-locale.md)).
+- **Telemetria:** al suo posto le statistiche calcolate da prenotazioni e commenti finali, con i limiti dichiarati.
+- Per gli altri strumenti l'alternativa scelta è nell'ADR collegato nella tabella.
 
 ## Conseguenze
 - Più facile: meno strumenti nuovi da imparare in quattro giorni, nessuna spesa, nessun account.
