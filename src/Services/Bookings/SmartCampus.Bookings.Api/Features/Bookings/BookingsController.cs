@@ -46,11 +46,15 @@ public class BookingsController(
             return Unauthorized();
         }
 
-        var organizerName = User.FindFirstValue(ClaimTypes.Name)
-            ?? User.FindFirstValue(ClaimTypes.Email)
-            ?? organizerId.ToString();
+        var organizerEmail = User.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrWhiteSpace(organizerEmail))
+        {
+            return Unauthorized();
+        }
 
-        var result = await bookingService.CreateAsync(organizerId, organizerName, request, cancellationToken);
+        var organizerName = User.FindFirstValue(ClaimTypes.Name) ?? organizerEmail;
+
+        var result = await bookingService.CreateAsync(organizerId, organizerName, organizerEmail, request, cancellationToken);
 
         return result.Outcome switch
         {

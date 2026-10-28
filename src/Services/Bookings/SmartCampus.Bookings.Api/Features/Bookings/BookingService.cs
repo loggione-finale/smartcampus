@@ -30,9 +30,9 @@ public class BookingService(
     private const int MaxReferenceCodeAttempts = 5;
 
     public async Task<CreateBookingResult> CreateAsync(
-        Guid organizerId, string organizerName, CreateBookingRequest request, CancellationToken cancellationToken)
+        Guid organizerId, string organizerName, string organizerEmail, CreateBookingRequest request, CancellationToken cancellationToken)
     {
-        var errors = validator.Validate(request, organizerName);
+        var errors = validator.Validate(request, organizerEmail);
         if (errors.Count > 0)
         {
             return CreateBookingResult.Invalid(errors);
@@ -40,7 +40,7 @@ public class BookingService(
 
         EquipmentRequestValidator.TryValidateParticipantEmails(
             request.ParticipantEmails,
-            organizerName,
+            organizerEmail,
             out var normalizedParticipants,
             out _);
 
@@ -148,6 +148,7 @@ public class BookingService(
                     ? await InsertInMixedSpaceAsync(
                         organizerId,
                         organizerName,
+                        organizerEmail,
                         request.SpaceId,
                         space,
                         start,
@@ -160,6 +161,7 @@ public class BookingService(
                     : await InsertAsync(
                         organizerId,
                         organizerName,
+                        organizerEmail,
                         request.SpaceId,
                         space,
                         start,
@@ -200,6 +202,7 @@ public class BookingService(
     private async Task<CreateBookingResult> InsertAsync(
         Guid organizerId,
         string organizerName,
+        string organizerEmail,
         Guid spaceId,
         SpaceBookability space,
         DateTime start,
@@ -213,6 +216,7 @@ public class BookingService(
         var booking = BuildBooking(
             organizerId,
             organizerName,
+            organizerEmail,
             spaceId,
             space,
             start,
@@ -253,6 +257,7 @@ public class BookingService(
     private Task<CreateBookingResult> InsertInMixedSpaceAsync(
         Guid organizerId,
         string organizerName,
+        string organizerEmail,
         Guid spaceId,
         SpaceBookability space,
         DateTime start,
@@ -290,6 +295,7 @@ public class BookingService(
             var booking = BuildBooking(
                 organizerId,
                 organizerName,
+                organizerEmail,
                 spaceId,
                 space,
                 start,
@@ -333,6 +339,7 @@ public class BookingService(
     private Booking BuildBooking(
         Guid organizerId,
         string organizerName,
+        string organizerEmail,
         Guid spaceId,
         SpaceBookability space,
         DateTime start,
@@ -353,7 +360,7 @@ public class BookingService(
             {
                 Id = Guid.NewGuid(),
                 BookingId = bookingId,
-                Email = organizerName,
+                Email = organizerEmail,
                 UserId = organizerId,
                 DisplayNameSnapshot = organizerName,
                 Role = ParticipantRole.Organizer,

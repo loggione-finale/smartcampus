@@ -288,6 +288,7 @@ public class EquipmentRequestValidationAndHttpTests
         var start = new DateTimeOffset(2026, 10, 29, 9, 0, 0, TimeSpan.Zero);
         var result = await bookingService.CreateAsync(
             Guid.NewGuid(),
+            "Giulia Rossi",
             "giulia.rossi@smartcampus.test",
             new CreateBookingRequest(
                 Guid.NewGuid(),
