@@ -89,6 +89,22 @@ aggiunge `Authorization: Bearer` a ogni chiamata `/api`.
 
 Si arriva alla pagina dal pulsante “Le mie prenotazioni” in `/account`.
 
+## Errori dei servizi
+
+`serviceUnavailableInterceptor` (`src/app/core/service-unavailable.interceptor.ts`) è l'unico punto che mostra un
+messaggio quando un servizio non risponde. Intercetta le chiamate `/api/...` e apre uno snackbar di Angular Material:
+
+| Caso | Messaggio per area |
+| --- | --- |
+| `503` | Catalogo, prenotazioni o accesso «momentaneamente non disponibile/i», in base al servizio chiamato |
+| Errore di rete (`0`) | Il servizio interessato «non è raggiungibile» |
+| Nessuna risposta entro 10 secondi | Il servizio interessato «non risponde in tempo»; alla pagina arriva un `504` |
+
+Lo snackbar dura 6 secondi, ha il pulsante «Chiudi», non ripete lo stesso messaggio entro 5 secondi e non blocca la
+navigazione. Le pagine continuano a mostrare il proprio stato con il pulsante di riprova; i controlli
+`/api/*/health` sono esclusi perché la home espone già lo stato dei tre servizi. I codici `400`, `401`, `403`, `404`
+e `409` restano gestiti dalle singole pagine, che conoscono il contesto dell'operazione.
+
 ## Generazione del codice
 
 Per generare un nuovo componente:

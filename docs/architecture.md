@@ -265,8 +265,13 @@ campo `detail` in inglese (per esempio "The Spaces service is not reachable. Try
   appena creata e restituirebbe un falso `409`.
 - **Health check** di ASP.NET Core (`AddHealthChecks`, endpoint `/health`) su ogni servizio, con controllo
   del database.
-- **Degradazione nell'interfaccia:** ogni pagina Angular gestisce l'errore del proprio servizio e mostra un
-  messaggio (ad esempio con uno snackbar di Angular Material), senza bloccare le altre pagine.
+- **Degradazione nell'interfaccia:** `serviceUnavailableInterceptor` (`src/web/src/app/core/`) intercetta le
+  risposte `503`, gli errori di rete (`0`) e i timeout di ogni chiamata `/api/...` e mostra uno snackbar di Angular
+  Material con il messaggio del servizio interessato: «Catalogo momentaneamente non disponibile», «Prenotazioni
+  momentaneamente non disponibili», «Accesso momentaneamente non disponibile». Lo snackbar dura 6 secondi, non
+  ripete lo stesso messaggio entro 5 secondi e non blocca la navigazione: la pagina conserva il proprio stato con
+  il pulsante di riprova. Una richiesta senza risposta dopo 10 secondi viene trattata come timeout (`504`). I
+  controlli `/api/*/health` sono esclusi perché la home mostra già lo stato dei tre servizi.
 
 ### Limiti accettati
 
