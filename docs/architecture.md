@@ -52,7 +52,7 @@ avrebbe dovuto tenerne una copia sincronizzata, con più codice e più punti di 
 | Rotta usata dal frontend | Inoltrata a | Esempi |
 |---|---|---|
 | `/api/spaces/**` | Spaces `http://localhost:5101` | `GET /spaces`, `GET /spaces/{id}`, `POST /spaces/{id}/unavailabilities` |
-| `/api/bookings/**` | Bookings `http://localhost:5102` | `POST /bookings`, `POST /bookings/availability`, `GET /bookings/mine`, `POST /bookings/{id}/leave`, `GET /bookings/stats` |
+| `/api/bookings/**` | Bookings `http://localhost:5102` | `POST /bookings`, `POST /bookings/availability`, `GET /bookings/mine`, `POST /bookings/{id}/leave`, `GET /admin/stats` |
 | `/api/users/**` | Users `http://localhost:5103` | `GET /users`, `GET /users?search=`, `GET /users/{id}` |
 
 L'inoltro lo fa il **proxy di sviluppo di Angular** (`proxy.conf.json`): il browser parla solo con

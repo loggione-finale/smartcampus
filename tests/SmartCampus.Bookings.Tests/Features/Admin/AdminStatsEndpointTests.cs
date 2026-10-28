@@ -34,6 +34,17 @@ public class AdminStatsEndpointTests(BookingsApiFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Theory]
+    [InlineData("/admin/stats")]
+    [InlineData("/admin/stats?from=2030-01-01")]
+    [InlineData("/admin/stats?to=2030-01-02")]
+    public async Task Missing_from_or_to_parameter_returns_400(string url)
+    {
+        var response = await AdminClient().GetAsync(url);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     [Fact]
     public async Task Computes_the_stats_per_space_type_and_building_from_known_data()
     {
@@ -118,11 +129,13 @@ public class AdminStatsEndpointTests(BookingsApiFactory factory) : IClassFixture
         var day = DateTime.UtcNow.Date.AddDays(-1000 - Random.Shared.Next(0, 3000)).AddHours(8);
         var future = TestSlots.Next().UtcDateTime;
 
-        // Finished and no comment: 2 (one still marked Confirmed, one Closed).
+        // In the domain a booking only transitions to Closed when a closing comment is submitted,
+        // so past bookings without comments remain Confirmed. Both past bookings without comments
+        // are finished and counted under withoutComment.
         // Not counted: Closed with comment, Cancelled, and a future booking.
         await Save(
             Seed(space, "Aula", "Edificio Y", day, BookingStatus.Confirmed, null),
-            Seed(space, "Aula", "Edificio Y", day.AddHours(1), BookingStatus.Closed, null),
+            Seed(space, "Aula", "Edificio Y", day.AddHours(1), BookingStatus.Confirmed, null),
             Seed(space, "Aula", "Edificio Y", day.AddHours(2), BookingStatus.Closed, Comment(true, 3, false)),
             Seed(space, "Aula", "Edificio Y", day.AddHours(3), BookingStatus.Cancelled, null),
             Seed(space, "Aula", "Edificio Y", future, BookingStatus.Confirmed, null));
