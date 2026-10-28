@@ -1,0 +1,91 @@
+<section class="admin-hero">
+  <div class="admin-inner">
+    <p class="eyebrow">AREA PERSONALE</p>
+    <h1>{{ spaceId ? 'Modifica spazio' : 'Nuovo spazio' }}</h1>
+  </div>
+</section>
+
+<section class="admin-body">
+  @if (error(); as message) {
+    <p class="form-alert" role="alert">{{ message }}</p>
+  }
+
+  <form class="space-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" maxlength="100" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <mat-error>Il nome è obbligatorio.</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="field-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo</mat-label>
+        <mat-select formControlName="type">
+          @for (option of typeOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Modalità d’uso</mat-label>
+        <mat-select formControlName="mode">
+          @for (option of modeOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Edificio</mat-label>
+      <input matInput formControlName="building" maxlength="100" />
+      @if (form.controls.building.touched && form.controls.building.invalid) {
+        <mat-error>L’edificio è obbligatorio.</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="field-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Piano</mat-label>
+        <input matInput type="number" formControlName="floor" />
+        <mat-hint>Da -5 a 50</mat-hint>
+        @if (form.controls.floor.touched && form.controls.floor.invalid) {
+          <mat-error>Il piano deve essere tra -5 e 50.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Capienza</mat-label>
+        <input matInput type="number" formControlName="capacity" />
+        <mat-hint>Da 1 a 500</mat-hint>
+        @if (form.controls.capacity.touched && form.controls.capacity.invalid) {
+          <mat-error>La capienza deve essere tra 1 e 500.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <fieldset>
+      <legend>Attrezzature</legend>
+      @for (item of equipmentCatalog(); track item.code) {
+        <label>
+          <input
+            type="checkbox"
+            [checked]="form.controls.equipment.value.includes(item.code)"
+            (change)="toggleEquipment(item.code, $any($event.target).checked)"
+          />
+          {{ item.name }}
+        </label>
+      }
+    </fieldset>
+
+    <div class="form-actions">
+      <button mat-flat-button class="btn" type="submit" [disabled]="saving()">
+        {{ saving() ? 'Salvataggio…' : 'Salva' }}
+      </button>
+      <button mat-button type="button" (click)="cancel()">Annulla</button>
+    </div>
+  </form>
+</section>
