@@ -1,7 +1,7 @@
 import { Component, ElementRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { BookingFormComponent } from './bookings/booking-form.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -55,6 +55,7 @@ type RegistrationField = Exclude<keyof RegisterRequest, 'inviteToken'>;
     MatInputModule,
     MatMenuModule,
     ReactiveFormsModule,
+    RouterLink,
     RouterOutlet,
   ],
   templateUrl: './app.html',
@@ -230,8 +231,12 @@ export class App {
       next: () => {
         this.registrationSubmitting.set(false);
         const result = this.inviteToken() ? 'invite' : 'created';
+        if (result === 'invite') {
+          void this.router.navigate(['/invitations']);
+          return;
+        }
         this.registrationResult.set(result);
-        const confirmationId = result === 'invite' ? 'conferma-invito' : 'conferma-registrazione';
+        const confirmationId = 'conferma-registrazione';
         window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}#${confirmationId}`);
         requestAnimationFrame(() => document.getElementById(confirmationId)?.scrollIntoView({ behavior: 'smooth' }));
       },

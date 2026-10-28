@@ -1,0 +1,64 @@
+<main class="invitations-container">
+  <header class="invitations-header">
+    <h1>I tuoi inviti</h1>
+    <p class="subtitle">
+      Conferma la partecipazione alle prenotazioni per cui sei stato invitato, entro la scadenza.
+    </p>
+  </header>
+
+  @if (successMessage()) {
+    <div class="message-banner success-banner" role="status">{{ successMessage() }}</div>
+  }
+
+  @if (errorMessage()) {
+    <div class="message-banner error-banner" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Caricamento inviti in corso...</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="empty-state">
+      <h2>Inviti non disponibili</h2>
+      <p>{{ loadError() }}</p>
+    </div>
+  } @else if (invitations().length === 0) {
+    <div class="empty-state">
+      <h2>Nessun invito in attesa</h2>
+      <p>Non hai inviti da confermare al momento.</p>
+    </div>
+  } @else {
+    <ul class="invitation-list">
+      @for (invitation of invitations(); track invitation.id) {
+        <li
+          class="invitation-card"
+          [class.highlighted]="invitation.id === highlightedId()"
+        >
+          <div class="invitation-info">
+            <div class="invitation-meta">
+              <span class="role">{{ invitation.role === 'Organizer' ? 'Responsabile' : 'Partecipante' }}</span>
+              <span class="status" [attr.data-status]="invitation.status">{{ statusLabel(invitation.status) }}</span>
+            </div>
+            <div class="invitation-deadline">
+              <strong>Scadenza:</strong> {{ formatDeadline(invitation.expiresAt) }}
+            </div>
+          </div>
+          <div class="invitation-actions">
+            @if (invitation.status === 'Invited') {
+              <button
+                mat-flat-button
+                color="primary"
+                type="button"
+                [disabled]="acceptingId() !== null"
+                (click)="confirm(invitation)"
+              >
+                {{ acceptingId() === invitation.id ? 'Conferma in corso...' : 'Conferma' }}
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</main>

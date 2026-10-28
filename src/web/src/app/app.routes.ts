@@ -37,4 +37,9 @@ export const routes: Routes = [
     path: 'closure',
     loadChildren: () => import('./closure/closure.routes').then((m) => m.CLOSURE_ROUTES),
   },
+  {
+    path: 'invitations',
+    loadChildren: () =>
+      import('./invitations/invitations.routes').then((m) => m.INVITATIONS_ROUTES),
+  },
 ];
