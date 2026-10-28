@@ -33,7 +33,7 @@ public class PendingClosureBlockingIntegrationTests(BookingsApiFactory factory) 
         var booking = new Booking
         {
             Id = Guid.NewGuid(),
-            ReferenceCode = $"SC-261028-{Random.Shared.Next(1000, 9999)}",
+            ReferenceCode = $"SC-T-{Guid.NewGuid():N}"[..24],
             SpaceId = Guid.NewGuid(),
             SpaceNameSnapshot = "Aula Seminari",
             SpaceTypeSnapshot = "Classroom",
