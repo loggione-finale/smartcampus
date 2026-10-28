@@ -1,0 +1,74 @@
+<div class="admin-shell">
+  <header class="admin-head">
+    <p class="eyebrow">AREA PERSONALE</p>
+    <h1>Dashboard aule</h1>
+    <p class="hint">
+      Vista di sola lettura: da qui non si creano prenotazioni. Sono elencate solo le aule con almeno
+      una prenotazione nel giorno scelto; una cella vuota significa nessuna prenotazione registrata.
+    </p>
+  </header>
+
+  <form class="filters" [formGroup]="filters" (ngSubmit)="load()" aria-label="Filtri dashboard">
+    <mat-form-field appearance="outline">
+      <mat-label>Giorno</mat-label>
+      <input matInput type="date" formControlName="date" />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Edificio</mat-label>
+      <input matInput formControlName="building" />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Tipo di spazio</mat-label>
+      <mat-select formControlName="type">
+        <mat-option value="">Tutti</mat-option>
+        @for (t of typeOptions; track t.value) {
+          <mat-option [value]="t.value">{{ t.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button type="submit" class="apply-btn" [disabled]="loading()">Aggiorna</button>
+  </form>
+
+  <div aria-live="polite">
+    @if (loading()) {
+      <p class="state">Caricamento in corso…</p>
+    } @else if (error(); as message) {
+      <p class="state state-error" role="alert">{{ message }}</p>
+    } @else if (spaces(); as list) {
+      @if (list.length === 0) {
+        <p class="state">Nessuna prenotazione per i filtri scelti.</p>
+      } @else {
+        <div class="table-wrap">
+          <table mat-table [dataSource]="list" aria-label="Prenotazioni delle aule per fascia oraria">
+            <ng-container matColumnDef="room" sticky>
+              <th mat-header-cell *matHeaderCellDef scope="col">Aula</th>
+              <td mat-cell *matCellDef="let space">
+                <strong>{{ space.spaceName }}</strong>
+                <span class="room-meta">{{ space.spaceBuilding }} · {{ space.capacity }} posti</span>
+              </td>
+            </ng-container>
+
+            @for (slot of slots(); track slot.key) {
+              <ng-container [matColumnDef]="slot.key">
+                <th mat-header-cell *matHeaderCellDef scope="col">{{ slot.label }}</th>
+                <td mat-cell *matCellDef="let space">
+                  @for (b of bookingsAt(space, slot.key); track b.referenceCode) {
+                    <span class="chip" [attr.data-status]="b.status">
+                      {{ statusLabels[b.status] }} · {{ b.referenceCode }}
+                      <small>{{ b.occupiedSeats }}/{{ space.capacity }} posti, liberi {{ freeSeats(space, b) }}</small>
+                    </span>
+                  } @empty {
+                    <span class="empty">–</span>
+                  }
+                </td>
+              </ng-container>
+            }
+
+            <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+            <tr mat-row *matRowDef="let row; columns: columns()"></tr>
+          </table>
+        </div>
+      }
+    }
+  </div>
+</div>
