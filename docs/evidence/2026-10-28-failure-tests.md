@@ -1,17 +1,18 @@
 # Prove di guasto per ogni servizio (#66)
 
-> **Stato: da eseguire.** Procedura ed esiti attesi sono scritti prima della prova, come chiede
-> [evidence/README.md](README.md); la colonna "Esito osservato" si compila durante la prova.
+> **Stato: eseguita il 28/10/2026.** Procedura ed esiti attesi sono stati scritti prima della prova (#189), come chiede
+> [evidence/README.md](README.md); la colonna "Esito osservato" riporta codice HTTP e tempo misurati con `curl`.
+> **Risultato: 10 scenari su 12 come atteso, 2 differenze aperte come Bug (#213, #224).**
 > Gli esiti attesi riguardano le **API**: su `main` il frontend ha solo catalogo, disponibilità e gestione spazi,
 > quindi prenotazioni, login e area admin si provano con chiamate HTTP.
 
 | Campo | Valore |
 |---|---|
 | Cosa verifica | Che il comportamento con un servizio o un database giù sia quello della tabella "Che cosa succede se va giù un servizio" di [architecture.md](../architecture.md) |
-| Ambiente | _sistema operativo, versione di .NET e di Docker Desktop_ |
-| Commit di `main` | _hash_ |
-| Chi l'ha eseguita | _nome GitHub_ |
-| Data | _GG/MM/AAAA_ |
+| Ambiente | Windows 11, .NET SDK 10.0.401, Docker 29.8.0, PostgreSQL 17.11, MongoDB 7.0 |
+| Commit di `main` | `c79bf89` |
+| Chi l'ha eseguita | asprenolapo |
+| Data | 28/10/2026 |
 
 ## Preparazione
 
@@ -32,9 +33,15 @@
    per giorno"):
 
    ```powershell
-   '{"spaceId":"3f2a9c1e-0000-4000-8000-000000000004","start":"2026-11-10T09:00:00+01:00","end":"2026-11-10T10:00:00+01:00"}' | Set-Content singola.json
-   '{"spaceId":"3f2a9c1e-0000-4000-8000-000000000001","start":"2026-11-11T09:00:00+01:00","end":"2026-11-11T10:00:00+01:00","participantEmails":["marco.bianchi@smartcampus.test"]}' | Set-Content gruppo.json
+   '{"spaceId":"3f2a9c1e-0000-4000-8000-000000000004","start":"2026-11-10T08:00:00Z","end":"2026-11-10T09:00:00Z"}' | Set-Content singola.json
+   '{"spaceId":"3f2a9c1e-0000-4000-8000-000000000001","start":"2026-11-11T08:00:00Z","end":"2026-11-11T09:00:00Z","participantEmails":["marco.bianchi@smartcampus.test"]}' | Set-Content gruppo.json
    ```
+
+   L'API accetta solo orari in UTC con `Z` (08:00Z = 09:00 a Roma in novembre): con `+01:00` risponde `400`
+   "Times must be expressed in UTC".
+
+   Nella prima esecuzione i corpi usavano `+01:00`: le chiamate `POST` degli scenari 1, 2 e 4 sono state ripetute
+   con `Z`, con gli esiti riportati sotto.
 
 6. Comando per leggere codice HTTP e tempo di risposta di una chiamata (esempio):
 
@@ -57,18 +64,18 @@ Sono 6 guasti, ognuno seguito dalla sua ripresa.
 
 | # | Si ferma | Come fermarlo | Chiamate da provare | Esito atteso | Esito osservato |
 |---|---|---|---|---|---|
-| 1 | Spaces | Ctrl+C sul suo `dotnet run` | `POST /bookings` con `singola.json`; `GET /bookings/availability/{spaceId}?date=…`; `GET /bookings/mine`; pagina Catalogo del frontend | Creazione e disponibilità: `503` con `detail` "The Spaces service is not reachable. Try again later." entro 5 s; `GET /bookings/mine` `200`; il catalogo mostra un messaggio di servizio non disponibile | |
-| 1b | Spaces, ripresa | `dotnet run` di nuovo | `POST /bookings` con `singola.json` | `201`, senza riavviare Bookings | |
-| 2 | Users | Ctrl+C sul suo `dotnet run` | `POST /auth/login`; con il token già preso: `POST /bookings` con `singola.json` (un altro giorno) e con `gruppo.json` | Login non raggiungibile; prenotazione singola `201` (il token si valida in Bookings); prenotazione di gruppo `503` con "The Users service is not reachable. Try again later." entro 5 s | |
-| 2b | Users, ripresa | `dotnet run` di nuovo | `POST /auth/login`; `POST /bookings` con `gruppo.json` | Login `200`, gruppo `201` | |
-| 3 | Bookings | Ctrl+C sul suo `dotnet run` | Pagina Catalogo; `GET http://localhost:5101/spaces`; `GET /bookings/mine` | Catalogo e Spaces funzionano; le chiamate a Bookings non sono raggiungibili | |
-| 3b | Bookings, ripresa | `dotnet run` di nuovo | `GET /bookings/mine` | `200` con le prenotazioni create prima: nessuna persa | |
-| 4 | MongoDB | `docker compose stop mongo` | Come lo scenario 1; poi `GET http://localhost:5101/health` | Come "Spaces giù"; `/health` di Spaces `503 Unhealthy` entro 5 s | |
-| 4b | MongoDB, ripresa | `docker compose start mongo` | `GET http://localhost:5101/spaces` | `200` senza riavviare Spaces; `/health` di nuovo `Healthy` | |
-| 5 | PostgreSQL | `docker compose stop postgres` | `GET http://localhost:5101/spaces`; `GET /bookings/mine`; `POST /auth/login`; `/health` di Bookings e Users | Catalogo `200` (MongoDB); Bookings e Users `503` con `detail` leggibile **entro 5 s**; `/health` di Bookings e Users `503 Unhealthy` | |
-| 5b | PostgreSQL, ripresa | `docker compose start postgres` | `GET /bookings/mine`; `POST /auth/login` | `200` senza riavviare i servizi; nessuna prenotazione persa | |
-| 6 | Frontend | Ctrl+C su `npm start` | `http://localhost:4200`; `GET http://localhost:5102/health` | Interfaccia non raggiungibile; le API restano attive | |
-| 6b | Frontend, ripresa | `npm start` di nuovo | `http://localhost:4200` | L'interfaccia torna raggiungibile | |
+| 1 | Spaces | Ctrl+C sul suo `dotnet run` | `POST /bookings` con `singola.json`; `GET /bookings/availability/{spaceId}?date=…`; `GET /bookings/mine`; pagina Catalogo del frontend | Creazione e disponibilità: `503` con `detail` "The Spaces service is not reachable. Try again later." entro 5 s; `GET /bookings/mine` `200`; il catalogo mostra un messaggio di servizio non disponibile | `POST /bookings` **503 in 3,08 s** "The Spaces service is not reachable. Try again later."; disponibilità **503 in 3,06 s** "Spaces timed out."; `GET /bookings/mine` **200 in 0,11 s**; catalogo tramite il proxy del frontend `500` (errore del proxy, la schermata non è stata controllata a vista) |
+| 1b | Spaces, ripresa | `dotnet run` di nuovo | `POST /bookings` con `singola.json` | `201`, senza riavviare Bookings | **201 in 0,48 s**, Bookings non riavviato |
+| 2 | Users | Ctrl+C sul suo `dotnet run` | `POST /auth/login`; con il token già preso: `POST /bookings` con `singola.json` (un altro giorno) e con `gruppo.json` | Login non raggiungibile; prenotazione singola `201` (il token si valida in Bookings); prenotazione di gruppo `503` con "The Users service is not reachable. Try again later." entro 5 s | Login **non raggiungibile** (connessione rifiutata); singola **201 in 0,04 s**; gruppo **503 in 3,01 s** "The Users service is not reachable. Try again later." |
+| 2b | Users, ripresa | `dotnet run` di nuovo | `POST /auth/login`; `POST /bookings` con `gruppo.json` | Login `200`, gruppo `201` | Login **200 in 0,44 s**; gruppo **201 in 0,36 s** |
+| 3 | Bookings | Ctrl+C sul suo `dotnet run` | Pagina Catalogo; `GET http://localhost:5101/spaces`; `GET /bookings/mine` | Catalogo e Spaces funzionano; le chiamate a Bookings non sono raggiungibili | `GET /spaces` **200 in 0,26 s**; `GET /bookings/mine` non raggiungibile |
+| 3b | Bookings, ripresa | `dotnet run` di nuovo | `GET /bookings/mine` | `200` con le prenotazioni create prima: nessuna persa | **200 in 0,45 s**, 3 prenotazioni create prima ancora presenti |
+| 4 | MongoDB | `docker compose stop mongo` | Come lo scenario 1; poi `GET http://localhost:5101/health` | Come "Spaces giù"; `/health` di Spaces `503 Unhealthy` entro 5 s | `POST /bookings` **503 in 3,03 s**; `GET /spaces` **503 in 5,10 s** "Unable to query the spaces catalog right now"; `/health` di Spaces **503 in 5,02 s**: codice giusto, tempo appena oltre i 5 s (**#224**) |
+| 4b | MongoDB, ripresa | `docker compose start mongo` | `GET http://localhost:5101/spaces` | `200` senza riavviare Spaces; `/health` di nuovo `Healthy` | `GET /spaces` **200**, `/health` **200**, `POST /bookings` **201**, Spaces non riavviato |
+| 5 | PostgreSQL | `docker compose stop postgres` | `GET http://localhost:5101/spaces`; `GET /bookings/mine`; `POST /auth/login`; `/health` di Bookings e Users | Catalogo `200` (MongoDB); Bookings e Users `503` con `detail` leggibile **entro 5 s**; `/health` di Bookings e Users `503 Unhealthy` | Catalogo **200 in 0,01 s**; `GET /bookings/mine` **500 in 82,7 s**; `POST /auth/login` **500 in 82,2 s**; `/health` Bookings **503 in 84,9 s**, Users **503 in 86,2 s** (**#213**) |
+| 5b | PostgreSQL, ripresa | `docker compose start postgres` | `GET /bookings/mine`; `POST /auth/login` | `200` senza riavviare i servizi; nessuna prenotazione persa | `GET /bookings/mine` **200**, login **200 in 2,1 s**, servizi non riavviati, nessuna prenotazione persa |
+| 6 | Frontend | Ctrl+C su `npm start` | `http://localhost:4200`; `GET http://localhost:5102/health` | Interfaccia non raggiungibile; le API restano attive | `:4200` non raggiungibile; `/health` di Bookings **200** |
+| 6b | Frontend, ripresa | `npm start` di nuovo | `http://localhost:4200` | L'interfaccia torna raggiungibile | `:4200` **200** |
 
 ### Differenza già nota prima della prova
 
@@ -84,11 +91,13 @@ Ogni differenza diventa un Bug con il numero dello scenario (DoD di #66).
 
 | Scenario | Differenza | Bug |
 |---|---|---|
-| | | |
+| 5 | Con PostgreSQL fermo Bookings **e Users** rispondono `500` dopo circa 82 s invece di `503` entro 5 s; `/health` `503` dopo 85–86 s. Causa: `EnableRetryOnFailure()` con i valori predefiniti e nessun gestore delle eccezioni | #213 |
+| 4 | Con MongoDB fermo Spaces risponde `503` corretto ma dopo 5,1 s, appena oltre il limite. Causa: `ServerSelectionTimeout` di 5 s | #224 |
 
 ## Limiti
 
 - La prova si fa su un solo PC e con un'istanza per servizio: non dice niente sul comportamento con più istanze.
-- Le pagine del frontend per prenotazioni, login e area admin non sono ancora su `main`: per quelle la prova va
-  ripetuta quando arrivano.
+- La prova è sulle API: le schermate del frontend non sono state controllate a vista durante i guasti. Il messaggio di
+  servizio non disponibile del frontend (#65, snackbar centralizzato) è arrivato su `main` dopo la prova.
+- Tempi misurati su un PC di sviluppo: su un'altra macchina cambiano, ma l'ordine di grandezza (secondi contro minuti) no.
 - Token, password e stringhe di connessione non vanno copiati in questo file né negli screenshot.
