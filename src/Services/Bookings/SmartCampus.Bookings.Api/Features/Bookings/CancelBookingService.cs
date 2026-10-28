@@ -5,7 +5,7 @@ using SmartCampus.Bookings.Api.Features.Notifications;
 
 namespace SmartCampus.Bookings.Api.Features.Bookings;
 
-public class CancelBookingService(BookingsDbContext dbContext, TimeProvider timeProvider, IEmailOutbox? emailOutbox = null)
+public class CancelBookingService(BookingsDbContext dbContext, TimeProvider timeProvider, IEmailOutbox emailOutbox)
 {
     public async Task<CancelBookingResult> CancelAsync(
         Guid bookingId, Guid userId, string? reason, CancellationToken cancellationToken)
@@ -48,26 +48,12 @@ public class CancelBookingService(BookingsDbContext dbContext, TimeProvider time
             invitation.RespondedAt ??= now;
         }
 
+        // Le code delle mail vengono salvate insieme all'annullamento:
+        // la scrittura dei .eml avviene nel dispatcher in background.
+        emailOutbox.EnqueueBookingCancelledEmails(booking);
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        // All'annullamento ricevono la mail il responsabile e gli invitati ancora attivi.
-        await NotifyCancellationAsync(booking, cancellationToken);
         return CancelBookingResult.Cancelled(booking);
-    }
-
-    private async Task NotifyCancellationAsync(Booking booking, CancellationToken cancellationToken)
-    {
-        if (emailOutbox is null)
-        {
-            return;
-        }
-
-        await emailOutbox.EnqueueBookingCancelledEmailAsync(booking, booking.OrganizerNameSnapshot, cancellationToken);
-
-        foreach (var invitation in booking.Invitations
-                     .Where(i => i.Status == InvitationStatus.Cancelled && i.Role == ParticipantRole.Participant))
-        {
-            await emailOutbox.EnqueueBookingCancelledEmailAsync(booking, invitation.Email, cancellationToken);
-        }
     }
 }

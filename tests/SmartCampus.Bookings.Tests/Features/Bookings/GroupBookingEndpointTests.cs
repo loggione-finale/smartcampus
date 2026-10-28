@@ -7,6 +7,7 @@ using NpgsqlTypes;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
 using SmartCampus.Bookings.Api.Features.Bookings;
+using SmartCampus.Bookings.Api.Features.Notifications;
 using SmartCampus.Bookings.Tests.Support;
 
 namespace SmartCampus.Bookings.Tests.Features.Bookings;
@@ -14,6 +15,18 @@ namespace SmartCampus.Bookings.Tests.Features.Bookings;
 public class GroupBookingEndpointTests(BookingsApiFactory factory) : IClassFixture<BookingsApiFactory>
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    private async Task RunOutboxDispatcherAsync()
+    {
+        using var scope = factory.Services.CreateScope();
+        var dispatcher = ActivatorUtilities.CreateInstance<EmailOutboxDispatcher>(
+            scope.ServiceProvider,
+            Microsoft.Extensions.Options.Options.Create(new NotificationOptions
+            {
+                PickupDirectoryLocation = factory.PickupDirectory
+            }));
+        await dispatcher.DispatchPendingAsync(CancellationToken.None);
+    }
 
     [Fact]
     public async Task Rejects_a_group_beyond_the_space_capacity_with_409()
@@ -117,7 +130,30 @@ public class GroupBookingEndpointTests(BookingsApiFactory factory) : IClassFixtu
         Assert.Equal(
             ["esterna@libero.test", "organizer@smartcampus.test", "registrata@smartcampus.test"],
             emails.Select(e => e.ToAddress));
-        Assert.All(emails, e => Assert.Equal(OutboxEmailStatus.Sent, e.Status));
+        Assert.All(emails, e => Assert.Equal(OutboxEmailStatus.Pending, e.Status));
+
+        await RunOutboxDispatcherAsync();
+
+        using (var freshScope = factory.Services.CreateScope())
+        {
+            var freshContext = freshScope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+            var sent = await freshContext.OutboxEmails
+                .AsNoTracking()
+                .Where(e => e.BookingId == bookingId)
+                .ToListAsync();
+            Assert.All(sent, e => Assert.Equal(OutboxEmailStatus.Sent, e.Status));
+        }
+
+        // Nel frattempo il servizio reale può aver già processato altre code della stessa suite:
+        // si contano solo i .eml di questa prenotazione, riconosciuti dal codice nel nome file.
+        var bookingReference = await dbContext.Bookings
+            .Where(b => b.Id == bookingId)
+            .Select(b => b.ReferenceCode)
+            .SingleAsync();
+        Assert.Equal(
+            3,
+            Directory.GetFiles(factory.PickupDirectory, "*.eml")
+                .Count(f => File.ReadAllText(f).Contains(bookingReference)));
     }
 
     [Fact]

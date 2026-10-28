@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
 using SmartCampus.Bookings.Api.Features.Bookings;
+using SmartCampus.Bookings.Api.Features.Notifications;
 using SmartCampus.Bookings.Tests.Support;
 
 namespace SmartCampus.Bookings.Tests.Features.Notifications;
@@ -52,13 +53,51 @@ public class OutboxEmailE2ETests(BookingsApiFactory factory) : IClassFixture<Boo
         Assert.Equal(
             ["organizer@smartcampus.test", "esterna@libero.test", "registrata@smartcampus.test"],
             emails.Select(e => e.ToAddress));
-        Assert.All(emails, e => Assert.Equal(OutboxEmailStatus.Sent, e.Status));
+        Assert.All(emails, e => Assert.Equal(OutboxEmailStatus.Pending, e.Status));
+
+        // Il dispatcher in background scrive i .eml e marca le righe come inviate.
+        await RunOutboxDispatcherAsync();
+
+        // Riquery con Contesti diversi: il dispatcher usa un contesto dedicato,
+        // quindi la lettura va fatta su una query nuova per vedere lo stato aggiornato.
+        using (var freshScope = factory.Services.CreateScope())
+        {
+            var freshContext = freshScope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+            var sent = await freshContext.OutboxEmails
+                .AsNoTracking()
+                .Where(e => e.BookingId == bookingId)
+                .ToListAsync();
+            Assert.All(sent, e => Assert.Equal(OutboxEmailStatus.Sent, e.Status));
+        }
+
+        // Nel frattempo il dispatcher del servizio può aver già scritto altre code della suite:
+        // si contano solo i .eml di questa prenotazione, riconosciuti dal codice nel corpo.
+        var bookingReference = await dbContext.Bookings
+            .Where(b => b.Id == bookingId)
+            .Select(b => b.ReferenceCode)
+            .SingleAsync();
+        Assert.Equal(
+            3,
+            Directory.GetFiles(factory.PickupDirectory, "*.eml")
+                .Count(f => File.ReadAllText(f).Contains(bookingReference)));
 
         // Ogni evento produce la mail attesa: invito separato per registrato e non registrato.
         var invitationToExternal = emails.Single(e => e.ToAddress == "esterna@libero.test");
         Assert.Contains("Registrati sul portale", invitationToExternal.Body);
         var invitationToRegistered = emails.Single(e => e.ToAddress == "registrata@smartcampus.test");
         Assert.Contains("utente registrato", invitationToRegistered.Body);
+    }
+
+    private async Task RunOutboxDispatcherAsync()
+    {
+        using var scope = factory.Services.CreateScope();
+        var dispatcher = ActivatorUtilities.CreateInstance<EmailOutboxDispatcher>(
+            scope.ServiceProvider,
+            Microsoft.Extensions.Options.Options.Create(new NotificationOptions
+            {
+                PickupDirectoryLocation = factory.PickupDirectory
+            }));
+        await dispatcher.DispatchPendingAsync(CancellationToken.None);
     }
 
     [Fact]

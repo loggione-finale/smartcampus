@@ -32,6 +32,7 @@ public static class BookingsServiceCollectionExtensions
         services.Configure<NotificationOptions>(configuration.GetSection(NotificationOptions.SectionName));
         services.AddScoped<INotificationSender, PickupDirectoryEmailSender>();
         services.AddScoped<IEmailOutbox, EmailOutbox>();
+        services.AddHostedService<EmailOutboxDispatcher>();
         services.Configure<InvitationExpiryOptions>(configuration.GetSection(InvitationExpiryOptions.SectionName));
         services.AddHostedService<InvitationExpiryBackgroundService>();
         services.AddHttpClient<ISpacesClient, SpacesClient>(client =>

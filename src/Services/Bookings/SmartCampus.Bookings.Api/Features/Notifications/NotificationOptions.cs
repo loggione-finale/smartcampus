@@ -12,4 +12,7 @@ public class NotificationOptions
 
     /// <summary>Mittente delle mail di notifica.</summary>
     public string FromAddress { get; set; } = "no-reply@smartcampus.test";
+
+    /// <summary>Intervallo tra i sondaggi della coda di outbox da parte del dispatcher, in secondi.</summary>
+    public int DispatchIntervalSeconds { get; set; } = 5;
 }
