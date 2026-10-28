@@ -59,7 +59,8 @@ public static class NotificationTemplates
         toAddress,
         $"Prenotazione annullata {booking.ReferenceCode} - {booking.SpaceNameSnapshot}",
         $"La prenotazione di {booking.SpaceNameSnapshot} ({Period(booking)}) " +
-        $"con codice {booking.ReferenceCode} è stata annullata.",
+        $"con codice {booking.ReferenceCode} è stata annullata dall'amministrazione. " +
+        $"Motivo: {booking.CancellationReason}.",
         "booking-cancelled",
         booking.Id);
 

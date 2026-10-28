@@ -242,6 +242,20 @@ public class BookingService(
     }
 
     private async Task RaiseNewBookingAlertAsync(Booking booking, CancellationToken cancellationToken)
+    {
+        if (adminAlerts is null)
+        {
+            return;
+        }
+
+        await adminAlerts.RaiseAsync(
+            AdminAlertKind.NewBooking,
+            booking.Id,
+            $"Nuova prenotazione {booking.ReferenceCode}: {booking.SpaceNameSnapshot}, {booking.OrganizerNameSnapshot}",
+            cancellationToken);
+    }
+
+    private async Task<CreateBookingResult> InsertInMixedSpaceAsync(
         Guid organizerId,
         string organizerName,
         string organizerEmail,
@@ -259,7 +273,7 @@ public class BookingService(
 
         // Solo il salvataggio è nella strategia di retry: le code delle mail restano fuori,
         // così un tentativo della strategia non può accodare due volte le notifiche.
-        var booking = await strategy.ExecuteAsync(async () =>
+        var created = await strategy.ExecuteAsync(async () =>
         {
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -305,17 +319,17 @@ public class BookingService(
             return created;
         }).ConfigureAwait(false);
 
-        if (booking is null)
+        if (created is null)
         {
             return CreateBookingResult.NoSeatsLeft(0);
         }
 
         if (equipmentPlan.MissingItems.Count > 0 && bookingEquipmentService is not null)
         {
-            await bookingEquipmentService.RaiseMissingEquipmentAlertsAsync(booking, equipmentPlan, cancellationToken);
+            await bookingEquipmentService.RaiseMissingEquipmentAlertsAsync(created, equipmentPlan, cancellationToken);
         }
 
-        return CreateBookingResult.Created(booking);
+        return CreateBookingResult.Created(created);
     }
 
     private void NotifyBookingCreated(Booking booking)
