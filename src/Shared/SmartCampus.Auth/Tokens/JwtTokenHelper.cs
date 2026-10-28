@@ -19,6 +19,7 @@ public static class JwtTokenHelper
         TimeSpan? lifetime = null,
         string? issuer = null,
         string? audience = null,
+        string? name = null,
         IEnumerable<Claim>? additionalClaims = null)
     {
         if (string.IsNullOrWhiteSpace(userId))
@@ -27,6 +28,8 @@ public static class JwtTokenHelper
             throw new ArgumentException("Email cannot be null or empty.", nameof(email));
         if (string.IsNullOrWhiteSpace(role))
             throw new ArgumentException("Role cannot be null or empty.", nameof(role));
+
+        name ??= email;
 
         var keyBytes = SigningKeyValidator.Validate(signingKey, nameof(signingKey));
         var securityKey = new SymmetricSecurityKey(keyBytes);
@@ -38,11 +41,19 @@ public static class JwtTokenHelper
             new(ClaimTypes.NameIdentifier, userId),
             new("id", userId),
             new(JwtRegisteredClaimNames.Email, email),
+            new("email", email),
             new(ClaimTypes.Email, email),
             new(ClaimTypes.Role, role),
             new("role", role),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        if (name is not null)
+        {
+            // Nome visualizzato, distinto dall'indirizzo email.
+            claims.Add(new("name", name));
+            claims.Add(new(ClaimTypes.Name, name));
+        }
 
         if (additionalClaims != null)
         {

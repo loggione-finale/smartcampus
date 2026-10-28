@@ -173,5 +173,6 @@ public class CancelBookingEndpointTests(BookingsApiFactory factory) : IClassFixt
         Assert.Equal(BookingStatus.Cancelled, booking.Status);
         Assert.Equal(2, booking.Invitations.Count);
         Assert.All(booking.Invitations, i => Assert.Equal(InvitationStatus.Cancelled, i.Status));
+        Assert.Equal(2, await db.OutboxEmails.CountAsync(e => e.BookingId == bookingId && e.Kind == "booking-cancelled"));
     }
 }

@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using SmartCampus.Bookings.Api.Data;
 using SmartCampus.Bookings.Api.Domain;
+using SmartCampus.Bookings.Api.Features.Notifications;
 
 namespace SmartCampus.Bookings.Api.Features.Bookings;
 
-public class CancelBookingService(BookingsDbContext dbContext, TimeProvider timeProvider)
+public class CancelBookingService(BookingsDbContext dbContext, TimeProvider timeProvider, IEmailOutbox emailOutbox)
 {
     public async Task<CancelBookingResult> CancelAsync(
         Guid bookingId, Guid userId, string? reason, CancellationToken cancellationToken)
@@ -39,6 +40,7 @@ public class CancelBookingService(BookingsDbContext dbContext, TimeProvider time
         var strategy = dbContext.Database.CreateExecutionStrategy();
         var cancelled = await strategy.ExecuteAsync(async () =>
         {
+            dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
             var affected = await dbContext.Bookings
@@ -65,6 +67,14 @@ public class CancelBookingService(BookingsDbContext dbContext, TimeProvider time
                         .SetProperty(i => i.Status, InvitationStatus.Cancelled)
                         .SetProperty(i => i.RespondedAt, i => i.RespondedAt ?? now),
                     cancellationToken);
+
+            var cancelledBooking = await dbContext.Bookings
+                .AsNoTracking()
+                .Include(b => b.Invitations)
+                .SingleAsync(b => b.Id == bookingId, cancellationToken);
+
+            emailOutbox.EnqueueBookingCancelledEmails(cancelledBooking);
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
             return true;
