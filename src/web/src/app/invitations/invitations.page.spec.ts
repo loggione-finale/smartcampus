@@ -30,6 +30,12 @@ const ACCEPTED: Invitation = {
   respondedAt: '2026-10-28T09:00:00Z',
 };
 
+const EXPIRED: Invitation = {
+  ...INVITED,
+  id: '00000000-0000-0000-0000-000000000003',
+  status: 'Expired',
+};
+
 describe('InvitationsApiService', () => {
   let service: InvitationsApiService;
   let http: HttpTestingController;
@@ -160,6 +166,17 @@ describe('InvitationsPage', () => {
     expect(el.textContent).toContain('Nessun invito in attesa');
   });
 
+  it('shows an expired invitation with its label and without a confirm button', () => {
+    const fixture = createPage();
+
+    http.expectOne('/api/invitations/mine').flush([EXPIRED]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Scaduto');
+    expect(el.querySelector('.invitation-actions button')).toBeNull();
+  });
+
   it('confirms an invitation and updates its status', () => {
     const fixture = createPage();
     const component = fixture.componentInstance;
@@ -198,6 +215,8 @@ describe('InvitationsPage', () => {
     expect(component['errorMessage']()).toBe(
       'Invito scaduto: sei stato escluso dalla prenotazione.',
     );
+    // L'invito scaduto non resta confermabile: la card mostra lo stato reale.
+    expect(component['invitations']()[0].status).toBe('Expired');
   });
 
   it('shows the overlap message on 409 Overlapping booking', () => {
@@ -234,6 +253,8 @@ describe('InvitationsPage', () => {
     fixture.detectChanges();
 
     expect(component['errorMessage']()).toBe('Invito non trovato.');
+    // Un invito inesistente non resta confermabile: la card mostra lo stato reale.
+    expect(component['invitations']()[0].status).toBe('Cancelled');
   });
 
   it('highlights the invitation matching the :id route parameter', () => {

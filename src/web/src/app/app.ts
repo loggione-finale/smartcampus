@@ -31,7 +31,7 @@ type Space = {
   alt: string;
 };
 
-type RegistrationResult = 'created' | 'invite' | null;
+type RegistrationResult = 'created' | null;
 
 type RegisterRequest = {
   matricola: string;
@@ -40,10 +40,9 @@ type RegisterRequest = {
   email: string;
   phoneNumber: string;
   password: string;
-  inviteToken?: string;
 };
 
-type RegistrationField = Exclude<keyof RegisterRequest, 'inviteToken'>;
+type RegistrationField = keyof RegisterRequest;
 
 @Component({
   selector: 'app-root',
@@ -165,7 +164,7 @@ export class App {
   };
 
   protected readonly year = new Date().getFullYear();
-  protected readonly inviteToken = signal<string | null>(null);
+  protected readonly registrationReturnUrl = signal<string | null>(null);
   protected readonly registrationResult = signal<RegistrationResult>(null);
   protected readonly registrationSubmitting = signal(false);
   protected readonly registrationError = signal<string | null>(null);
@@ -187,7 +186,9 @@ export class App {
   });
 
   constructor() {
-    this.inviteToken.set(new URLSearchParams(window.location.search).get('invite'));
+    this.registrationReturnUrl.set(
+      new URLSearchParams(window.location.search).get('returnUrl'),
+    );
     afterNextRender(() => {
       this.checkHealth();
       this.revealOnScroll();
@@ -224,18 +225,19 @@ export class App {
 
     this.registrationSubmitting.set(true);
     const request: RegisterRequest = this.registrationForm.getRawValue();
-    const inviteToken = this.inviteToken();
-    const requestWithInvite = inviteToken ? { ...request, inviteToken } : request;
 
-    this.http.post('/api/users/auth/register', requestWithInvite).subscribe({
+    this.http.post('/api/users/auth/register', request).subscribe({
       next: () => {
         this.registrationSubmitting.set(false);
-        const result = this.inviteToken() ? 'invite' : 'created';
-        if (result === 'invite') {
-          void this.router.navigate(['/invitations']);
+        // Chi arriva dal link di registrazione della mail di invito torna
+        // all'invito dopo l'iscrizione (la rotta /invitations è protetta:
+        // se non ha ancora la sessione passa dal login con returnUrl).
+        const returnUrl = this.registrationReturnUrl();
+        if (returnUrl !== null && returnUrl.startsWith('/')) {
+          void this.router.navigate([returnUrl]);
           return;
         }
-        this.registrationResult.set(result);
+        this.registrationResult.set('created');
         const confirmationId = 'conferma-registrazione';
         window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}#${confirmationId}`);
         requestAnimationFrame(() => document.getElementById(confirmationId)?.scrollIntoView({ behavior: 'smooth' }));

@@ -107,7 +107,10 @@ public class PickupDirectoryEmailSenderTests : IDisposable
 
         var invitationEmail = NotificationTemplates.InvitationToUnregistered(invitation, booking, "http://localhost:4200");
         // ExpiresAt coincide con l'inizio della prenotazione: 09:00 UTC = 11:00.
-        Assert.Contains("conferma entro 11:00", invitationEmail.Body);
+        Assert.Contains("Registrati sul portale entro 11:00", invitationEmail.Body);
+        Assert.Contains(
+            "http://localhost:4200/#registrazione?returnUrl=%2Finvitations%2F" + invitation.Id,
+            invitationEmail.Body);
     }
 
     [Fact]

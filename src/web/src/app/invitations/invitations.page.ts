@@ -19,6 +19,9 @@ const ACCEPT_ERROR_MESSAGES: Record<AcceptInvitationError, string> = {
   unknown: 'Si è verificato un errore durante la conferma. Riprova più tardi.',
 };
 
+/** Stati dopo i quali l'invito non è più confermabile: la card va aggiornata. */
+const NOT_CONFIRMABLE_ERRORS: readonly AcceptInvitationError[] = ['expired', 'not-found'];
+
 @Component({
   selector: 'app-invitations-page',
   standalone: true,
@@ -58,6 +61,7 @@ export class InvitationsPage implements OnInit {
     return new Intl.DateTimeFormat('it-IT', {
       dateStyle: 'medium',
       timeStyle: 'short',
+      timeZone: 'Europe/Rome',
     }).format(date);
   }
 
@@ -77,6 +81,17 @@ export class InvitationsPage implements OnInit {
       error: (error: AcceptInvitationError) => {
         this.acceptingId.set(null);
         this.errorMessage.set(ACCEPT_ERROR_MESSAGES[error] ?? ACCEPT_ERROR_MESSAGES.unknown);
+        // Scaduto o inesistente: l'invito non è più confermabile,
+        // la card torna con lo stato reale invece del bottone attivo.
+        if (NOT_CONFIRMABLE_ERRORS.includes(error)) {
+          const newStatus: InvitationStatus =
+            error === 'expired' ? 'Expired' : 'Cancelled';
+          this.invitations.update((list) =>
+            list.map((item) =>
+              item.id === invitation.id ? { ...item, status: newStatus } : item,
+            ),
+          );
+        }
       },
     });
   }

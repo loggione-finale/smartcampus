@@ -87,17 +87,25 @@ public class OutboxEmailE2ETests(BookingsApiFactory factory) : IClassFixture<Boo
         var invitationToRegistered = emails.Single(e => e.ToAddress == "registrata@smartcampus.test");
         Assert.Contains("utente registrato", invitationToRegistered.Body);
 
-        // Le mail di invito contengono il link di conferma con l'id dell'invito.
+        // L'invito al non registrato punta alla registrazione con ritorno all'invito;
+        // quello al registrato punta alla pagina di conferma.
         var invitationIds = await dbContext.Invitations
             .Where(i => i.BookingId == bookingId && i.Role != ParticipantRole.Organizer)
-            .Select(i => i.Id)
             .ToListAsync();
-        Assert.All(invitationIds, id =>
+        foreach (var invitation in invitationIds)
         {
-            var expectedLink = $"/invitations/{id}";
-            var mail = emails.Single(e => e.Body.Contains(expectedLink));
-            Assert.Contains(expectedLink, mail.Body);
-        });
+            var mail = emails.Single(e => e.ToAddress == invitation.Email);
+            if (invitation.UserId is null)
+            {
+                Assert.Contains(
+                    $"/#registrazione?returnUrl=%2Finvitations%2F{invitation.Id}",
+                    mail.Body);
+            }
+            else
+            {
+                Assert.Contains($"/invitations/{invitation.Id}", mail.Body);
+            }
+        }
     }
 
     private async Task RunOutboxDispatcherAsync()

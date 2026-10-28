@@ -86,4 +86,22 @@ public class MyInvitationsEndpointTests(BookingsApiFactory factory) : IClassFixt
         var invitations = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(0, invitations.GetArrayLength());
     }
+
+    [Fact]
+    public async Task An_expired_invitation_stays_visible_with_its_status()
+    {
+        var userId = Guid.NewGuid();
+        var email = $"{Guid.NewGuid():N}@smartcampus.test";
+        await CreateInvitationAsync(userId, email, InvitationStatus.Expired);
+
+        var client = factory.CreateAuthenticatedClient(userId, email);
+        var response = await client.GetAsync("/invitations/mine");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var invitations = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(1, invitations.GetArrayLength());
+        Assert.Equal(
+            nameof(InvitationStatus.Expired),
+            invitations[0].GetProperty("status").GetString());
+    }
 }

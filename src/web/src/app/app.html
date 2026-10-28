@@ -100,16 +100,10 @@
         role="status"
       >
         <span class="confirmation-icon" aria-hidden="true">✓</span>
-        @if (result === 'invite') {
-          <p class="eyebrow">INVITO RICEVUTO</p>
-          <h2 id="registration-title">Account creato. Ti stiamo portando ai tuoi inviti…</h2>
-          <p>Se il reindirizzamento non parte, apri la pagina <a routerLink="/invitations">/invitations</a>.</p>
-        } @else {
-          <p class="eyebrow">REGISTRAZIONE COMPLETATA</p>
-          <h2 id="registration-title">Benvenuto in SmartCampus.</h2>
-          <p>Il tuo account è stato creato. Ora puoi cercare uno spazio e preparare la tua giornata.</p>
-          <a mat-flat-button class="btn" href="#spazi">Esplora gli spazi</a>
-        }
+        <p class="eyebrow">REGISTRAZIONE COMPLETATA</p>
+        <h2 id="registration-title">Benvenuto in SmartCampus.</h2>
+        <p>Il tuo account è stato creato. Ora puoi cercare uno spazio e preparare la tua giornata.</p>
+        <a mat-flat-button class="btn" href="#spazi">Esplora gli spazi</a>
         <button mat-button type="button" class="text-button" (click)="resetRegistration()">
           Registra un altro account
         </button>
