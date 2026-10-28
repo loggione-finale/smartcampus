@@ -16,8 +16,9 @@ Approvato dal PO il 27/10 (decisione 16).
 
 | Sprint | Date | Sprint Goal | Stato |
 |---|---|---|---|
-| 1 | lun 26 – mar 27 | Uno studente trova uno spazio e lo prenota, da solo o in gruppo, con la certezza che nessuno spazio e nessuna persona siano prenotati due volte | Approvato dal PO (decisione 16). Review con il PO non ancora fatta: vedi sotto |
-| 2 | mer 28 – gio 29 mattina | I gruppi confermano la partecipazione entro due ore, chi ha prenotato lascia il commento finale, e l'admin vede aule prenotate e libere, avvisi e statistiche d'uso, in modo sicuro e verificato | **Proposta da confermare con il PO**: la versione approvata citava il rilascio automatico, uscito dal perimetro con il brainstorming (decisione 17) |
+| 1 | lun 26 – mar 27 | Uno studente trova uno spazio e lo prenota, da solo o in gruppo, con la certezza che nessuno spazio e nessuna persona siano prenotati due volte | Approvato dal PO (decisione 16). Review fatta con il PO il 28/10 sera, insieme a quella dello Sprint 2 |
+| 2 | mer 28 | I gruppi confermano la partecipazione entro due ore, chi ha prenotato lascia il commento finale, e l'admin vede aule prenotate e libere, avvisi e statistiche d'uso, in modo sicuro e verificato | **Approvato dal PO il 28/10** (decisione 33), a condizione che tutto sia coerente con le decisioni 29–32. Review fatta il 28/10 sera |
+| 3 (iper-sprint) | mer 28 sera – gio 29 tarda mattinata | Il prodotto rispetta le regole confermate dal PO il 28/10 e la demo mostra solo ciò che è stato provato | Proposta del gruppo, da confermare nella PR del piano ([hyper-sprint-2026-10-29.md](hyper-sprint-2026-10-29.md)) |
 
 ## Eventi
 
@@ -35,7 +36,7 @@ Dichiarati come chiede la slide 32 ("pratiche adattate non equivalgono all'adozi
 
 | Scrum | Noi | Perché |
 |---|---|---|
-| Sprint di durata fissa, fino a un mese | Due Sprint di circa un giorno e mezzo | Il project work dura quattro giorni |
+| Sprint di durata fissa, fino a un mese | Due Sprint di circa un giorno e mezzo, più un iper-sprint di una notte e una mattina dopo la Review del 28/10 | Il project work dura quattro giorni; la Review con il PO è arrivata la sera prima della consegna |
 | Un Product Owner nel team | Un PO comune a tutti i gruppi, esterno al team | Dato dal contesto (slide 6 e 32) |
 | Scrum Master | asprenolapo fa da **facilitatore**: organizza gli eventi, cura board e repository, aiuta a rimuovere gli impedimenti | Il gruppo può scegliere un facilitatore (slide 6) |
 | Sprint Review alla fine dello Sprint | Si fa quando il PO è disponibile: se salta, la si recupera al primo confronto | Lo Sprint 1 si è chiuso senza Review per una lezione in aula (27/10) |
@@ -46,12 +47,15 @@ Dichiarati come chiede la slide 32 ("pratiche adattate non equivalgono all'adozi
 ## Sprint 1: Review e Retrospective
 
 **Review con il PO:** non fatta il 27/10, perché il professore ha usato la giornata per il Modulo 3 (agenti e
-workflow). Da recuperare al primo confronto con il PO, insieme a queste questioni aperte (scaletta del 29/10 in
-[po-meeting-2026-10-29.md](analysis/po-meeting-2026-10-29.md)):
+workflow). **Recuperata il 28/10 sera**, insieme a quella dello Sprint 2, con la scaletta di
+[po-meeting-2026-10-29.md](analysis/po-meeting-2026-10-29.md):
 
-- conferma delle fasce orarie e delle regole 25–27 (già nel codice con la #153);
-- anticipo massimo di una prenotazione (proposta: 14 giorni);
-- nuova formulazione dello Sprint Goal 2 (sopra).
+- fasce orarie e prenotazioni a cavallo confermate (decisioni 29 e 30);
+- il limite per fascia vale anche per i partecipanti (decisione 31, cambia la proposta del gruppo);
+- anticipo massimo di 15 giorni (decisione 32);
+- Sprint Goal 2 approvato (decisione 33);
+- nove richieste di revisione (R1–R9 nel [registro](analysis/po-decisions.md)), pianificate
+  nell'[iper-sprint](hyper-sprint-2026-10-29.md).
 
 **Retrospective (#87):** svolta il 27/10/2026 dal gruppo. Sintesi di cosa ha funzionato, dei punti critici emersi e delle azioni correttive concordate e applicate nello Sprint 2.
 
