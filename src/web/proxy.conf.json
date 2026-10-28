@@ -23,6 +23,14 @@
       "^/api/bookings": "/bookings"
     }
   },
+  "/api/invitations": {
+    "target": "http://localhost:5102",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/invitations": "/invitations"
+    }
+  },
   "/api/users": {
     "target": "http://localhost:5103",
     "secure": false,

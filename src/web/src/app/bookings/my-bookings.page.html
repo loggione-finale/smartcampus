@@ -1,0 +1,165 @@
+<section class="bookings-page" aria-labelledby="bookings-title">
+  <div class="bookings-hero">
+    <a class="back-link" href="/account">
+      <span aria-hidden="true">←</span> Torna all’area personale
+    </a>
+    <p class="eyebrow">AREA PERSONALE</p>
+    <h1 id="bookings-title">Le mie prenotazioni</h1>
+    <p class="bookings-lead">
+      Le prenotazioni in cui sei organizzatore o partecipante, con spazio, data, fascia oraria e
+      stato. Le prenotazioni annullate restano qui, con lo stato ben visibile.
+    </p>
+  </div>
+
+  <div class="bookings-content">
+    @if (errorMessage(); as error) {
+      <section class="state-panel state-error" role="alert" data-testid="error-state">
+        <mat-icon class="state-icon" aria-hidden="true">cloud_off</mat-icon>
+        <p class="section-tag">PRENOTAZIONI NON DISPONIBILI</p>
+        <h2>Non riusciamo a caricare le prenotazioni</h2>
+        <p>{{ error }}</p>
+        <button mat-flat-button class="btn" type="button" (click)="refresh()">Riprova</button>
+      </section>
+    } @else if (loading()) {
+      <div class="loading-box" role="status" data-testid="loading-state">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <p>Caricamento delle prenotazioni in corso…</p>
+      </div>
+    } @else if (bookings().length === 0) {
+      <section class="state-panel" role="status" data-testid="empty-state">
+        <mat-icon class="state-icon" aria-hidden="true">event_available</mat-icon>
+        <p class="section-tag">NESSUNA PRENOTAZIONE</p>
+        <h2>Non hai ancora prenotazioni</h2>
+        <p>Quando prenoti uno spazio del campus, lo trovi qui con il suo stato.</p>
+        <a mat-flat-button class="btn" href="/spaces">Cerca uno spazio</a>
+      </section>
+    } @else {
+      <div class="results-bar">
+        <h2 aria-live="polite" data-testid="bookings-count">{{ countLabel() }}</h2>
+        <button
+          mat-stroked-button
+          class="refresh-btn"
+          type="button"
+          (click)="refresh()"
+          [disabled]="loading()"
+        >
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Aggiorna
+        </button>
+      </div>
+
+      @if (actionSuccess(); as message) {
+        <p class="inline-success" role="status" data-testid="action-success">{{ message }}</p>
+      }
+
+      @if (invitationsUnavailable()) {
+        <p class="inline-alert" role="alert" data-testid="invitations-unavailable">
+          Non è stato possibile caricare gli inviti in attesa. Premi «Aggiorna» per riprovare.
+        </p>
+      }
+
+      @if (actionError(); as error) {
+        <p class="inline-alert" role="alert" data-testid="action-error">{{ error }}</p>
+      }
+
+      @for (section of sections(); track section.key) {
+        <section class="booking-section" [attr.aria-labelledby]="section.key + '-title'">
+          <div class="section-head">
+            <p class="section-tag">{{ section.tag }}</p>
+            <h2 [id]="section.key + '-title'">{{ section.title }}</h2>
+          </div>
+
+          <ul class="booking-list" [attr.data-testid]="section.key + '-list'">
+            @for (booking of section.bookings; track booking.id) {
+              <li
+                class="booking-card"
+                [attr.data-status]="booking.status"
+                data-testid="booking-card"
+              >
+                <div class="booking-top">
+                  <div class="booking-badges">
+                    <span class="status-badge" [attr.data-status]="booking.status">
+                      {{ statusLabels[booking.status] }}
+                    </span>
+                    <span class="role-badge">{{ roleLabels[booking.role] }}</span>
+                  </div>
+                  <span class="booking-reference">{{ booking.referenceCode }}</span>
+                </div>
+
+                <h3 class="booking-title">{{ booking.spaceName }}</h3>
+                <p class="booking-building">{{ booking.spaceBuilding }}</p>
+
+                <ul class="booking-facts">
+                  <li>
+                    <mat-icon aria-hidden="true">calendar_month</mat-icon>
+                    <span>{{ bookingDate(booking) }}</span>
+                  </li>
+                  <li>
+                    <mat-icon aria-hidden="true">schedule</mat-icon>
+                    <span>{{ bookingTime(booking) }}</span>
+                  </li>
+                </ul>
+
+                @if (booking.hasPendingInvitation) {
+                  <div class="notice notice-invite" data-testid="pending-invitation">
+                    <mat-icon aria-hidden="true">mail</mat-icon>
+                    <div>
+                      @if (invitationExpired(booking)) {
+                        <p class="notice-title">Invito scaduto</p>
+                        @if (invitationExpiry(booking); as expiry) {
+                          <p>La scadenza era il {{ expiry }}.</p>
+                        }
+                        <p>Non è più possibile confermare questo invito.</p>
+                      } @else {
+                        <p class="notice-title">Invito in attesa di conferma</p>
+                        @if (invitationExpiry(booking); as expiry) {
+                          <p>Scade il {{ expiry }}.</p>
+                        } @else {
+                          <p>Controlla la scadenza prima di rispondere.</p>
+                        }
+
+                        @if (pendingInvitation(booking); as invitation) {
+                          <button
+                            mat-flat-button
+                            class="btn accept-btn"
+                            type="button"
+                            (click)="acceptInvitation(invitation)"
+                            [disabled]="acceptingInvitationId() !== null"
+                            data-testid="accept-invitation-btn"
+                          >
+                            {{
+                              acceptingInvitationId() === invitation.id
+                                ? 'Conferma in corso…'
+                                : 'Conferma invito'
+                            }}
+                          </button>
+                        } @else {
+                          <p class="notice-muted">
+                            Il dettaglio dell’invito non è disponibile: aggiorna tra poco.
+                          </p>
+                        }
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (booking.hasPendingClosureComment) {
+                  <div class="notice notice-comment" data-testid="pending-comment-notice">
+                    <mat-icon aria-hidden="true">rate_review</mat-icon>
+                    <div>
+                      <p class="notice-title">Prenotazione conclusa senza commento</p>
+                      <p>Il commento finale non è ancora stato inserito.</p>
+                      <a mat-stroked-button class="closure-link" [href]="closureLink(booking)">
+                        Scrivi il commento
+                      </a>
+                    </div>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+  </div>
+</section>

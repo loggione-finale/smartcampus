@@ -14,6 +14,12 @@ export const routes: Routes = [
     title: 'Area personale · SmartCampus',
   },
   {
+    path: 'bookings',
+    canActivate: [authGuard],
+    loadComponent: () => import('./bookings/my-bookings.page').then((m) => m.MyBookingsPage),
+    title: 'Le mie prenotazioni · SmartCampus',
+  },
+  {
     path: 'admin/spaces',
     canActivate: [adminGuard],
     loadChildren: () =>
