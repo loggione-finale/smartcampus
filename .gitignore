@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Log e PID di scripts/dev-up
+.dev/
+
 # User-specific files
 *.rsuser
 *.suo

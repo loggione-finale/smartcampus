@@ -7,7 +7,7 @@
 
 ## Prima di iniziare
 
-1. Database e servizi come nel [README](../README.md) (sezioni 2-5): `docker compose up -d --wait`, poi i tre servizi in
+1. Database, servizi e frontend come nel [README](../README.md) (sezioni 2 e 3): `scripts/dev-up`, che avvia i servizi in
    `Development`. All'avvio si caricano da soli utenti, spazi e prenotazioni sintetiche
    ([bookings-seed.md](../data/synthetic/bookings-seed.md)); se i database non sono vuoti il seed si salta.
 2. Account demo (email e password in [data/synthetic/README.md](../data/synthetic/README.md)): Giulia Rossi, Marco Bianchi,
