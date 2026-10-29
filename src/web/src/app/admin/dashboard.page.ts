@@ -6,6 +6,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { SPACE_TYPE_OPTIONS, todayInRome, utcIsoToRomeTime } from '../spaces/spaces.models';
 import { AdminApiService } from './admin-api.service';
+import { AdminNavComponent } from './admin-nav.component';
 import { BOOKING_STATUS_LABELS, DashboardBooking, DashboardSpace } from './admin.models';
 
 // The API may return timestamps without the "Z" suffix: they are UTC.
@@ -13,7 +14,7 @@ const asUtc = (iso: string): string => (/(Z|[+-]\d\d:\d\d)$/.test(iso) ? iso : `
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule],
+  imports: [AdminNavComponent, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
 })

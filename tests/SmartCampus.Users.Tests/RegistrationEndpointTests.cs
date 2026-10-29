@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SmartCampus.Users.Api.Controllers;
 using SmartCampus.Users.Api.Data;
 using SmartCampus.Users.Api.Domain.Entities;
 using SmartCampus.Users.Api.Features.Registration;
@@ -145,7 +146,7 @@ public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
     }
 
     [Fact]
-    public async Task GetUsers_WithEmailsFilter_ReturnsMatchingUsers()
+    public async Task GetUsers_WithCommaSeparatedEmails_ReturnsMatchingUsers_WithoutPersonalData()
     {
         var client = _factory.CreateClient();
         var user1 = CreateValidRequest(email: $"target1.{Guid.NewGuid():N}@smartcampus.test");
@@ -157,7 +158,34 @@ public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
         var response = await client.GetAsync($"/users?emails={user1.Email},{user2.Email}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var users = await response.Content.ReadFromJsonAsync<List<UserResponse>>();
+        var json = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("phoneNumber", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("matricola", json, StringComparison.OrdinalIgnoreCase);
+
+        var users = await response.Content.ReadFromJsonAsync<List<UserLookupResponse>>();
+        Assert.NotNull(users);
+        Assert.Contains(users, u => u.Email == user1.Email.ToLowerInvariant());
+        Assert.Contains(users, u => u.Email == user2.Email.ToLowerInvariant());
+    }
+
+    [Fact]
+    public async Task GetUsers_WithRepeatedQueryKeys_ReturnsBothUsers_WithoutPersonalData()
+    {
+        var client = _factory.CreateClient();
+        var user1 = CreateValidRequest(email: $"rep1.{Guid.NewGuid():N}@smartcampus.test");
+        var user2 = CreateValidRequest(email: $"rep2.{Guid.NewGuid():N}@smartcampus.test");
+
+        await client.PostAsJsonAsync("/auth/register", user1);
+        await client.PostAsJsonAsync("/auth/register", user2);
+
+        var response = await client.GetAsync($"/users?emails={Uri.EscapeDataString(user1.Email)}&emails={Uri.EscapeDataString(user2.Email)}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var json = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("phoneNumber", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("matricola", json, StringComparison.OrdinalIgnoreCase);
+
+        var users = await response.Content.ReadFromJsonAsync<List<UserLookupResponse>>();
         Assert.NotNull(users);
         Assert.Contains(users, u => u.Email == user1.Email.ToLowerInvariant());
         Assert.Contains(users, u => u.Email == user2.Email.ToLowerInvariant());
@@ -178,7 +206,7 @@ public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
     }
 
     [Fact]
-    public async Task GetById_WithExistingUser_Returns200Ok()
+    public async Task GetById_WithExistingUser_Returns200Ok_WithoutPersonalData()
     {
         var client = _factory.CreateClient();
         var request = CreateValidRequest();
@@ -190,9 +218,15 @@ public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
         var response = await client.GetAsync($"/users/{createdUser.Id}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var user = await response.Content.ReadFromJsonAsync<UserResponse>();
+        var json = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("phoneNumber", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("matricola", json, StringComparison.OrdinalIgnoreCase);
+
+        var user = await response.Content.ReadFromJsonAsync<UserLookupResponse>();
         Assert.NotNull(user);
         Assert.Equal(createdUser.Id, user.Id);
+        Assert.Equal(createdUser.Email.ToLowerInvariant(), user.Email);
+        Assert.Equal(createdUser.DisplayName, user.DisplayName);
     }
 
     [Fact]

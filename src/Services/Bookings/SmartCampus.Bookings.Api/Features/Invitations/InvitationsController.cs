@@ -59,6 +59,10 @@ public class InvitationsController(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Invitation no longer pending",
                 detail: "The invitation was already responded to or its deadline has passed."),
+            AcceptInvitationOutcome.TimeBandAlreadyUsed => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Time band already used",
+                detail: "You already have a confirmed booking in that time band on that day."),
             AcceptInvitationOutcome.PersonConflict => Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Overlapping booking",

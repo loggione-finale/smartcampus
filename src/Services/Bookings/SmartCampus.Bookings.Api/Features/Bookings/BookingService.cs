@@ -117,6 +117,24 @@ public class BookingService(
             }
         }
 
+        if (registeredParticipants.Count > 0
+            && BookingTimeBands.TryResolve(start, end, out var bookingDate, out var timeBand))
+        {
+            var participantIds = registeredParticipants.Values.Select(user => user.Id).ToList();
+            var participantBusy = await dbContext.Invitations.AnyAsync(
+                i => i.UserId != null
+                    && participantIds.Contains(i.UserId.Value)
+                    && i.Status == InvitationStatus.Accepted
+                    && i.Booking.Status == BookingStatus.Confirmed
+                    && i.Booking.BookingDate == bookingDate
+                    && i.Booking.TimeBand == timeBand,
+                cancellationToken);
+            if (participantBusy)
+            {
+                return CreateBookingResult.ParticipantTimeBandAlreadyUsed();
+            }
+        }
+
         var equipmentPlan = EquipmentResolutionPlan.Empty;
         if (normalizedEquipment.Count > 0)
         {

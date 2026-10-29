@@ -6,5 +6,6 @@ public enum AcceptInvitationOutcome
     NotFound,
     Forbidden,
     Expired,
-    PersonConflict
+    PersonConflict,
+    TimeBandAlreadyUsed
 }
