@@ -1,4 +1,4 @@
-import { Component, ElementRef, afterNextRender, computed, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
@@ -61,7 +61,7 @@ type RegistrationField = keyof RegisterRequest;
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App {
+export class App implements AfterViewInit {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly formBuilder = inject(FormBuilder);
   private readonly http = inject(HttpClient);
@@ -82,7 +82,7 @@ export class App {
     return path === '' || path === '/';
   });
 
-  protected readonly navLinks = [
+  private static readonly ALL_NAV_LINKS = [
     { label: 'Come funziona', href: '/#come-funziona', icon: 'route' },
     { label: 'Spazi', href: '/#spazi', icon: 'meeting_room' },
     { label: 'Prenota', href: '/#prenota', icon: 'event_available' },
@@ -90,6 +90,12 @@ export class App {
     { label: 'Registrati', href: '/#registrazione', icon: 'person_add' },
     { label: 'Contatti', href: '/#contatti', icon: 'mail' },
   ];
+
+  protected readonly navLinks = computed(() =>
+    this.session.isAuthenticated()
+      ? App.ALL_NAV_LINKS.filter((link) => link.href !== '/#registrazione')
+      : App.ALL_NAV_LINKS,
+  );
 
   protected readonly heroWords = ['Cerca.', 'Prenota.', 'Studia.'];
 
@@ -193,7 +199,27 @@ export class App {
     afterNextRender(() => {
       this.checkHealth();
       this.revealOnScroll();
+      this.scrollToFragment();
     });
+  }
+
+  ngAfterViewInit(): void {
+    this.scrollToFragment();
+  }
+
+  protected scrollToFragment(): void {
+    const hash = window.location.hash;
+    if (!hash) {
+      return;
+    }
+    const id = hash.replace(/^#/, '');
+    if (!id) {
+      return;
+    }
+    const element =
+      this.host.nativeElement.querySelector<HTMLElement>(`#${id}`) ??
+      document.getElementById(id);
+    element?.scrollIntoView({ behavior: 'smooth' });
   }
 
   protected fieldError(field: RegistrationField): string | null {

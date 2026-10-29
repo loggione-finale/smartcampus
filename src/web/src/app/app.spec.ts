@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { FormControl, FormGroup } from '@angular/forms';
-import { Router, provideRouter } from '@angular/router';
+import { Router, provideRouter, withInMemoryScrolling } from '@angular/router';
 import { of } from 'rxjs';
 import { AuthSessionService } from './auth/auth-session.service';
 import { LoginResponse } from './auth/auth.models';
@@ -70,7 +70,13 @@ describe('App', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter(routes),
+        provideRouter(
+          routes,
+          withInMemoryScrolling({
+            anchorScrolling: 'enabled',
+            scrollPositionRestoration: 'enabled',
+          }),
+        ),
         { provide: SpacesApiService, useValue: spacesApiStub },
       ],
     }).compileComponents();
@@ -261,5 +267,33 @@ describe('App', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Admin');
+  });
+
+  it('shows the registration nav link when anonymous and hides it when authenticated', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    const topnav = fixture.nativeElement.querySelector('.topnav');
+    expect(topnav?.textContent).toContain('Registrati');
+
+    const session = TestBed.inject(AuthSessionService);
+    session.store(LOGIN_RESPONSE);
+    fixture.detectChanges();
+
+    expect(topnav?.textContent).not.toContain('Registrati');
+  });
+
+  it('scrolls to #registrazione after render when url has the registration fragment', () => {
+    window.history.replaceState({}, '', '/?returnUrl=%2Finvitations%2Fabc#registrazione');
+    const scrollSpy = spyOn(HTMLElement.prototype, 'scrollIntoView');
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth' });
+    const targetElement = scrollSpy.calls.mostRecent()?.object as HTMLElement;
+    expect(targetElement?.id).toBe('registrazione');
+
+    window.history.replaceState({}, '', '/');
   });
 });
