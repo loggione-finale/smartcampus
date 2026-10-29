@@ -7,12 +7,12 @@ Project Work ITS Bari – Novembre 2026.
 
 ## Stato
 
-Progetto appena avviato: il perimetro è ancora da concordare con il Product Owner. Le decisioni prese
-vanno registrate in [`docs/decisions/`](docs/decisions/).
+Consegnato il **29/10/2026**: due Sprint e un iper-sprint, con il perimetro e le regole concordati con il Product
+Owner ([registro delle decisioni](docs/analysis/po-decisions.md)).
 
-Consegna: **29/10/2026**.
-
-- **[Promemoria: che cosa stiamo facendo e come](docs/project-overview.md)**
+- **[Guida al progetto (hand-off): da leggere per primo](docs/HANDOFF.md)**
+- [Chi ha fatto cosa e perché](docs/team-work-map.md)
+- [Promemoria: che cosa stiamo facendo e come](docs/project-overview.md)
 - **[Brainstorming del 26/10: nuovo perimetro e divisione del lavoro](docs/analysis/brainstorming-2026-10-26.md)**
 - [Analisi del progetto](docs/analysis/project-analysis.md)
 - [Analisi dei requisiti rispetto alle slide](docs/analysis/requirements-analysis.md)
