@@ -91,8 +91,8 @@ Una riga a persona, dopo aver seguito il percorso nel browser:
 | Sistema | Browser | Chi | Data | Passi riusciti | Differenze | Bug aperti |
 |---|---|---|---|---|---|---|
 | Windows 11 | Browser integrato dell'app Claude (Chromium), **guidato da Claude Code con lo strumento di automazione, non a mano** | asprenolapo con Claude Code | 28/10 sera su `main` `1d42f2b`; 29/10 verso le 11:40 sul branch della #272 (`ce9c79e`), prima della fusione | Eseguiti in parte: **1** (solo accesso riuscito, non la password sbagliata), **4** (prenotazione da `/book` con spazio e orari diversi), **13** (gruppo con un solo ospite non registrato: mail `.eml`, registrazione, login, conferma, le mie prenotazioni), **14** (solo la parte admin: dashboard, avvisi, report). In più: catalogo con le fasce e "Prenota" verso `/book`, registrazione su `/register`, messaggio all'admin al posto del form. **Non eseguiti nel browser:** 2, 3, 5–12, 15 (provati sull'API) | Link della mail che non scorreva al form, etichetta dei chip sovrapposta, finestre del catalogo diverse dalle fasce, doppio pulsante "Prenota" | Nessuno aperto: corretti con #259, #263, #253, #273 |
-| Linux o macOS | | | | | | |
-| Smartphone (ora di Roma e layout stretto) | | | | | | |
+| Linux (Fedora) | Non indicato | Rhaastrake | 29/10 | Percorso della demo nel browser: come atteso (esito riferito da asprenolapo il 29/10) | Nessuna | Nessuno |
+| Smartphone (ora di Roma e layout stretto) | Dispositivo e browser non indicati | fedeericodl, a mano | 29/10 | Accesso, catalogo e navigazione; layout stretto e orari in ora di Roma corretti ([commento su #93](https://github.com/loggione-finale/smartcampus/issues/93#issuecomment-6495713905)) | Nessuna | Nessuno |
 
 ## Ogni componente spiega il proprio contributo
 
