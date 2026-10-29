@@ -1,7 +1,7 @@
 # SmartCampus: guida al progetto (hand-off)
 
 > Il punto di partenza per chi prende in mano il progetto: valutatori, nuovi membri, noi stessi fra qualche mese.
-> Riassume e rimanda ai documenti di dettaglio, senza ripeterli. Aggiornata il 29/10/2026 sul `main` della release `v0.2.1`.
+> Riassume e rimanda ai documenti di dettaglio, senza ripeterli. Aggiornata il 29/10/2026 sul `main` dopo la release `v0.2`.
 
 ## 1. Il prodotto in breve
 
@@ -31,7 +31,7 @@ prenotazioni, uso dichiarato e dati mancanti.
 | Piattaforma | Avvio con un comando, CI su ogni PR, prove di sistema | `scripts/dev-up`; Actions |
 
 Rilasci: [`v0.1`](https://github.com/loggione-finale/smartcampus/releases/tag/v0.1) (Sprint 1) e [`v0.2`](https://github.com/loggione-finale/smartcampus/releases/tag/v0.2) (Sprint 2 e
-iper-sprint) e `v0.2.1` (interfaccia uniforme e correzioni dopo la `v0.2`). Cosa è entrato con l'iper-sprint del 29/10: [piano](hyper-sprint-2026-10-29.md) e note
+iper-sprint). Le PR fuse dopo la `v0.2` (#251, #269, #271–#276: interfaccia uniforme e correzioni) **non sono ancora in una release**: la `v0.2.1` si pubblica dopo le prove della consegna. Cosa è entrato con l'iper-sprint del 29/10: [piano](hyper-sprint-2026-10-29.md) e note
 della `v0.2`.
 
 ## 3. Architettura in una pagina

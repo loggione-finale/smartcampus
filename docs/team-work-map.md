@@ -1,23 +1,23 @@
 # Mappa del lavoro: chi ha fatto cosa e perché
 
-> Fonte: le PR fuse su `main` dal 26/10 al 29/10 alle 12:30 (GitHub), con le issue e le decisioni che le hanno
+> Fonte: le PR fuse su `main` dal 26/10 al 29/10 alle 12:15 (GitHub), con le issue e le decisioni che le hanno
 > motivate. Serve alla presentazione: ognuno rilegge la propria sezione e sa spiegare il proprio contributo e il suo
 > perché (slide 69, "evitare i silos"; [Chi spiega cosa](presentation-outline.md#chi-spiega-cosa)).
 > Le PR dell'iper-sprint del 29/10 sono nella sezione [Iper-sprint](#iper-sprint-2910).
 
 ## In sintesi
 
-122 PR fuse in quattro giorni. Le review contano le PR di altri approvate o rimandate con modifiche.
+122 PR fuse in quattro giorni (somma delle righe: 28+24+17+16+15+14+8). Le review contano le PR di altri approvate o rimandate con modifiche, contate il 29/10 alle 12:15.
 
 | Persona | Area | PR fuse | Review su PR di altri |
 |---|---|---|---|
-| asprenolapo | Coordinamento (facilitatore Scrum), piattaforma, CI, processo, prove di sistema | 22 | 21 |
-| Rhaastrake | Bookings: prenotazioni, vincoli, fasce; demo e presentazione | 21 | 33 |
-| FranDeSa456 | Gruppi e inviti, email, concorrenza, sicurezza di Bookings | 15 | 17 |
-| antoStr | Area admin, dalle API alle pagine | 14 | 34 |
-| fedeericodl | Users e accesso, disponibilità, commento finale, dati sintetici | 14 | 25 |
-| AldAndrew0 | Spaces: catalogo, disponibilità, strumenti | 10 | 5 |
-| Leo-prova | Frontend: struttura, registrazione, login, prenotazione | 7 | 7 |
+| asprenolapo | Coordinamento (facilitatore Scrum), piattaforma, CI, processo, prove di sistema | 28 | 23 |
+| Rhaastrake | Bookings: prenotazioni, vincoli, fasce; demo e presentazione | 24 | 41 |
+| FranDeSa456 | Gruppi e inviti, email, concorrenza, sicurezza di Bookings | 16 | 21 |
+| antoStr | Area admin, dalle API alle pagine | 15 | 39 |
+| fedeericodl | Users e accesso, disponibilità, commento finale, dati sintetici | 17 | 34 |
+| AldAndrew0 | Spaces: catalogo, disponibilità, strumenti | 14 | 11 |
+| Leo-prova | Frontend: struttura, registrazione, login, prenotazione | 8 | 10 |
 
 Il numero di righe cambiate non è una misura del lavoro: comprende file generati, come `package-lock.json`.
 
@@ -131,7 +131,7 @@ Dopo la Review con il PO del 28/10 sera: regole confermate, richieste R1–R9 e 
 | asprenolapo | #237, #254, #256, #265, #271, #272, #273 | Decisioni del PO e piano; scenario 5 ripetuto e `403` documentato; mappa, guida e speech; agenti; unione della #255 di antoStr con `main` e doppio pulsante "Prenota" |
 | Rhaastrake | #257, #260, #264 | Massimo 15 giorni di anticipo (decisione 32); limite per fascia anche per i partecipanti (decisione 31); avvio su Linux con SELinux |
 | FranDeSa456 | #250, #252, #274 | Data e ora nelle mail (R1); card dell'invito completa (R3); testo della mail di annullamento |
-| antoStr | #266, e #255 unita in #272 | Controllo dei requisiti admin (H10) e correzione del proxy che dava `404` all'area admin; stile uniforme delle pagine; audit del backend che ha trovato i difetti di Users |
+| antoStr | #266 (fusa); #255 chiusa, ripresa e unita a `main` da asprenolapo con la #272 | Controllo dei requisiti admin (H10, esito in #243) e correzione del proxy che dava `404` all'area admin; lo stile uniforme delle pagine della #255; audit del backend, i cui difetti su Users sono descritti in #261 e corretti da fedeericodl con la #267 |
 | fedeericodl | #259, #267, #251 | "Registrati" nascosto dopo l'accesso (R5); email dei gruppi e dati personali in Users (dall'audit); commenti tecnici in inglese |
 | AldAndrew0 | #253, #258, #269, #275 | Finestre del catalogo uguali alle fasce (decisione 29); 15 spazi (R6); "Prenota" dalla card (R7); percorso della demo aggiornato |
 | Leo-prova | #263 | Form di prenotazione: data massima, messaggio per l'admin, slider, etichetta dei chip (R2, R4) |
