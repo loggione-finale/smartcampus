@@ -172,7 +172,29 @@ describe('InvitationsPage', () => {
     expect(el.textContent).toContain('Aula 1');
     expect(el.textContent).toContain('Edificio A');
     expect(el.textContent).toContain('09:00 – 11:00');
-    expect(el.textContent).toContain('2 partecipanti');
+    expect(el.textContent).toContain(`2 invitati oltre all'organizzatore`);
+  });
+
+  it('shows the duration next to the time range', () => {
+    const fixture = createPage();
+
+    http.expectOne('/api/invitations/mine').flush([INVITED]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    // Whitespace collapses differently between spans; compare without spaces.
+    const text = (el.textContent ?? '').replace(/\s+/g, '');
+    expect(text).toContain('09:00–11:00·2ore');
+  });
+
+  it('shows the singular form with one participant', () => {
+    const fixture = createPage();
+
+    http.expectOne('/api/invitations/mine').flush([{ ...INVITED, participantCount: 1 }]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain(`1 invitato oltre all'organizzatore`);
   });
 
   it('shows the empty state when there are no invitations', () => {

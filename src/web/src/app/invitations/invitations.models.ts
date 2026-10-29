@@ -62,3 +62,31 @@ export function formatInvitationTimeRange(startIso: string, endIso: string): str
 
   return `${timeFormatter.format(new Date(start))} – ${timeFormatter.format(new Date(end))}`;
 }
+
+/** Rounded duration in hours such as "2 ore"; minutes are shown only below two hours. */
+export function formatInvitationDuration(startIso: string, endIso: string): string {
+  const start = Date.parse(startIso);
+  const end = Date.parse(endIso);
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
+    return 'Durata non disponibile';
+  }
+
+  const minutes = Math.round((end - start) / 60000);
+  const hours = Math.floor(minutes / 60);
+  const remainderMinutes = minutes % 60;
+  if (hours === 0) {
+    return `${minutes} minuti`;
+  }
+  if (remainderMinutes === 0) {
+    return `${hours} ${hours === 1 ? 'ora' : 'ore'}`;
+  }
+  return `${hours} ${hours === 1 ? 'ora' : 'ore'} e ${remainderMinutes} minuti`;
+}
+
+/** "1 invitato oltre all'organizzatore" / "2 invitati oltre all'organizzatore". */
+export function formatInvitationParticipants(participantCount: number): string {
+  if (!Number.isFinite(participantCount) || participantCount < 0) {
+    return 'Partecipanti non disponibili';
+  }
+  return `${participantCount} ${participantCount === 1 ? 'invitato' : 'invitati'} oltre all'organizzatore`;
+}

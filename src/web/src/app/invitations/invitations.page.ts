@@ -11,6 +11,8 @@ import {
   Invitation,
   InvitationStatus,
   formatInvitationDate,
+  formatInvitationDuration,
+  formatInvitationParticipants,
   formatInvitationTimeRange,
 } from './invitations.models';
 
@@ -73,6 +75,14 @@ export class InvitationsPage implements OnInit {
 
   protected formatInvitationTimeRange(start: string, end: string): string {
     return formatInvitationTimeRange(start, end);
+  }
+
+  protected formatInvitationDuration(start: string, end: string): string {
+    return formatInvitationDuration(start, end);
+  }
+
+  protected formatInvitationParticipants(count: number): string {
+    return formatInvitationParticipants(count);
   }
 
   protected confirm(invitation: Invitation): void {
