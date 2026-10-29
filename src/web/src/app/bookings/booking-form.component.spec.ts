@@ -1,3 +1,4 @@
+import { isSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -24,6 +25,11 @@ const LOGIN_RESPONSE: LoginResponse = {
     role: 'User',
     createdAt: '2026-10-27T10:00:00Z',
   },
+};
+
+const ADMIN_LOGIN_RESPONSE: LoginResponse = {
+  ...LOGIN_RESPONSE,
+  user: { ...LOGIN_RESPONSE.user, role: 'Admin' },
 };
 
 const SPACES: SpaceDto[] = [
@@ -195,6 +201,51 @@ describe('BookingFormComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('shows a specific message instead of the form for administrators', () => {
+    const session = TestBed.inject(AuthSessionService);
+    session.store(ADMIN_LOGIN_RESPONSE);
+
+    const fixture = TestBed.createComponent(BookingFormComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('form')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Gli amministratori non prenotano');
+    expect(fixture.nativeElement.textContent).toContain('area admin');
+  });
+
+  it('limits the booking date to 15 days from today', () => {
+    const fixture = TestBed.createComponent(BookingFormComponent);
+    const form = fixture.componentInstance as any;
+    fixture.detectChanges();
+
+    const dateInput = fixture.nativeElement.querySelector('input[type="date"]');
+    expect(dateInput.getAttribute('min')).toBe(form.minimumBookingDate);
+    expect(dateInput.getAttribute('max')).toBe(form.maximumBookingDate);
+    const days =
+      (Date.parse(`${form.maximumBookingDate}T00:00:00Z`) -
+        Date.parse(`${form.minimumBookingDate}T00:00:00Z`)) /
+      86400000;
+    expect(days).toBe(15);
+
+    fillValidBooking(form);
+    const [year, month, day] = form.maximumBookingDate.split('-').map(Number);
+    const beyond = new Date(year, month - 1, day + 1);
+    form.bookingForm.patchValue({
+      date: new Date(beyond.getTime() - beyond.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 10),
+      start: '10:00',
+      end: '11:00',
+    });
+
+    form.submitBooking();
+    fixture.detectChanges();
+
+    expect(form.bookingFieldError('date')).toContain('15 giorni');
+    expect(fixture.nativeElement.textContent).toContain('15 giorni');
+    httpTesting.expectNone('/api/bookings');
+  });
+
   it('starts from a booking slot in the future and inside a valid band', () => {
     const form = createForm();
     const { date, start, end } = form.bookingForm.getRawValue();
@@ -335,6 +386,21 @@ describe('BookingFormComponent', () => {
     expect(form.bookingDuration()).toBe(60);
   });
 
+  it('derives the duration from the start and end fields', () => {
+    const fixture = TestBed.createComponent(BookingFormComponent);
+    const form = fixture.componentInstance as any;
+    fixture.detectChanges();
+    fillValidBooking(form);
+
+    expect(isSignal(form.bookingDuration)).toBeTrue();
+
+    form.bookingForm.patchValue(localSlotFromRome(romeDayOffset(1), '10:00', '12:30'));
+    fixture.detectChanges();
+
+    expect(form.bookingDuration()).toBe(150);
+    expect(fixture.nativeElement.textContent).toContain('150 minuti');
+  });
+
   it('shows the conflict returned by Bookings', () => {
     const fixture = TestBed.createComponent(BookingFormComponent);
     const form = fixture.componentInstance as any;
@@ -397,6 +463,22 @@ describe('BookingFormComponent', () => {
     form.removeParticipant('group@example.test');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.equipment-field')).toBeNull();
+  });
+
+  it('floats the participants label above the chips', () => {
+    const fixture = TestBed.createComponent(BookingFormComponent);
+    const form = fixture.componentInstance as any;
+    fixture.detectChanges();
+
+    form.addParticipant({ value: 'one@example.test', chipInput: { clear() {} } } as any);
+    fixture.detectChanges();
+
+    const label = fixture.nativeElement.querySelector(
+      '.participant-field label.mdc-floating-label',
+    );
+    expect(label).not.toBeNull();
+    expect(label.classList.contains('mdc-floating-label--float-above')).toBeTrue();
+    expect(fixture.nativeElement.querySelectorAll('.participant-field mat-chip-row').length).toBe(1);
   });
 
   it('shows the participant total and the capacity of the selected space', () => {
