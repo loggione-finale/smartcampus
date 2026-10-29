@@ -86,6 +86,8 @@ Decise con il PO: [registro delle decisioni](analysis/po-decisions.md).
     `ConnectionStrings__UsersTest`, `ConnectionStrings__SpacesTest` e, per i test di concorrenza di Bookings,
     `BOOKINGS_TEST_CONNECTION_STRING`.
   - Senza queste variabili molti test falliscono per l'autenticazione: non è un difetto del codice.
+  - **Non esportare `JWT_SECRET`** nel terminale dei test: i servizi la preferiscono alla chiave dei test e i test
+    d'integrazione rispondono `401`.
 - **Problemi frequenti**: tabella nel [README](../README.md#problemi-frequenti).
 
 ## 6. Mappa del repository

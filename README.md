@@ -58,10 +58,12 @@ Il backlog vive nelle **Issue** e nel progetto **Loggione Roadmap** dell'organiz
 ### 1. Scarica il repository
 
 ```bash
-git clone https://github.com/loggione-finale/smartcampus.git
+git clone -c core.longpaths=true https://github.com/loggione-finale/smartcampus.git
 cd smartcampus
-git config core.longpaths true   # solo su Windows
 ```
+
+Su Windows `-c core.longpaths=true` serve già durante il clone: alcuni percorsi superano i 260 caratteri se la
+cartella di partenza è lunga, e senza l'opzione il checkout si ferma con `Filename too long`.
 
 ### 2. Prepara il file `.env` (una volta per PC)
 
@@ -167,7 +169,7 @@ cd src/web && npm test -- --watch=false
 | `failed to connect to the docker API` | Docker Desktop non è avviato |
 | `required variable ... is missing a value: Imposta ... nel file .env` | Manca una password nel `.env`: aprilo e compila tutte e 5 le password |
 | Porta 5432 o 27017 già occupata | Cambia `POSTGRES_PORT` o `MONGO_PORT` nel `.env` e la porta nella stringa di connessione |
-| `Filename too long` (Windows) | `git config core.longpaths true` |
+| `Filename too long` (Windows) | Durante il clone: rifallo con `git clone -c core.longpaths=true ...`. Se il clone appena fatto si è fermato: dentro la cartella `git config core.longpaths true` e poi `git reset --hard HEAD` (solo su un clone nuovo, senza modifiche tue) |
 | Hai rilanciato `cp .env.example .env` o cambiato le password dopo il primo avvio | `docker compose down -v` e di nuovo `up` (cancella i dati locali): utenti e password dei database si creano solo al primo avvio |
 | `JWT signing key is not configured` (Bookings) | Manca la chiave: lancia `scripts/dev-up`, oppure imposta `Jwt:SigningKey` come sopra |
 | `401` sulle prenotazioni dopo un login riuscito | Users e Bookings hanno chiavi JWT diverse: usa lo stesso `JWT_SECRET` per tutti e tre |
