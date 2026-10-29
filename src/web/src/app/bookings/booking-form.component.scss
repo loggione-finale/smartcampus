@@ -42,6 +42,16 @@
   mat-form-field { width: 100%; }
 }
 
+.admin-notice {
+  margin: 0;
+  padding: clamp(24px, 4vw, 48px);
+  color: var(--ink);
+  background: var(--ground);
+  font-size: clamp(19px, 1.5vw, 22px);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .booking-times { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .booking-submit { min-height: 52px; color: var(--cream) !important; background: var(--night) !important; font-weight: 800; }
 .booking-feedback { margin: 4px 0 0; padding: 14px 16px; font-weight: 700; }
@@ -130,5 +140,6 @@
 @media (max-width: 600px) {
   .booking { padding-inline: 20px; }
   .booking-form { padding: 20px; box-shadow: 8px 8px 0 var(--night); }
+  .admin-notice { padding: 20px; }
   .booking-times { grid-template-columns: 1fr; gap: 0; }
 }
