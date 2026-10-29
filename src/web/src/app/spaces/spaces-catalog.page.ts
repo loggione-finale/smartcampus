@@ -23,6 +23,7 @@ import {
   extractSpaceFeatures,
   formatEquipmentLabel,
   formatFloorLabel,
+  bookingHref,
   romeLocalToUtcIso,
   todayInRome,
   utcIsoToRomeTime,
@@ -211,7 +212,8 @@ export class SpacesCatalogPage implements OnInit {
   }
 
   protected spaceBookingHref(spaceId: string): string {
-    return `/?spazio=${encodeURIComponent(spaceId)}#prenota`;
+    const slot = this.appliedSlot();
+    return bookingHref(spaceId, slot?.startIso, slot?.endIso);
   }
 
   protected spaceAvailabilityHref(spaceId: string): string {

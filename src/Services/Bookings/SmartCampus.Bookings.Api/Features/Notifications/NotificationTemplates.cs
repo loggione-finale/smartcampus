@@ -43,7 +43,7 @@ public static class NotificationTemplates
         $"Sei stato invitato alla prenotazione {booking.SpaceNameSnapshot} " +
         $"({Period(booking)}). Registrati sul portale entro {CampusTime(invitation.ExpiresAt):dd/MM/yyyy HH:mm} " +
         $"e conferma il tuo invito. " +
-        $"Registrati qui: {webAppBaseUrl.TrimEnd('/')}/?returnUrl=%2Finvitations%2F{invitation.Id}#registrazione",
+        $"Registrati qui: {webAppBaseUrl.TrimEnd('/')}/register?returnUrl=%2Finvitations%2F{invitation.Id}",
         "invitation",
         booking.Id);
 

@@ -1,0 +1,45 @@
+// The form on the lilac field, the rules of the house beside it
+.book-body {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+  gap: clamp(32px, 5vw, 72px);
+  align-items: start;
+}
+
+.book-form {
+  padding: clamp(16px, 3vw, 40px);
+  background: var(--lilac);
+}
+
+.book-notes {
+  position: sticky;
+  top: 104px;
+
+  h2 {
+    margin-bottom: 20px;
+    font-size: clamp(24px, 2.4vw, 32px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+
+  ul {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-left: 20px;
+  }
+
+  li::marker {
+    color: var(--brand);
+  }
+}
+
+@media (max-width: 900px) {
+  .book-body {
+    grid-template-columns: 1fr;
+  }
+
+  .book-notes {
+    position: static;
+  }
+}

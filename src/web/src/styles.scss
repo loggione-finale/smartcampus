@@ -14,6 +14,39 @@
   --gutter: clamp(20px, 4vw, 64px);
   --section: clamp(96px, 14vw, 200px);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --muted: #4b4663;
+  --line: #d9d2e8;
+  --danger: #a32d2d;
+  --danger-ink: #7a2119;
+  --danger-field: #ffe8e4;
+  --success-ink: #10462f;
+  --success-field: #e3f7ec;
+  --warn-ink: #5a3600;
+  --warn-field: #fff1d6;
+
+  // Material: the prebuilt theme takes the campus face, the brand hue and square buttons
+  --mat-sys-primary: var(--brand);
+  --mat-sys-on-primary: var(--on-dark);
+  --mat-sys-primary-container: var(--lilac);
+  --mat-sys-on-primary-container: var(--ink);
+  --mat-sys-body-large-font: var(--font-sans);
+  --mat-sys-body-medium-font: var(--font-sans);
+  --mat-sys-body-small-font: var(--font-sans);
+  --mat-sys-label-large-font: var(--font-sans);
+  --mat-sys-label-medium-font: var(--font-sans);
+  --mat-sys-label-small-font: var(--font-sans);
+  --mat-sys-title-large-font: var(--font-sans);
+  --mat-sys-title-medium-font: var(--font-sans);
+  --mat-sys-title-small-font: var(--font-sans);
+  --mat-sys-headline-small-font: var(--font-sans);
+  --mat-button-filled-container-shape: 0;
+  --mat-button-outlined-container-shape: 0;
+  --mat-button-text-container-shape: 0;
+  --mat-button-protected-container-shape: 0;
+  --mat-button-tonal-container-shape: 0;
+  --mat-button-text-label-text-color: var(--night);
+  --mat-button-text-label-text-size: 16px;
+  --mat-button-text-label-text-weight: 700;
 }
 
 *,
@@ -79,12 +112,44 @@ dd {
     transform: scale(0.97);
   }
 
+  // Colour only: a lift moved the button out from under the cursor and made it flicker
   @media (hover: hover) {
     &:hover {
       --mat-button-filled-container-color: var(--brand);
-      transform: translateY(-3px);
     }
   }
+}
+
+// Secondary action: the same square, drawn as an outline
+.btn-line.mat-mdc-outlined-button {
+  --mat-button-outlined-outline-color: var(--night);
+  --mat-button-outlined-label-text-color: var(--night);
+  --mat-button-outlined-container-height: 56px;
+  --mat-button-outlined-label-text-weight: 700;
+  --mat-button-outlined-label-text-size: 16px;
+  --mat-button-outlined-horizontal-padding: 28px;
+  transition: background-color 0.25s;
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--lilac);
+    }
+  }
+}
+
+.btn-danger.mat-mdc-unelevated-button {
+  --mat-button-filled-container-color: var(--danger);
+
+  @media (hover: hover) {
+    &:hover {
+      --mat-button-filled-container-color: var(--danger-ink);
+    }
+  }
+}
+
+.btn-line.btn-danger.mat-mdc-outlined-button {
+  --mat-button-outlined-outline-color: var(--danger);
+  --mat-button-outlined-label-text-color: var(--danger);
 }
 
 .sc-snackbar.mat-mdc-snack-bar-container {
@@ -108,6 +173,318 @@ dd {
   --mat-menu-item-hover-state-layer-color: var(--cream);
   --mat-menu-item-focus-state-layer-color: var(--cream);
   min-width: 240px;
+}
+
+// Routed pages: one frame under the fixed bar, on the document scroll
+app-root > router-outlet + * {
+  display: block;
+  min-height: 100svh;
+  padding-top: 72px;
+  background: var(--ground);
+}
+
+// Page head: the hero's indigo field, its faded campus photo and its cream rule
+.page-head {
+  --focus: var(--cream);
+  position: relative;
+  padding: clamp(40px, 6vw, 88px) var(--gutter) clamp(48px, 6vw, 80px);
+  overflow: hidden;
+  color: var(--on-dark);
+  background: var(--night);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/assets/students-walking-towards-komaba-campus-university-of.jpg') center 40% / cover;
+    mix-blend-mode: luminosity;
+    opacity: 0.18;
+  }
+
+  h1 {
+    max-width: 20ch;
+    font-size: clamp(40px, 5.6vw, 84px);
+    font-weight: 900;
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+}
+
+.page-head-inner,
+.page-body {
+  position: relative;
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.page-title {
+  padding-left: clamp(20px, 2vw, 32px);
+  border-left: 3px solid var(--cream);
+}
+
+.page-lead {
+  max-width: 56ch;
+  margin-top: 24px;
+  font-size: clamp(18px, 1.5vw, 21px);
+  color: var(--cream);
+}
+
+.page-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 32px;
+
+  .btn.mat-mdc-unelevated-button {
+    --mat-button-filled-container-color: var(--cream);
+    --mat-button-filled-label-text-color: var(--ink);
+  }
+}
+
+.back-link,
+.page-nav a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--cream);
+  text-decoration: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 6px;
+    height: 2px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s var(--ease);
+  }
+
+  &:hover::after,
+  &:focus-visible::after,
+  &[aria-current='page']::after {
+    transform: none;
+  }
+}
+
+.back-link {
+  margin-bottom: clamp(20px, 3vw, 40px);
+}
+
+.page-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 32px;
+  margin-bottom: clamp(20px, 3vw, 40px);
+
+  a[aria-current='page'] {
+    font-weight: 800;
+  }
+}
+
+.page-body {
+  // content-box: the body's text starts on the same left edge as the page head
+  box-sizing: content-box;
+  padding: clamp(40px, 6vw, 88px) var(--gutter) clamp(80px, 10vw, 144px);
+}
+
+.page-section + .page-section {
+  margin-top: clamp(56px, 7vw, 104px);
+}
+
+.section-title {
+  margin-bottom: 24px;
+  font-size: clamp(26px, 2.8vw, 38px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+// Lilac field: the homepage's step card, reused for forms and filters
+.panel {
+  padding: clamp(24px, 4vw, 48px);
+  background: var(--lilac);
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+// Messages: a tone step, never a coloured edge
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 24px;
+  padding: 16px 20px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--lilac);
+}
+
+.notice-error {
+  color: var(--danger-ink);
+  background: var(--danger-field);
+}
+
+.notice-success {
+  color: var(--success-ink);
+  background: var(--success-field);
+}
+
+.notice-warn {
+  color: var(--warn-ink);
+  background: var(--warn-field);
+}
+
+// Loading, empty and failed states keep the section's frame
+.state-box {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: clamp(40px, 7vw, 88px) 24px;
+  text-align: center;
+  background: var(--lilac);
+
+  h2,
+  h3 {
+    font-size: clamp(26px, 3vw, 36px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    max-width: 52ch;
+  }
+
+  &.notice-error {
+    background: var(--danger-field);
+  }
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid color-mix(in srgb, var(--night) 20%, transparent);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: sc-spin 0.8s linear infinite;
+}
+
+@keyframes sc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Status beside a value: sentence case in the text face
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+  background: var(--lilac);
+}
+
+.badge-night {
+  color: var(--on-dark);
+  background: var(--night);
+}
+
+.badge-brand {
+  color: var(--on-dark);
+  background: var(--brand);
+}
+
+.badge-ok {
+  color: var(--success-ink);
+  background: var(--success-field);
+}
+
+.badge-warn {
+  color: var(--warn-ink);
+  background: var(--warn-field);
+}
+
+.badge-danger {
+  color: var(--danger-ink);
+  background: var(--danger-field);
+}
+
+.badge-muted {
+  color: var(--muted);
+  background: #efedf3;
+}
+
+.field-label {
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline 2px;
+  text-underline-offset: 6px;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--brand);
+  }
+}
+
+// Tables: rules and alignment, figures in tabular numerals
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td,
+  th.mat-mdc-header-cell,
+  td.mat-mdc-cell {
+    padding: 14px 16px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    text-align: left;
+    vertical-align: top;
+    color: var(--ink);
+    background: var(--ground);
+    border-bottom: 1px solid var(--line);
+  }
+
+  thead th,
+  th.mat-mdc-header-cell {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--muted);
+    border-bottom-color: var(--night);
+  }
+
+  th.num,
+  td.num {
+    text-align: right;
+  }
+}
+
+.table-wrap {
+  overflow-x: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

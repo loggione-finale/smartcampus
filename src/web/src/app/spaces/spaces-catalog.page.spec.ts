@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { SpacesCatalogPage } from './spaces-catalog.page';
 import {
+  bookingHref,
   SpaceDto,
   hasOverlappingUnavailability,
   romeLocalToUtcIso,
@@ -63,6 +64,13 @@ const SAMPLE_SPACES: SpaceDto[] = [
 ];
 
 describe('Spaces time & availability helpers', () => {
+  it('links Prenota to the booking page with the space and the optional slot', () => {
+    expect(bookingHref('a b')).toBe('/book?spazio=a+b');
+    expect(bookingHref('s1', '2026-10-30T09:00:00.000Z', '2026-10-30T10:00:00.000Z')).toBe(
+      '/book?spazio=s1&inizio=2026-10-30T09%3A00%3A00.000Z&fine=2026-10-30T10%3A00%3A00.000Z',
+    );
+  });
+
   it('converts 10:00 Europe/Rome to 09:00 UTC in winter and 08:00 UTC in summer', () => {
     expect(romeLocalToUtcIso('2026-01-15', '10:00')).toBe('2026-01-15T09:00:00.000Z');
     expect(romeLocalToUtcIso('2026-07-15', '10:00')).toBe('2026-07-15T08:00:00.000Z');
@@ -136,7 +144,7 @@ describe('SpacesCatalogPage', () => {
     expect(firstLink?.getAttribute('href')).toBe('/spaces/3f2a9c1e-0000-4000-8000-000000000001');
   });
 
-  it('shows a Prenota link on every card pointing to the home booking form with the space', () => {
+  it('shows a Prenota link on every card pointing to the booking form with the space', () => {
     fixture.detectChanges();
     httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
     fixture.detectChanges();
@@ -152,7 +160,7 @@ describe('SpacesCatalogPage', () => {
       const link = card.querySelector<HTMLAnchorElement>('[data-testid="book-space-link"]');
       expect(link).withContext(`card ${index} has no Prenota link`).not.toBeNull();
       expect(link?.textContent?.trim()).toBe('Prenota');
-      expect(link?.getAttribute('href')).toBe(`/?spazio=${SAMPLE_SPACES[index].id}#prenota`);
+      expect(link?.getAttribute('href')).toBe(`/book?spazio=${SAMPLE_SPACES[index].id}`);
     });
   });
 

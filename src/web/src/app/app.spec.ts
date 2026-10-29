@@ -1,8 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { FormControl, FormGroup } from '@angular/forms';
-import { Router, provideRouter, withInMemoryScrolling } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { AuthSessionService } from './auth/auth-session.service';
 import { LoginResponse } from './auth/auth.models';
@@ -35,18 +34,6 @@ const ADMIN_RESPONSE: LoginResponse = {
   user: { ...LOGIN_RESPONSE.user, role: 'Admin' },
 };
 
-type RegistrationTestApp = {
-  registrationForm: FormGroup<{
-    matricola: FormControl<string>;
-    firstName: FormControl<string>;
-    lastName: FormControl<string>;
-    email: FormControl<string>;
-    phoneNumber: FormControl<string>;
-    password: FormControl<string>;
-  }>;
-  submitRegistration(): void;
-};
-
 const spacesApiStub = {
   searchSpaces: () => of<SpaceDto[]>([]),
   getEquipmentCatalog: () => of<EquipmentCatalogItemDto[]>([]),
@@ -70,13 +57,7 @@ describe('App', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter(
-          routes,
-          withInMemoryScrolling({
-            anchorScrolling: 'enabled',
-            scrollPositionRestoration: 'enabled',
-          }),
-        ),
+        provideRouter(routes),
         { provide: SpacesApiService, useValue: spacesApiStub },
       ],
     }).compileComponents();
@@ -84,7 +65,6 @@ describe('App', () => {
   });
 
   afterEach(() => {
-    httpTesting.match((request) => request.url.endsWith('/health')).forEach((request) => request.flush({}));
     httpTesting.verify();
     sessionStorage.clear();
   });
@@ -101,150 +81,33 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Prenota.');
     expect(compiled.querySelectorAll('.space').length).toBe(4);
-    expect(compiled.querySelectorAll('.service').length).toBe(3);
+    // The homepage no longer exposes the services' health endpoints
+    expect(compiled.querySelector('#servizi')).toBeNull();
+    expect(compiled.querySelector('a[href*="/health"]')).toBeNull();
   });
 
-  it('renders the booking form in its own component', () => {
+  it('previews the booking on the home and continues on /book', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('app-booking-form #prenota')).not.toBeNull();
-    expect(compiled.querySelector('#booking-title')?.textContent).toContain('Prenota senza sorprese');
-  });
+    expect(compiled.querySelector('app-booking-teaser #prenota')).not.toBeNull();
+    expect(compiled.querySelector('app-booking-form')).toBeNull();
 
-  it('keeps the registration form invalid until all server rules are met', () => {
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance as unknown as RegistrationTestApp;
-    fixture.detectChanges();
-
-    app.registrationForm.patchValue({
-      matricola: '123',
-      firstName: 'A',
-      lastName: '',
-      email: 'not-an-email',
-      phoneNumber: '3331234567',
-      password: 'short',
-    });
-    app.submitRegistration();
-    fixture.detectChanges();
-
-    expect(app.registrationForm.invalid).toBeTrue();
-    expect(fixture.nativeElement.querySelectorAll('mat-error').length).toBeGreaterThan(0);
-  });
-
-  it('shows a duplicate email response on the email field', () => {
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance as unknown as RegistrationTestApp;
-    fixture.detectChanges();
-
-    app.registrationForm.setValue({
-      matricola: '1234567890',
-      firstName: 'Mario',
-      lastName: 'Rossi',
-      email: 'mario@example.test',
-      phoneNumber: '+393331234567',
-      password: 'Password123',
-    });
-    app.submitRegistration();
-
-    const request = httpTesting.expectOne('/api/users/auth/register');
-    expect(request.request.method).toBe('POST');
-    request.flush(
-      { detail: 'Email is already registered.' },
-      { status: 409, statusText: 'Conflict' },
-    );
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.textContent).toContain('Email is already registered.');
-    expect(fixture.nativeElement.textContent).toContain('Esiste già un account');
-  });
-
-  it('navigates to the login with returnUrl after registration without a session', async () => {
-    // Link dalla mail all'invitato non registrato (#233): la query sta prima del frammento.
-    window.history.replaceState({}, '', '/?returnUrl=%2Finvitations%2Fabc');
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance as unknown as RegistrationTestApp;
-    fixture.detectChanges();
-
-    app.registrationForm.setValue({
-      matricola: '1234567890',
-      firstName: 'Mario',
-      lastName: 'Rossi',
-      email: 'mario@example.test',
-      phoneNumber: '+393331234567',
-      password: 'Password123',
-    });
-    app.submitRegistration();
-
-    const request = httpTesting.expectOne('/api/users/auth/register');
-    expect(request.request.method).toBe('POST');
-    // La rotta /invitations è protetta: senza sessione l'authGuard manda al login con returnUrl.
-    request.flush({}, { status: 201, statusText: 'Created' });
+    // Without a session the booking page sends to the login, keeping the way back.
+    compiled.querySelector('app-booking-teaser form')!.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(TestBed.inject(Router).url).toBe('/login?returnUrl=%2Finvitations%2Fabc');
-    window.history.replaceState({}, '', '/');
+    expect(TestBed.inject(Router).url).toBe('/login?returnUrl=%2Fbook');
   });
 
-  it('navigates to the invitation after registration with a session', async () => {
-    // Come sopra, ma con la sessione attiva: si atterra direttamente sull'invito.
-    const session = TestBed.inject(AuthSessionService);
-    session.store(LOGIN_RESPONSE);
-    window.history.replaceState({}, '', '/?returnUrl=%2Finvitations%2Fabc');
+  it('keeps registration off the home and forwards old #registrazione links to /register', async () => {
     const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance as unknown as RegistrationTestApp;
     fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#registrazione')).toBeNull();
 
-    app.registrationForm.setValue({
-      matricola: '1234567890',
-      firstName: 'Mario',
-      lastName: 'Rossi',
-      email: 'mario@example.test',
-      phoneNumber: '+393331234567',
-      password: 'Password123',
-    });
-    app.submitRegistration();
-
-    const request = httpTesting.expectOne('/api/users/auth/register');
-    expect(request.request.method).toBe('POST');
-    request.flush({}, { status: 201, statusText: 'Created' });
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(TestBed.inject(Router).url).toBe('/invitations/abc');
-    // La pagina inviti caricata dalla rotta fa la sua GET: la chiudiamo qui.
-    httpTesting.match((r) => r.url.endsWith('/api/invitations/mine')).forEach((r) => r.flush([]));
-    window.history.replaceState({}, '', '/');
-  });
-
-  it('stays on the home after registration when returnUrl is external', async () => {
-    // returnUrl esterno (//host): safeReturnUrl lo scarta, si resta sulla home.
-    window.history.replaceState({}, '', '/?returnUrl=%2F%2Fevil.example');
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance as unknown as RegistrationTestApp;
-    fixture.detectChanges();
-
-    app.registrationForm.setValue({
-      matricola: '1234567890',
-      firstName: 'Mario',
-      lastName: 'Rossi',
-      email: 'mario@example.test',
-      phoneNumber: '+393331234567',
-      password: 'Password123',
-    });
-    app.submitRegistration();
-
-    const request = httpTesting.expectOne('/api/users/auth/register');
-    expect(request.request.method).toBe('POST');
-    request.flush({}, { status: 201, statusText: 'Created' });
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(TestBed.inject(Router).url).toBe('/');
-    expect(fixture.nativeElement.textContent).toContain('Il tuo account è stato creato');
-    window.history.replaceState({}, '', '/');
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/?returnUrl=%2Finvitations%2Fabc#registrazione');
+    expect(router.url).toBe('/register?returnUrl=%2Finvitations%2Fabc');
   });
 
   it('shows the login entry when anonymous and the personal area when authenticated', () => {
@@ -267,33 +130,5 @@ describe('App', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Admin');
-  });
-
-  it('shows the registration nav link when anonymous and hides it when authenticated', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    const topnav = fixture.nativeElement.querySelector('.topnav');
-    expect(topnav?.textContent).toContain('Registrati');
-
-    const session = TestBed.inject(AuthSessionService);
-    session.store(LOGIN_RESPONSE);
-    fixture.detectChanges();
-
-    expect(topnav?.textContent).not.toContain('Registrati');
-  });
-
-  it('scrolls to #registrazione after render when url has the registration fragment', () => {
-    window.history.replaceState({}, '', '/?returnUrl=%2Finvitations%2Fabc#registrazione');
-    const scrollSpy = spyOn(HTMLElement.prototype, 'scrollIntoView');
-
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth' });
-    const targetElement = scrollSpy.calls.mostRecent()?.object as HTMLElement;
-    expect(targetElement?.id).toBe('registrazione');
-
-    window.history.replaceState({}, '', '/');
   });
 });

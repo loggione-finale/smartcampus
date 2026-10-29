@@ -1,0 +1,34 @@
+<section class="booking" id="prenota" aria-labelledby="booking-title">
+  <div class="booking-intro" data-reveal>
+    <h2 id="booking-title">Prenota senza sorprese.</h2>
+    <p>
+      Scegli lo spazio, il giorno e l’ora. Nella pagina di prenotazione aggiungi durata, partecipanti e
+      attrezzature: il sistema controlla sovrapposizioni e disponibilità prima di confermare.
+    </p>
+  </div>
+
+  <form class="booking-teaser" [formGroup]="form" (ngSubmit)="continueToBooking()" novalidate data-reveal>
+    <mat-form-field appearance="outline">
+      <mat-label>Spazio</mat-label>
+      <mat-select formControlName="spaceId">
+        @for (space of spaces(); track space.id) {
+          <mat-option [value]="space.id">{{ space.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="teaser-times">
+      <mat-form-field appearance="outline">
+        <mat-label>Giorno</mat-label>
+        <input matInput type="date" formControlName="date" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Inizio</mat-label>
+        <input matInput type="time" step="900" formControlName="start" />
+      </mat-form-field>
+    </div>
+
+    <button mat-flat-button class="btn" type="submit">Continua la prenotazione</button>
+    <a class="text-link" href="/spaces">Oppure cerca nel catalogo</a>
+  </form>
+</section>

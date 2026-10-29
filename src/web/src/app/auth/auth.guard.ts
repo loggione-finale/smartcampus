@@ -41,3 +41,13 @@ export const adminGuard: CanActivateFn = (_route, state) => {
 
   return true;
 };
+
+// Invitation emails sent before registration had its own page link to /?returnUrl=…#registrazione.
+export const legacyRegistrationGuard: CanActivateFn = (_route, state) => {
+  const router = inject(Router);
+  const tree = router.parseUrl(state.url);
+  if (tree.fragment !== 'registrazione') {
+    return true;
+  }
+  return router.createUrlTree(['/register'], { queryParams: tree.queryParams });
+};

@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { AdminNavComponent } from '../admin/admin-nav.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -13,6 +14,7 @@ import { describeAdminError } from './spaces-admin-error';
 @Component({
   selector: 'app-space-form-page',
   imports: [
+    AdminNavComponent,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,

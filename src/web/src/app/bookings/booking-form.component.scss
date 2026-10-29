@@ -1,43 +1,9 @@
-// Booking: group participants and equipment stay secondary to the date and space choice
-.booking {
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(360px, 7fr);
-  gap: clamp(40px, 8vw, 128px);
-  align-items: start;
-  padding: var(--section) var(--gutter);
-  color: var(--cream);
-  background: var(--brand);
-}
-
-.booking-intro {
-  max-width: 42ch;
-
-  h2 {
-    margin: 12px 0 28px;
-    font-size: clamp(42px, 5vw, 76px);
-    line-height: 0.96;
-    letter-spacing: -0.04em;
-  }
-
-  > p:not(.eyebrow):not(.booking-note) {
-    font-size: clamp(19px, 1.5vw, 22px);
-    line-height: 1.45;
-  }
-}
-
-.booking-note {
-  margin-top: 28px;
-  color: color-mix(in srgb, var(--cream) 72%, transparent);
-  font-size: 14px;
-}
-
 .booking-form {
   display: grid;
   gap: 16px;
   padding: clamp(24px, 4vw, 48px);
   color: var(--ink);
-  background: var(--cream);
-  box-shadow: 16px 16px 0 var(--night);
+  background: var(--ground);
 
   mat-form-field { width: 100%; }
 }
@@ -53,7 +19,7 @@
 }
 
 .booking-times { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.booking-submit { min-height: 52px; color: var(--cream) !important; background: var(--night) !important; font-weight: 800; }
+.booking-submit { width: 100%; }
 .booking-feedback { margin: 4px 0 0; padding: 14px 16px; font-weight: 700; }
 .booking-feedback.success { color: #164d35; background: #d6f3df; }
 .booking-feedback.error { color: #8f1d2c; background: #ffe0e2; }
@@ -67,7 +33,6 @@
   padding: 14px 16px;
   color: #7a2119;
   background: #ffe8e4;
-  border-left: 4px solid var(--offline);
 }
 
 .field-error { margin: 0; color: #8f1d2c; font-size: 14px; font-weight: 600; }
@@ -129,17 +94,8 @@
   font-size: 13px;
 }
 
-@media (max-width: 860px) {
-  .booking {
-    grid-template-columns: 1fr;
-  }
-
-  .booking-intro { max-width: 52ch; }
-}
-
 @media (max-width: 600px) {
-  .booking { padding-inline: 20px; }
-  .booking-form { padding: 20px; box-shadow: 8px 8px 0 var(--night); }
+  .booking-form { padding: 20px; }
   .admin-notice { padding: 20px; }
   .booking-times { grid-template-columns: 1fr; gap: 0; }
 }

@@ -1,12 +1,11 @@
 import { Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { AuthSessionService } from '../auth/auth-session.service';
 
 @Component({
   selector: 'app-account-page',
-  imports: [MatButtonModule, MatIconModule],
+  imports: [MatButtonModule],
   templateUrl: './account.page.html',
   styleUrl: './account.page.scss',
 })

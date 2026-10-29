@@ -110,7 +110,7 @@ public class PickupDirectoryEmailSenderTests : IDisposable
         // ExpiresAt coincides with the booking start: 09:00 UTC = 11:00 on 30/03/2033.
         Assert.Contains("Registrati sul portale entro 30/03/2033 11:00", invitationEmail.Body);
         Assert.Contains(
-            "http://localhost:4200/?returnUrl=%2Finvitations%2F" + unregistered.Id + "#registrazione",
+            "http://localhost:4200/register?returnUrl=%2Finvitations%2F" + unregistered.Id,
             invitationEmail.Body);
 
         var registeredEmail = NotificationTemplates.InvitationToRegistered(registered, booking, "http://localhost:4200");

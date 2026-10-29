@@ -19,6 +19,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { merge } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 import { AuthSessionService } from '../auth/auth-session.service';
 
 type BookingSpace = {
@@ -98,7 +99,7 @@ const BOOKING_BANDS: ReadonlyArray<readonly [number, number]> = [
 ];
 
 // First full hour that starts in the future inside a bookable band, whatever the device time zone.
-function defaultBookingSlot(now: Date = new Date()): { date: string; start: string; end: string } {
+export function defaultBookingSlot(now: Date = new Date()): { date: string; start: string; end: string } {
   const step = 15 * 60000;
   const firstSlot = Math.ceil((now.getTime() + 60000) / step) * step;
 
@@ -126,6 +127,39 @@ function defaultBookingSlot(now: Date = new Date()): { date: string; start: stri
   }
 
   return { date: localDate(now), start: '09:00', end: '10:00' };
+}
+
+// "Prenota" links from the home, the catalog and a space's day view: /book?spazio=<id>&inizio=<iso>&fine=<iso>.
+// A slot already under way starts at the next quarter hour; a past or malformed one falls back to
+// the default slot; a free span longer than four hours keeps its first hour.
+export function bookingPrefill(search: string, now: Date = new Date()): {
+  spaceId: string;
+  slot: { date: string; start: string; end: string } | null;
+} {
+  const params = new URLSearchParams(search);
+  let start = new Date(params.get('inizio') ?? '');
+  let end = new Date(params.get('fine') ?? '');
+  if (start <= now) {
+    const step = 15 * 60000;
+    start = new Date(Math.ceil((now.getTime() + 60000) / step) * step);
+  }
+  const valid =
+    !Number.isNaN(start.valueOf()) &&
+    !Number.isNaN(end.valueOf()) &&
+    end.getTime() - start.getTime() >= 30 * 60000;
+  if (valid && end.getTime() - start.getTime() > 240 * 60000) {
+    end = new Date(start.getTime() + 60 * 60000);
+  }
+  return {
+    spaceId: params.get('spazio') ?? '',
+    slot: valid
+      ? {
+          date: localDate(start),
+          start: hhmm(start.getHours() * 60 + start.getMinutes()),
+          end: hhmm(end.getHours() * 60 + end.getMinutes()),
+        }
+      : null,
+  };
 }
 
 function toBookingSpace(space: SpaceDto): BookingSpace {
@@ -232,10 +266,14 @@ export class BookingFormComponent {
   protected readonly participantError = signal('');
   protected readonly emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  private readonly initialSlot = defaultBookingSlot();
+  // Read from the route, not window.location: after the login redirect the browser URL may still be /login.
+  private readonly prefill = bookingPrefill(
+    new URLSearchParams(inject(ActivatedRoute, { optional: true })?.snapshot.queryParams ?? {}).toString(),
+  );
+  private readonly initialSlot = this.prefill.slot ?? defaultBookingSlot();
 
   protected readonly bookingForm = new FormGroup({
-    spaceId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    spaceId: new FormControl(this.prefill.spaceId, { nonNullable: true, validators: [Validators.required] }),
     date: new FormControl(this.initialSlot.date, { nonNullable: true, validators: [Validators.required] }),
     start: new FormControl(this.initialSlot.start, { nonNullable: true, validators: [Validators.required] }),
     end: new FormControl(this.initialSlot.end, { nonNullable: true, validators: [Validators.required] }),
