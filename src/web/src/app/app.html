@@ -4,7 +4,7 @@
   </a>
 
   <nav class="topnav" aria-label="Navigazione principale">
-    @for (link of navLinks; track link.href) {
+    @for (link of navLinks(); track link.href) {
       <a [href]="link.href">{{ link.label }}</a>
     }
   </nav>
@@ -25,7 +25,7 @@
     <mat-icon>menu</mat-icon>
   </button>
   <mat-menu #menu="matMenu" class="sc-menu" xPosition="before">
-    @for (link of navLinks; track link.href) {
+    @for (link of navLinks(); track link.href) {
       <a mat-menu-item [href]="link.href">
         <mat-icon>{{ link.icon }}</mat-icon>
         <span>{{ link.label }}</span>
