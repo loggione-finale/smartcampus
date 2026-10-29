@@ -298,6 +298,14 @@
                 {{ appliedSlot() ? 'Prenota questa fascia' : 'Prenota' }}
               </a>
               <a
+                mat-flat-button
+                class="btn card-book"
+                [href]="spaceBookingHref(space.id)"
+                data-testid="book-space-link"
+              >
+                Prenota
+              </a>
+              <a
                 class="card-action"
                 [href]="spaceAvailabilityHref(space.id)"
                 (click)="openSpaceAvailability($event, space.id)"

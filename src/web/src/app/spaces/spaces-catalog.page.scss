@@ -220,6 +220,12 @@
   --mat-button-filled-horizontal-padding: 24px;
 }
 
+.card-book {
+  display: flex;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
 .card-action {
   display: inline-flex;
   align-items: center;
