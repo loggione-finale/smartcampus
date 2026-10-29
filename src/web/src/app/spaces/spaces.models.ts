@@ -231,7 +231,7 @@ function getRomeOffsetMs(utcMs: number): number {
 }
 
 /**
- * Link to the booking form on the home page, preselecting the space and, when known, the slot
+ * Link to the booking page, preselecting the space and, when known, the slot
  * (UTC instants; the form shows them in the device time zone).
  */
 export function bookingHref(spaceId: string, startIso?: string, endIso?: string): string {
@@ -240,7 +240,7 @@ export function bookingHref(spaceId: string, startIso?: string, endIso?: string)
     params.set('inizio', startIso);
     params.set('fine', endIso);
   }
-  return `/?${params.toString()}#prenota`;
+  return `/book?${params.toString()}`;
 }
 
 /**

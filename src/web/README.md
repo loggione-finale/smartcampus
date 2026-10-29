@@ -64,7 +64,9 @@ npm test -- --watch=false --browsers=ChromeHeadless
 
 ## Prenotare uno spazio
 
-La form è disponibile nella sezione `#prenota`: seleziona spazio, data e fascia oraria, poi aggiungi
+La form è nella pagina `/book` (serve l'accesso). La home mostra un'anteprima (spazio, giorno, ora) che
+porta a `/book` già compilata, come i pulsanti "Prenota" del catalogo e della disponibilità
+(`/book?spazio=<id>&inizio=<iso>&fine=<iso>`). Nella pagina seleziona spazio, data e fascia oraria, poi aggiungi
 facoltativamente le email dei partecipanti. Le email non valide, i duplicati e l'email del responsabile
 vengono rifiutati; il form mostra il totale dei partecipanti e lo confronta con la capienza dell'aula
 (o con i posti liberi di un'aula mista) prima di inviare. Con almeno un partecipante compare la selezione

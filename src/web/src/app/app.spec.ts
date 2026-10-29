@@ -86,13 +86,18 @@ describe('App', () => {
     expect(compiled.querySelector('a[href*="/health"]')).toBeNull();
   });
 
-  it('renders the booking form in its own component', () => {
+  it('previews the booking on the home and continues on /book', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('app-booking-form #prenota')).not.toBeNull();
-    expect(compiled.querySelector('#booking-title')?.textContent).toContain('Prenota senza sorprese');
+    expect(compiled.querySelector('app-booking-teaser #prenota')).not.toBeNull();
+    expect(compiled.querySelector('app-booking-form')).toBeNull();
+
+    // Without a session the booking page sends to the login, keeping the way back.
+    compiled.querySelector('app-booking-teaser form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe('/login?returnUrl=%2Fbook');
   });
 
   it('keeps registration off the home and forwards old #registrazione links to /register', async () => {

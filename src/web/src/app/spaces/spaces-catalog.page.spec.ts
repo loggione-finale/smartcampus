@@ -64,10 +64,10 @@ const SAMPLE_SPACES: SpaceDto[] = [
 ];
 
 describe('Spaces time & availability helpers', () => {
-  it('links Prenota to the home booking form with the space and the optional slot', () => {
-    expect(bookingHref('a b')).toBe('/?spazio=a+b#prenota');
+  it('links Prenota to the booking page with the space and the optional slot', () => {
+    expect(bookingHref('a b')).toBe('/book?spazio=a+b');
     expect(bookingHref('s1', '2026-10-30T09:00:00.000Z', '2026-10-30T10:00:00.000Z')).toBe(
-      '/?spazio=s1&inizio=2026-10-30T09%3A00%3A00.000Z&fine=2026-10-30T10%3A00%3A00.000Z#prenota',
+      '/book?spazio=s1&inizio=2026-10-30T09%3A00%3A00.000Z&fine=2026-10-30T10%3A00%3A00.000Z',
     );
   });
 

@@ -1,7 +1,7 @@
 import { Component, ElementRef, afterNextRender, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { BookingFormComponent } from './bookings/booking-form.component';
+import { BookingTeaserComponent } from './bookings/booking-teaser.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -19,7 +19,7 @@ type Space = {
 @Component({
   selector: 'app-root',
   imports: [
-    BookingFormComponent,
+    BookingTeaserComponent,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
@@ -51,7 +51,7 @@ export class App {
   protected readonly navLinks = [
     { label: 'Come funziona', href: '/#come-funziona', icon: 'route' },
     { label: 'Spazi', href: '/#spazi', icon: 'meeting_room' },
-    { label: 'Prenota', href: '/#prenota', icon: 'event_available' },
+    { label: 'Prenota', href: '/book', icon: 'event_available' },
     { label: 'Contatti', href: '/#contatti', icon: 'mail' },
   ];
 

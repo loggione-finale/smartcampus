@@ -19,6 +19,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { merge } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 import { AuthSessionService } from '../auth/auth-session.service';
 
 type BookingSpace = {
@@ -90,7 +91,7 @@ const BOOKING_BANDS: ReadonlyArray<readonly [number, number]> = [
 ];
 
 // First full hour that starts in the future inside a bookable band, whatever the device time zone.
-function defaultBookingSlot(now: Date = new Date()): { date: string; start: string; end: string } {
+export function defaultBookingSlot(now: Date = new Date()): { date: string; start: string; end: string } {
   const step = 15 * 60000;
   const firstSlot = Math.ceil((now.getTime() + 60000) / step) * step;
 
@@ -120,7 +121,7 @@ function defaultBookingSlot(now: Date = new Date()): { date: string; start: stri
   return { date: localDate(now), start: '09:00', end: '10:00' };
 }
 
-// "Prenota" links from the catalog and a space's day view: /?spazio=<id>&inizio=<iso>&fine=<iso>#prenota.
+// "Prenota" links from the home, the catalog and a space's day view: /book?spazio=<id>&inizio=<iso>&fine=<iso>.
 // A slot already under way starts at the next quarter hour; a past or malformed one falls back to
 // the default slot; a free span longer than four hours keeps its first hour.
 export function bookingPrefill(search: string, now: Date = new Date()): {
@@ -257,7 +258,10 @@ export class BookingFormComponent {
   protected readonly participantError = signal('');
   protected readonly emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  private readonly prefill = bookingPrefill(window.location.search);
+  // Read from the route, not window.location: after the login redirect the browser URL may still be /login.
+  private readonly prefill = bookingPrefill(
+    new URLSearchParams(inject(ActivatedRoute, { optional: true })?.snapshot.queryParams ?? {}).toString(),
+  );
   private readonly initialSlot = this.prefill.slot ?? defaultBookingSlot();
 
   protected readonly bookingForm = new FormGroup({
