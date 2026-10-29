@@ -11,7 +11,10 @@ public static class BookingTestData
         DateTime end,
         SpaceAccessMode accessMode = SpaceAccessMode.Dedicated,
         BookingStatus status = BookingStatus.Confirmed,
-        Guid? organizerId = null)
+        Guid? organizerId = null,
+        bool cancelledByIsOrganizer = false,
+        Guid? cancelledBy = null,
+        string? cancellationReason = null)
     {
         var period = new NpgsqlRange<DateTime>(start, true, end, false);
         return new Booking
@@ -32,7 +35,9 @@ public static class BookingTestData
             SeatsRequested = 1,
             Status = status,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            CancelledBy = cancelledByIsOrganizer ? organizerId : cancelledBy,
+            CancellationReason = cancellationReason
         };
     }
 

@@ -43,7 +43,9 @@ public class PickupDirectoryEmailSenderTests : IDisposable
             NotificationTemplates.InvitationToUnregistered(invitation, booking, "http://localhost:4200"),
             NotificationTemplates.InvitationExpired(invitation, booking, invitation.Email, toOrganizer: false),
             NotificationTemplates.InvitationExpired(invitation, booking, "organizer@smartcampus.test", toOrganizer: true),
-            NotificationTemplates.BookingCancelled(booking, "organizer@smartcampus.test")
+            NotificationTemplates.BookingCancelled(
+                BookingTestData.NewBooking(Guid.NewGuid(), Start, Start.AddHours(2), cancelledByIsOrganizer: true),
+                "organizer@smartcampus.test")
         };
 
         foreach (var email in emails)
@@ -138,6 +140,41 @@ public class PickupDirectoryEmailSenderTests : IDisposable
         Assert.Equal(
             "invitation-expired",
             NotificationTemplates.InvitationExpired(registered, booking, registered.Email, toOrganizer: false).Kind);
-        Assert.Equal("booking-cancelled", NotificationTemplates.BookingCancelled(booking, "o@smartcampus.test").Kind);
+        Assert.Equal("booking-cancelled", NotificationTemplates.BookingCancelled(
+            BookingTestData.NewBooking(Guid.NewGuid(), Start, Start.AddHours(2), cancelledByIsOrganizer: true),
+            "o@smartcampus.test").Kind);
+    }
+
+    [Fact]
+    public void Booking_cancelled_by_the_organizer_says_so_and_skips_the_reason()
+    {
+        // Self-cancel: CancelBookingService scrive CancelledBy == OrganizerId e può non scrivere un motivo.
+        var organizerId = Guid.NewGuid();
+        var booking = BookingTestData.NewBooking(
+            Guid.NewGuid(), Start, Start.AddHours(2),
+            organizerId: organizerId,
+            cancelledByIsOrganizer: true);
+
+        var email = NotificationTemplates.BookingCancelled(booking, "organizer@smartcampus.test");
+
+        Assert.Contains("è stata annullata da chi l'ha prenotata", email.Body);
+        Assert.DoesNotContain("dall'amministrazione", email.Body);
+        Assert.DoesNotContain("Motivo:", email.Body);
+    }
+
+    [Fact]
+    public void Booking_cancelled_by_the_admin_says_so_and_includes_the_reason()
+    {
+        // Admin-cancel: AdminCancelBookingService scrive CancelledBy == adminId (diverso dall'organizer) e un motivo.
+        var organizerId = Guid.NewGuid();
+        var booking = BookingTestData.NewBooking(
+            Guid.NewGuid(), Start, Start.AddHours(2),
+            organizerId: organizerId,
+            cancelledBy: Guid.NewGuid(),
+            cancellationReason: "Aula non disponibile");
+        var email = NotificationTemplates.BookingCancelled(booking, "organizer@smartcampus.test");
+
+        Assert.Contains("è stata annullata dall'amministrazione. Motivo: Aula non disponibile.", email.Body);
+        Assert.DoesNotContain("da chi l'ha prenotata", email.Body);
     }
 }
