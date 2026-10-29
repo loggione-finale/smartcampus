@@ -19,3 +19,7 @@ costante durante il progetto.
 Chi ha scritto il codice e cosa ha fatto ciascuno, PR per PR, è in [team-work-map.md](team-work-map.md).
 
 Il razzo è partito: grazie a tutti.
+
+## Foto
+
+<img src="https://cdn-images.dzcdn.net/images/cover/a2b508c6ee9de484750115903ecaed4b/0x1900-000000-80-0-0.jpg" alt="Foto di John Pork" width="120">
