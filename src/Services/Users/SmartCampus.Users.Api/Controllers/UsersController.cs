@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartCampus.Users.Api.Data;
-using SmartCampus.Users.Api.Features.Registration;
 
 namespace SmartCampus.Users.Api.Controllers;
 
@@ -12,7 +11,7 @@ public class UsersController(UsersDbContext dbContext) : ControllerBase
 {
     [HttpGet("{id:guid}")]
     [ActionName(nameof(GetById))]
-    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UserLookupResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
@@ -25,15 +24,17 @@ public class UsersController(UsersDbContext dbContext) : ControllerBase
             return NotFound();
         }
 
-        return Ok(UserResponse.FromEntity(user));
+        return Ok(UserLookupResponse.FromEntity(user));
     }
 
+    // Accepts both ?emails=a&emails=b (sent by Bookings) and ?emails=a,b.
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<UserResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<UserLookupResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetUsers([FromQuery] string? emails, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetUsers(
+        [FromQuery(Name = "emails")] string[]? emails, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(emails))
+        if (emails is null || emails.All(string.IsNullOrWhiteSpace))
         {
             return BadRequest(new ProblemDetails
             {
@@ -44,7 +45,7 @@ public class UsersController(UsersDbContext dbContext) : ControllerBase
         }
 
         var emailList = emails
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .SelectMany(value => value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             .Select(e => e.ToLowerInvariant())
             .Distinct()
             .ToList();
@@ -65,6 +66,6 @@ public class UsersController(UsersDbContext dbContext) : ControllerBase
             .OrderBy(u => u.DisplayName)
             .ToListAsync(cancellationToken);
 
-        return Ok(users.Select(UserResponse.FromEntity));
+        return Ok(users.Select(UserLookupResponse.FromEntity));
     }
 }

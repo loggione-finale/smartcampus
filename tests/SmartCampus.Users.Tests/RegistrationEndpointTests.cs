@@ -164,6 +164,51 @@ public class RegistrationEndpointTests : IClassFixture<UsersApiFactory>
     }
 
     [Fact]
+    public async Task GetUsers_WithRepeatedEmailsKey_ReturnsAllMatchingUsers()
+    {
+        // Bookings sends ?emails=a&emails=b: every user must come back, not only the first (#261).
+        var client = _factory.CreateClient();
+        var user1 = CreateValidRequest(email: $"repeated1.{Guid.NewGuid():N}@smartcampus.test");
+        var user2 = CreateValidRequest(email: $"repeated2.{Guid.NewGuid():N}@smartcampus.test");
+
+        await client.PostAsJsonAsync("/auth/register", user1);
+        await client.PostAsJsonAsync("/auth/register", user2);
+
+        var response = await client.GetAsync(
+            $"/users?emails={Uri.EscapeDataString(user1.Email)}&emails={Uri.EscapeDataString(user2.Email)}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var users = await response.Content.ReadFromJsonAsync<List<UserResponse>>();
+        Assert.NotNull(users);
+        Assert.Equal(2, users.Count);
+        Assert.Contains(users, u => u.Email == user1.Email.ToLowerInvariant());
+        Assert.Contains(users, u => u.Email == user2.Email.ToLowerInvariant());
+    }
+
+    [Fact]
+    public async Task Lookup_Endpoints_DoNotExposePhoneNumberOrMatricola()
+    {
+        // GET /users and GET /users/{id} are reachable without a token (#261).
+        var client = _factory.CreateClient();
+        var request = CreateValidRequest(email: $"lookup.{Guid.NewGuid():N}@smartcampus.test");
+        var createResponse = await client.PostAsJsonAsync("/auth/register", request);
+        var createdUser = await createResponse.Content.ReadFromJsonAsync<UserResponse>();
+        Assert.NotNull(createdUser);
+
+        var byEmail = await client.GetStringAsync($"/users?emails={Uri.EscapeDataString(request.Email)}");
+        var byId = await client.GetStringAsync($"/users/{createdUser.Id}");
+
+        foreach (var body in new[] { byEmail, byId })
+        {
+            Assert.DoesNotContain("phoneNumber", body, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("matricola", body, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(request.PhoneNumber, body);
+            Assert.DoesNotContain(request.Matricola, body);
+            Assert.Contains(request.Email.ToLowerInvariant(), body);
+        }
+    }
+
+    [Fact]
     public async Task GetUsers_WithoutEmailsFilter_Returns400BadRequest()
     {
         var client = _factory.CreateClient();
