@@ -23,7 +23,7 @@ Gli orari sono in ora di Roma. La colonna "Chi" è una proposta in base all'area
 | # | Chi (proposta) | Azione | Esito atteso |
 |---|---|---|---|
 | 1 | fedeericodl | Accesso come Giulia Rossi; prova con una password sbagliata | Accesso riuscito; con la password sbagliata `401` |
-| 2 | AldAndrew0 | Catalogo: filtro per laboratori; dettaglio di Aula 101 | Due laboratori; il dettaglio dello spazio |
+| 2 | AldAndrew0 | Catalogo: filtro per laboratori; dettaglio di Aula 101 | Quattro laboratori su 15 spazi; il dettaglio dello spazio |
 | 3 | FranDeSa456 | Disponibilità di Aula 101 in un giorno libero | Nessuna fascia occupata |
 | 4 | Rhaastrake | Giulia prenota Aula 101, 09:00-11:00 | Prenotazione confermata con un codice leggibile (es. `SC-261109-VJQ9`) |
 | 5 | Rhaastrake | Marco prenota Aula 101, 10:00-12:00, sovrapposta | Rifiutata: "Space already booked" (`409`) |
@@ -49,9 +49,9 @@ giorno, mai oltre la capienza. I test di concorrenza sono in
 - **Statistiche e report dell'admin** (`GET /admin/stats` e pagina report) sono su `main` e provate sull'API il 28/10 (`200`
   per l'admin, `403` per un utente).
 - Gli inviti scadono dopo due ore: per mostrare la scadenza serve aspettare o cambiare l'orologio; meglio dirla a voce.
-- Il tasto per cercare spazi liberi in una fascia nel catalogo propone finestre di ricerca (mattina 09:00-11:00,
-  pomeriggio 14:00-16:00, sera 19:00-21:00) diverse dalle fasce di prenotazione del PO (08-14, 14-19, 19-23): spiegarlo a voce
-  per non creare confusione.
+- Il tasto per cercare spazi liberi in una fascia nel catalogo propone le stesse fasce di prenotazione del PO (mattina
+  08:00-14:00, pomeriggio 14:00-19:00, sera 19:00-23:00), dalla #242. Le card hanno il tasto "Prenota", che porta alla
+  prenotazione con lo spazio già scelto.
 
 ## Dichiarazioni obbligatorie
 
