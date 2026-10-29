@@ -35,6 +35,19 @@ public class AcceptInvitationService(BookingsDbContext dbContext, TimeProvider t
             return AcceptInvitationResult.Failed(AcceptInvitationOutcome.Expired);
         }
 
+        var bandAlreadyUsed = await dbContext.Invitations.AnyAsync(
+            i => i.UserId == userId
+                && i.BookingId != invitation.BookingId
+                && i.Status == InvitationStatus.Accepted
+                && i.Booking.Status == BookingStatus.Confirmed
+                && i.Booking.BookingDate == invitation.Booking.BookingDate
+                && i.Booking.TimeBand == invitation.Booking.TimeBand,
+            cancellationToken);
+        if (bandAlreadyUsed)
+        {
+            return AcceptInvitationResult.Failed(AcceptInvitationOutcome.TimeBandAlreadyUsed);
+        }
+
         invitation.UserId ??= userId;
         invitation.Status = InvitationStatus.Accepted;
         invitation.RespondedAt = timeProvider.GetUtcNow().UtcDateTime;
