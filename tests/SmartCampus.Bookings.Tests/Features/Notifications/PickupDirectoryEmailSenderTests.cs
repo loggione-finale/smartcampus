@@ -107,7 +107,7 @@ public class PickupDirectoryEmailSenderTests : IDisposable
         Assert.DoesNotContain("09:00", email.Body);
 
         var invitationEmail = NotificationTemplates.InvitationToUnregistered(unregistered, booking, "http://localhost:4200");
-        // ExpiresAt coincide con l'inizio della prenotazione: 09:00 UTC = 11:00 del 30/03/2033.
+        // ExpiresAt coincides with the booking start: 09:00 UTC = 11:00 on 30/03/2033.
         Assert.Contains("Registrati sul portale entro 30/03/2033 11:00", invitationEmail.Body);
         Assert.Contains(
             "http://localhost:4200/?returnUrl=%2Finvitations%2F" + unregistered.Id + "#registrazione",

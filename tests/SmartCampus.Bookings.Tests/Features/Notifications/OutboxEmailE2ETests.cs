@@ -85,7 +85,7 @@ public class OutboxEmailE2ETests(BookingsApiFactory factory) : IClassFixture<Boo
         // Ogni evento produce la mail attesa: invito separato per registrato e non registrato.
         var invitationToExternal = emails.Single(e => e.ToAddress == "esterna@libero.test");
         Assert.Contains("Registrati sul portale", invitationToExternal.Body);
-        // La scadenza dell'invito è mostrata con data e ora, non solo con l'ora.
+        // The invitation expiry is shown with date and time, not just the time.
         var expiresAtLine = Regex.Match(
             invitationToExternal.Body,
             @"Registrati sul portale entro \d{2}/\d{2}/\d{4} \d{2}:\d{2}");
