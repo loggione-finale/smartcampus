@@ -95,6 +95,44 @@ Gli agenti di [`.github/agents/`](../../.github/agents/) compaiono nel selettore
 nella pagina degli agenti di GitHub. Ogni file limita gli strumenti dell'agente (per esempio il revisore non ha lo
 strumento per modificare file) e ha `disable-model-invocation: true`, così Copilot non lo sceglie da solo.
 
+### Gli agenti disponibili
+
+| Agente nel selettore | File | Strumenti | Quando si usa |
+|---|---|---|---|
+| `code-reviewer` | [`code-reviewer.agent.md`](../../.github/agents/code-reviewer.agent.md) | read, search, execute | Bozza di review di una PR (bloccanti, da chiarire, non bloccanti) |
+| `backlog-checker` | [`backlog-checker.agent.md`](../../.github/agents/backlog-checker.agent.md) | read, search, execute | Rapporto per la daily: board, issue, PR e decisioni del PO, solo in lettura |
+| `backend-test-checker` | [`backend-test-checker.agent.md`](../../.github/agents/backend-test-checker.agent.md) | read, search, execute | Test .NET fragili o che non provano ciò che dichiarano |
+| `frontend-test-checker` | [`frontend-test-checker.agent.md`](../../.github/agents/frontend-test-checker.agent.md) | read, search, execute | Build e test Angular; regole dei form confrontate con backend e PO |
+| `data-consistency-checker` | [`data-consistency-checker.agent.md`](../../.github/agents/data-consistency-checker.agent.md) | read, search, execute | Utenti e spazi di `data/synthetic` confrontati con i seed dei servizi |
+| `implementer` | [`implementer.agent.md`](../../.github/agents/implementer.agent.md) | read, search, edit, execute | Un task piccolo da una specifica approvata in `docs/agents/changes/<issue>-<nome>/` (da creare prima: `proposal.md`, `spec.md`, `tasks.md`) |
+
+Il settimo ruolo, il **controllore delle PR**, non è un agente Copilot: è il job "Controllo PR" della CI
+([pr-checker.md](pr-checker.md)).
+
+### Se gli agenti non compaiono nel selettore
+
+I file sono nel percorso documentato da GitHub e da VS Code: `.github/agents/<nome>.agent.md`, nella radice del
+repository. VS Code però li cerca **nella radice della cartella aperta**. Se apri `mio_server`, `loggione-finale` o
+`src/web` invece della cartella del repository, gli agenti non compaiono.
+
+1. **Apri in VS Code la cartella del repository** (quella che contiene `.github/`, `src/` e `SmartCampus.slnx`),
+   oppure la copia creata con `git worktree add`. È il modo consigliato.
+2. Aggiorna l'estensione GitHub Copilot e, nella chat, scegli l'agente dal menu **Agent**. Gli agenti non partono da
+   soli (`disable-model-invocation: true`): vanno scelti a mano.
+3. Se devi per forza aprire una cartella diversa:
+   - se è una **sottocartella** del repository, attiva l'impostazione `chat.useCustomizationsInParentRepositories`;
+   - se è una **cartella che lo contiene**, aggiungi il percorso in `chat.agentFilesLocations`, per esempio
+     `"chat.agentFilesLocations": { "smartcampus/.github/agents": true }`.
+
+   Sono impostazioni di VS Code sul tuo PC, non del repository: Copilot CLI non le legge.
+4. **Copilot CLI:** lancialo dalla radice del repository e scegli l'agente con `/agent`.
+5. Se non compare ancora, controlla nel file che `user-invocable` non sia `false`: nei nostri file non c'è, quindi
+   vale `true`.
+
+Fonti: [GitHub, configurazione degli agenti](https://docs.github.com/en/copilot/reference/custom-agents-configuration),
+[GitHub, creare agenti](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/create-custom-agents),
+[VS Code, custom agents](https://code.visualstudio.com/docs/copilot/customization/custom-agents).
+
 **Il cloud agent di Copilot non si usa** (decisione del 28/10): non si avviano attività dalla pagina degli agenti di
 GitHub e non si assegnano issue a Copilot. Gli agenti si usano solo in VS Code, con una persona che conferma ogni
 comando.
