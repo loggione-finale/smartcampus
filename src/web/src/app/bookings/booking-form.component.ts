@@ -258,6 +258,18 @@ export class BookingFormComponent {
     return Number.isFinite(minutes) && minutes >= 30 && minutes <= 240 ? minutes : 60;
   });
 
+  // The longest booking that still ends inside the band of the chosen start: the slider stops there.
+  protected readonly maxBookingDuration = computed(() => {
+    const startDate = this.bookingStartDate();
+    if (!startDate) return 240;
+    const campusStart = campusTimeParts(startDate).minutes;
+    const band = BOOKING_BANDS.find(
+      ([from, to]) => campusStart >= from && campusStart < to,
+    );
+    const bandEnd = band?.[1] ?? BOOKING_BANDS[BOOKING_BANDS.length - 1][1];
+    return Math.max(30, Math.min(240, bandEnd - campusStart));
+  });
+
   private readonly selectedSpaceId = toSignal(this.bookingForm.controls.spaceId.valueChanges, {
     initialValue: this.bookingForm.controls.spaceId.value,
   });
@@ -465,21 +477,20 @@ export class BookingFormComponent {
     this.equipmentError.set('');
   }
 
+  // The slider calls this while dragging too, so the duration and the end time follow the thumb.
   protected setBookingDuration(minutes: number): void {
-    const { date, start } = this.bookingForm.getRawValue();
-    if (!date || !start) return;
-    const startDate = new Date(`${date}T${start}`);
-    if (Number.isNaN(startDate.valueOf())) return;
-
-    const campusStart = campusTimeParts(startDate).minutes;
-    const band = BOOKING_BANDS.find(
-      ([from, to]) => campusStart >= from && campusStart < to,
-    );
-    const bandEnd = band?.[1] ?? BOOKING_BANDS[BOOKING_BANDS.length - 1][1];
-    const maxDuration = Math.max(30, Math.min(240, bandEnd - campusStart));
-    const duration = Math.min(Math.max(30, Math.round(minutes / 15) * 15), maxDuration);
+    const startDate = this.bookingStartDate();
+    if (!startDate) return;
+    const duration = Math.min(Math.max(30, Math.round(minutes / 15) * 15), this.maxBookingDuration());
     const endDate = new Date(startDate.getTime() + duration * 60000);
     this.bookingForm.controls.end.setValue(hhmm(endDate.getHours() * 60 + endDate.getMinutes()));
+  }
+
+  private bookingStartDate(): Date | null {
+    const { date, start } = this.bookingFormValue();
+    if (!date || !start) return null;
+    const startDate = new Date(`${date}T${start}`);
+    return Number.isNaN(startDate.valueOf()) ? null : startDate;
   }
 
   protected retryBookingSpaces(): void {

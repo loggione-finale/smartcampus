@@ -103,15 +103,22 @@
           <span>Durata</span>
           <strong>{{ bookingDuration() }} minuti</strong>
         </div>
-        <mat-slider min="30" max="240" step="15" discrete showTickMarks>
+        <mat-slider min="30" [max]="maxBookingDuration()" step="15" discrete showTickMarks>
           <input
             matSliderThumb
             [value]="bookingDuration()"
+            (input)="setBookingDuration(+$any($event.target).value)"
             (valueChange)="setBookingDuration($event)"
             aria-label="Durata della prenotazione in minuti"
           />
         </mat-slider>
-        <p class="duration-hint">Da 30 minuti a 4 ore, a passi di 15 minuti.</p>
+        <p class="duration-hint">
+          @if (maxBookingDuration() < 240) {
+            Da 30 a {{ maxBookingDuration() }} minuti, a passi di 15: la fascia oraria scelta finisce prima.
+          } @else {
+            Da 30 minuti a 4 ore, a passi di 15 minuti.
+          }
+        </p>
       </div>
 
       <button mat-flat-button class="booking-submit" type="submit" [disabled]="bookingState() === 'submitting'">

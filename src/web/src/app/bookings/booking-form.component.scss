@@ -46,8 +46,7 @@
   margin: 0;
   padding: clamp(24px, 4vw, 48px);
   color: var(--ink);
-  background: var(--cream);
-  box-shadow: 16px 16px 0 var(--night);
+  background: var(--ground);
   font-size: clamp(19px, 1.5vw, 22px);
   font-weight: 700;
   line-height: 1.45;
@@ -140,7 +139,7 @@
 
 @media (max-width: 600px) {
   .booking { padding-inline: 20px; }
-  .booking-form,
-  .admin-notice { padding: 20px; box-shadow: 8px 8px 0 var(--night); }
+  .booking-form { padding: 20px; box-shadow: 8px 8px 0 var(--night); }
+  .admin-notice { padding: 20px; }
   .booking-times { grid-template-columns: 1fr; gap: 0; }
 }

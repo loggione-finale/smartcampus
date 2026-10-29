@@ -401,6 +401,35 @@ describe('BookingFormComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('150 minuti');
   });
 
+  it('follows the slider while it is dragged, not only on release', () => {
+    const fixture = TestBed.createComponent(BookingFormComponent);
+    const form = fixture.componentInstance as any;
+    fixture.detectChanges();
+    fillValidBooking(form);
+    fixture.detectChanges();
+
+    const thumb = fixture.nativeElement.querySelector('input[matSliderThumb]') as HTMLInputElement;
+    thumb.value = '90';
+    thumb.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(form.bookingDuration()).toBe(90);
+    expect(fixture.nativeElement.textContent).toContain('90 minuti');
+  });
+
+  it('stops the slider at the end of the band of the chosen start', () => {
+    const fixture = TestBed.createComponent(BookingFormComponent);
+    const form = fixture.componentInstance as any;
+    fixture.detectChanges();
+    fillValidBooking(form);
+
+    form.bookingForm.patchValue(localSlotFromRome(romeDayOffset(1), '13:00', '13:30'));
+    fixture.detectChanges();
+
+    expect(form.maxBookingDuration()).toBe(60);
+    expect(fixture.nativeElement.textContent).toContain('Da 30 a 60 minuti');
+  });
+
   it('shows the conflict returned by Bookings', () => {
     const fixture = TestBed.createComponent(BookingFormComponent);
     const form = fixture.componentInstance as any;
