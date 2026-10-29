@@ -63,9 +63,9 @@ export class SpacesCatalogPage implements OnInit {
   protected readonly modeHints = SPACE_MODE_HINTS;
 
   protected readonly timeBandPresets: ReadonlyArray<TimeBandPreset> = [
-    { label: 'Mattina (09:00–11:00)', startTime: '09:00', endTime: '11:00' },
-    { label: 'Pomeriggio (14:00–16:00)', startTime: '14:00', endTime: '16:00' },
-    { label: 'Sera (19:00–21:00)', startTime: '19:00', endTime: '21:00' },
+    { label: 'Mattina (08:00–14:00)', startTime: '08:00', endTime: '14:00' },
+    { label: 'Pomeriggio (14:00–19:00)', startTime: '14:00', endTime: '19:00' },
+    { label: 'Sera (19:00–23:00)', startTime: '19:00', endTime: '23:00' },
   ];
 
   protected readonly filterForm = this.formBuilder.group({

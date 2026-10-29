@@ -88,7 +88,7 @@ public class SpacesController(ISpacesService spacesService, ILogger<SpacesContro
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
             {
                 Title = "Service Unavailable",
-                Detail = "Il database degli spazi non è temporaneamente raggiungibile.",
+                Detail = "The spaces database is temporarily unreachable.",
                 Status = StatusCodes.Status503ServiceUnavailable
             });
         }

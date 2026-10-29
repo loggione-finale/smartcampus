@@ -98,19 +98,31 @@ public class PickupDirectoryEmailSenderTests : IDisposable
     {
         // 09:00 UTC = 11:00 ora italiana (CEST, UTC+2 a fine marzo).
         var booking = BookingTestData.NewBooking(Guid.NewGuid(), Start, Start.AddHours(2));
-        var invitation = BookingTestData.NewInvitation(booking, userId: null, InvitationStatus.Invited);
+        var registered = BookingTestData.NewInvitation(booking, Guid.NewGuid(), InvitationStatus.Invited);
+        var unregistered = BookingTestData.NewInvitation(booking, userId: null, InvitationStatus.Invited);
 
         var email = NotificationTemplates.BookingCreated(booking, "organizer@smartcampus.test");
 
         Assert.Contains("30/03/2033 11:00 - 13:00", email.Body);
         Assert.DoesNotContain("09:00", email.Body);
 
-        var invitationEmail = NotificationTemplates.InvitationToUnregistered(invitation, booking, "http://localhost:4200");
-        // ExpiresAt coincide con l'inizio della prenotazione: 09:00 UTC = 11:00.
-        Assert.Contains("Registrati sul portale entro 11:00", invitationEmail.Body);
+        var invitationEmail = NotificationTemplates.InvitationToUnregistered(unregistered, booking, "http://localhost:4200");
+        // ExpiresAt coincides with the booking start: 09:00 UTC = 11:00 on 30/03/2033.
+        Assert.Contains("Registrati sul portale entro 30/03/2033 11:00", invitationEmail.Body);
         Assert.Contains(
-            "http://localhost:4200/register?returnUrl=%2Finvitations%2F" + invitation.Id,
+            "http://localhost:4200/register?returnUrl=%2Finvitations%2F" + unregistered.Id,
             invitationEmail.Body);
+
+        var registeredEmail = NotificationTemplates.InvitationToRegistered(registered, booking, "http://localhost:4200");
+        Assert.Contains("Conferma entro il 30/03/2033 alle 11:00", registeredEmail.Body);
+
+        var expiredToInvitee = NotificationTemplates.InvitationExpired(
+            registered, booking, registered.Email, toOrganizer: false);
+        Assert.Contains("è scaduto il 30/03/2033 alle 11:00 senza conferma", expiredToInvitee.Body);
+
+        var expiredToOrganizer = NotificationTemplates.InvitationExpired(
+            unregistered, booking, "organizer@smartcampus.test", toOrganizer: true);
+        Assert.Contains("è scaduto il 30/03/2033 alle 11:00 senza conferma", expiredToOrganizer.Body);
     }
 
     [Fact]

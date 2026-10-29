@@ -40,6 +40,34 @@
   margin-bottom: 6px;
 }
 
+.invitation-booking,
+.invitation-when {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-bottom: 4px;
+}
+
+.invitation-booking .space {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.invitation-booking .building,
+.invitation-when .duration,
+.invitation-participants {
+  color: var(--muted);
+}
+
+.invitation-when .time {
+  font-variant-numeric: tabular-nums;
+}
+
+.invitation-participants {
+  margin-bottom: 4px;
+}
+
 .role {
   font-size: clamp(22px, 2.2vw, 28px);
   font-weight: 900;

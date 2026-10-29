@@ -38,6 +38,13 @@ Poiché i tre microservizi (`Spaces`, `Bookings`, `Users`) hanno ciascuno il pro
 | **Aula Mista Seminari** | `3f2a9c1e-0000-4000-8000-000000000006` | `Classroom` | `Mixed` | Edificio A | 1 | 30 |
 | **Laboratorio Multimediale** | `3f2a9c1e-0000-4000-8000-000000000007` | `Lab` | `Dedicated` | Edificio B | 2 | 20 |
 | **Aula 205 (Manutenzione)** | `3f2a9c1e-0000-4000-8000-000000000008` | `Classroom` | `Dedicated` | Edificio A | 2 | 35 |
+| **Aula 301** | `3f2a9c1e-0000-4000-8000-000000000009` | `Classroom` | `Dedicated` | Edificio C | 3 | 40 |
+| **Aula 302** | `3f2a9c1e-0000-4000-8000-000000000010` | `Classroom` | `Mixed` | Edificio C | 3 | 20 |
+| **Laboratorio Reti** | `3f2a9c1e-0000-4000-8000-000000000011` | `Lab` | `Dedicated` | Edificio B | 0 | 18 |
+| **Laboratorio Elettronica** | `3f2a9c1e-0000-4000-8000-000000000012` | `Lab` | `Dedicated` | Edificio D | 1 | 16 |
+| **Sala Studio Biblioteca** | `3f2a9c1e-0000-4000-8000-000000000013` | `StudyRoom` | `Mixed` | Biblioteca | 1 | 20 |
+| **Sala Lavoro di Gruppo** | `3f2a9c1e-0000-4000-8000-000000000014` | `StudyRoom` | `Dedicated` | Biblioteca | 2 | 8 |
+| **Aula Conferenze** | `3f2a9c1e-0000-4000-8000-000000000015` | `Classroom` | `Dedicated` | Edificio Centrale | 1 | 80 |
 
 ---
 
@@ -82,7 +89,7 @@ Il dataset include una serie di scenari complessi per validare le regole di busi
 In ambiente `Development`, ciascun microservizio carica automaticamente la propria porzione di dati all'avvio se il rispettivo database è vuoto:
 
 - **Bookings (`SmartCampus.Bookings.Api`)**: `BookingsSeeder.SeedIfEmptyAsync()` popola prenotazioni, inviti, commenti e avvisi.
-- **Spaces (`SmartCampus.Spaces.Api`)**: carica gli 8 spazi da `spaces.json` se la collezione MongoDB è vuota.
+- **Spaces (`SmartCampus.Spaces.Api`)**: carica i 15 spazi da `spaces.json` se la collezione MongoDB è vuota.
 - **Users (`SmartCampus.Users.Api`)**: `UsersDbSeeder.SeedAsync()` inserisce gli account utente e admin con password con hash sicuro tramite `IPasswordHasher<UserProfile>`.
 
 Tutte le operazioni di seed sono **idempotenti**: riavviare il servizio con database già popolato ignora il seed e non genera duplicati.

@@ -21,6 +21,11 @@ const INVITED: Invitation = {
   status: 'Invited',
   expiresAt: '2026-10-30T18:00:00Z',
   respondedAt: null,
+  spaceName: 'Aula 1',
+  spaceBuilding: 'Edificio A',
+  start: '2026-10-30T08:00:00Z',
+  end: '2026-10-30T10:00:00Z',
+  participantCount: 2,
 };
 
 const ACCEPTED: Invitation = {
@@ -154,6 +159,42 @@ describe('InvitationsPage', () => {
     expect(el.textContent).toContain('Da confermare');
     expect(el.textContent).toContain('Scadenza:');
     expect(el.textContent).toContain('Conferma');
+  });
+
+  it('shows the booking details in Europe/Rome on the card', () => {
+    const fixture = createPage();
+
+    http.expectOne('/api/invitations/mine').flush([INVITED]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    // 08:00Z-10:00Z = 09:00-11:00 Europe/Rome (CET, UTC+1): DST ended on Oct 25.
+    expect(el.textContent).toContain('Aula 1');
+    expect(el.textContent).toContain('Edificio A');
+    expect(el.textContent).toContain('09:00 – 11:00');
+    expect(el.textContent).toContain(`2 invitati oltre all'organizzatore`);
+  });
+
+  it('shows the duration next to the time range', () => {
+    const fixture = createPage();
+
+    http.expectOne('/api/invitations/mine').flush([INVITED]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    // Whitespace collapses differently between spans; compare without spaces.
+    const text = (el.textContent ?? '').replace(/\s+/g, '');
+    expect(text).toContain('09:00–11:00·2ore');
+  });
+
+  it('shows the singular form with one participant', () => {
+    const fixture = createPage();
+
+    http.expectOne('/api/invitations/mine').flush([{ ...INVITED, participantCount: 1 }]);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain(`1 invitato oltre all'organizzatore`);
   });
 
   it('shows the empty state when there are no invitations', () => {

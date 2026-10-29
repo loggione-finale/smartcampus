@@ -45,6 +45,13 @@ public class CreateBookingResult
             Detail = "You already have a booking in that time band on that day."
         };
 
+    public static CreateBookingResult ParticipantTimeBandAlreadyUsed() =>
+        new()
+        {
+            Outcome = CreateBookingOutcome.TimeBandAlreadyUsed,
+            Detail = "A participant already has a confirmed booking in that time band on that day."
+        };
+
     public static CreateBookingResult NoSeatsLeft(int freeSeats) =>
         new()
         {

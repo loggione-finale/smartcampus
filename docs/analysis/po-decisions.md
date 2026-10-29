@@ -38,15 +38,29 @@ Incontro con il PO del **27/10/2026** (task #85). Le domande sono quelle prepara
 | 26 | 27/10 | Prenotazione a cavallo di due fasce | Non ammessa: una prenotazione sta dentro una sola fascia | _Definito dal gruppo, da confermare alla review di oggi_ | #139 | asprenolapo |
 | 27 | 27/10 | Il limite per fascia vale anche per i partecipanti? | No, solo per chi prenota (i partecipanti sono già protetti dal vincolo sulle persone) | _Definito dal gruppo, da confermare alla review di oggi_ | #139 | asprenolapo |
 | 28 | 27/10 | **Richiesta del professore**: flusso agentico nel progetto | Le slide lo indicavano come bonus facoltativo su un solo task | **Da integrare nel progetto**, con i vincoli: nessun orchestratore, nessun segreto, nessuna spesa, tutto sotto il controllo del gruppo, solo lo strumento autorizzato e gratuito (scelto dal gruppo: GitHub Copilot) | Flusso e ruoli in [docs/agents](../agents/README.md); controllo fisso delle PR in CI | asprenolapo |
+| 29 | 28/10 | Orari delle fasce (conferma della 25) | Mattina 08:00–14:00, pomeriggio 14:00–19:00, sera 19:00–23:00 (ora di Roma) | **Confermati** | Nessuno: già nel codice (#153). Le finestre di ricerca del catalogo vanno allineate (H5 in [hyper-sprint](../hyper-sprint-2026-10-29.md)) | asprenolapo |
+| 30 | 28/10 | Prenotazione a cavallo di due fasce (conferma della 26) | Non ammessa | **Confermato: non ammessa** | Nessuno: già nel codice | asprenolapo |
+| 31 | 28/10 | Il limite per fascia vale anche per i partecipanti? (sostituisce la 27) | No, solo per chi prenota | **Sì, vale anche per i partecipanti** | Nuovo controllo in Bookings, in creazione e in conferma dell'invito (H8) | asprenolapo |
+| 32 | 28/10 | Anticipo massimo di una prenotazione | 14 giorni | **Al massimo 15 giorni di anticipo**; l'inizio deve essere nel futuro (già gestito) | Regola nel validatore di Bookings e limite della data nel form (H1, H2) | asprenolapo |
+| 33 | 28/10 | Sprint Goal 2 senza il rilascio automatico | La versione in [process.md](../process.md) | **Approvato**, a condizione che tutto sia coerente con le decisioni 29–32 | `process.md` aggiornato | asprenolapo |
 
 ## Questioni aperte
 
-| Questione | Da chiarire quando |
-|---|---|
-| Anticipo massimo di una prenotazione (proposta: 14 giorni) | Review del 29/10 ([scaletta](po-meeting-2026-10-29.md)) |
-| Orari delle fasce e regole 25–27 | Review del 29/10 |
-| Riformulazione dello Sprint Goal 2 senza il rilascio automatico | Review del 29/10 |
+_Nessuna: le tre questioni portate alla Review del 28/10 sono chiuse con le decisioni 29–33._
 
 ## Richieste di revisione dopo le review
 
-_Nessuna ancora._
+Emerse alla Review con il PO del 28/10 sera ([scaletta](po-meeting-2026-10-29.md)). Chi se ne occupa e quando è nel
+piano dell'[iper-sprint](../hyper-sprint-2026-10-29.md).
+
+| # | Data | Richiesta | Origine | Task | Stato |
+|---|---|---|---|---|---|
+| R1 | 28/10 | Le mail mostrano data **e** ora, anche per la scadenza dell'invito (oggi solo l'ora) | PO | H3 | Da fare |
+| R2 | 28/10 | L'admin non vede il form di prenotazione ma un messaggio specifico: l'admin non prenota | PO (conferma la regola del brainstorming, punto 9) | H2 | Da fare |
+| R3 | 28/10 | La card dell'invito mostra aula, data, orario, durata e partecipanti | PO | H7 | Da fare |
+| R4 | 28/10 | Lo slider della durata segue le ore scelte | PO | H2 | Da fare |
+| R5 | 28/10 | Dopo l'accesso la voce "Registrati" sparisce dal menu | PO | H4 | Da fare |
+| R6 | 28/10 | Più aule nei dati sintetici | PO | H6 | Da fare |
+| R7 | 28/10 | Quando si prenota, si cercano e si filtrano gli spazi | PO | H9 | Da fare |
+| R8 | 28/10 | Uno strumento non in elenco si segnala con una nota; l'admin risponde all'utente | PO | H11 | Proposto come sviluppo futuro |
+| R9 | 28/10 | Pagina admin controllata rispetto ai requisiti | PO | H10 | Da fare |
