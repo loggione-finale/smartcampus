@@ -10,9 +10,14 @@ public record InvitationResponse(
     ParticipantRole Role,
     InvitationStatus Status,
     DateTime ExpiresAt,
-    DateTime? RespondedAt)
+    DateTime? RespondedAt,
+    string SpaceName,
+    string SpaceBuilding,
+    DateTime Start,
+    DateTime End,
+    int ParticipantCount)
 {
-    public static InvitationResponse From(Invitation invitation) => new(
+    public static InvitationResponse From(Invitation invitation, int participantCount) => new(
         invitation.Id,
         invitation.BookingId,
         invitation.Email,
@@ -20,5 +25,10 @@ public record InvitationResponse(
         invitation.Role,
         invitation.Status,
         invitation.ExpiresAt,
-        invitation.RespondedAt);
+        invitation.RespondedAt,
+        invitation.Booking.SpaceNameSnapshot,
+        invitation.Booking.SpaceBuildingSnapshot,
+        invitation.Booking.Period.LowerBound,
+        invitation.Booking.Period.UpperBound,
+        participantCount);
 }

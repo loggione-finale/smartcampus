@@ -49,7 +49,14 @@ public class AcceptInvitationService(BookingsDbContext dbContext, TimeProvider t
             return AcceptInvitationResult.Failed(AcceptInvitationOutcome.PersonConflict);
         }
 
-        return AcceptInvitationResult.Accepted(invitation);
+        // The response includes booking details and the participant count:
+        // load the booking (already tracked above) and its invitations.
+        await dbContext.Entry(invitation.Booking).Collection(b => b.Invitations).LoadAsync(cancellationToken);
+        var participantCount = invitation.Booking.Invitations.Count(i =>
+            i.Role == ParticipantRole.Participant
+            && i.Status is InvitationStatus.Invited or InvitationStatus.Accepted);
+
+        return AcceptInvitationResult.Accepted(invitation, participantCount);
     }
 
     private static bool IsPersonOverlapConflict(DbUpdateException exception) =>

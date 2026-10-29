@@ -45,7 +45,8 @@ public class InvitationsController(
 
         return result.Outcome switch
         {
-            AcceptInvitationOutcome.Accepted => Ok(InvitationResponse.From(result.Invitation!)),
+            AcceptInvitationOutcome.Accepted => Ok(InvitationResponse.From(
+                result.Invitation!, result.ParticipantCount)),
             AcceptInvitationOutcome.NotFound => Problem(
                 statusCode: StatusCodes.Status404NotFound,
                 title: "Invitation not found",
