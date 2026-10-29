@@ -48,8 +48,8 @@ export class MyBookingsPage implements OnInit {
   protected readonly sections = computed(() => {
     const { upcoming, past } = splitBookings(this.bookings());
     return [
-      { key: 'upcoming', tag: 'IN ARRIVO', title: 'Prossime prenotazioni', bookings: upcoming },
-      { key: 'past', tag: 'ARCHIVIO', title: 'Prenotazioni passate', bookings: past },
+      { key: 'upcoming', title: 'Prossime prenotazioni', bookings: upcoming },
+      { key: 'past', title: 'Prenotazioni passate', bookings: past },
     ].filter((section) => section.bookings.length > 0);
   });
 

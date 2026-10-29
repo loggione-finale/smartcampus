@@ -120,6 +120,39 @@ function defaultBookingSlot(now: Date = new Date()): { date: string; start: stri
   return { date: localDate(now), start: '09:00', end: '10:00' };
 }
 
+// "Prenota" links from the catalog and a space's day view: /?spazio=<id>&inizio=<iso>&fine=<iso>#prenota.
+// A slot already under way starts at the next quarter hour; a past or malformed one falls back to
+// the default slot; a free span longer than four hours keeps its first hour.
+export function bookingPrefill(search: string, now: Date = new Date()): {
+  spaceId: string;
+  slot: { date: string; start: string; end: string } | null;
+} {
+  const params = new URLSearchParams(search);
+  let start = new Date(params.get('inizio') ?? '');
+  let end = new Date(params.get('fine') ?? '');
+  if (start <= now) {
+    const step = 15 * 60000;
+    start = new Date(Math.ceil((now.getTime() + 60000) / step) * step);
+  }
+  const valid =
+    !Number.isNaN(start.valueOf()) &&
+    !Number.isNaN(end.valueOf()) &&
+    end.getTime() - start.getTime() >= 30 * 60000;
+  if (valid && end.getTime() - start.getTime() > 240 * 60000) {
+    end = new Date(start.getTime() + 60 * 60000);
+  }
+  return {
+    spaceId: params.get('spazio') ?? '',
+    slot: valid
+      ? {
+          date: localDate(start),
+          start: hhmm(start.getHours() * 60 + start.getMinutes()),
+          end: hhmm(end.getHours() * 60 + end.getMinutes()),
+        }
+      : null,
+  };
+}
+
 function toBookingSpace(space: SpaceDto): BookingSpace {
   const detail = [space.building, `${space.capacity} posti`].filter(Boolean).join(' · ');
   return {
@@ -224,10 +257,11 @@ export class BookingFormComponent {
   protected readonly participantError = signal('');
   protected readonly emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  private readonly initialSlot = defaultBookingSlot();
+  private readonly prefill = bookingPrefill(window.location.search);
+  private readonly initialSlot = this.prefill.slot ?? defaultBookingSlot();
 
   protected readonly bookingForm = new FormGroup({
-    spaceId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    spaceId: new FormControl(this.prefill.spaceId, { nonNullable: true, validators: [Validators.required] }),
     date: new FormControl(this.initialSlot.date, { nonNullable: true, validators: [Validators.required] }),
     start: new FormControl(this.initialSlot.start, { nonNullable: true, validators: [Validators.required] }),
     end: new FormControl(this.initialSlot.end, { nonNullable: true, validators: [Validators.required] }),
@@ -450,21 +484,31 @@ export class BookingFormComponent {
     return Number.isFinite(minutes) && minutes >= 30 && minutes <= 240 ? minutes : 60;
   }
 
-  protected setBookingDuration(minutes: number): void {
-    const { date, start } = this.bookingForm.getRawValue();
-    if (!date || !start) return;
-    const startDate = new Date(`${date}T${start}`);
-    if (Number.isNaN(startDate.valueOf())) return;
-
+  // The longest booking that still ends inside the band of the chosen start.
+  protected maxBookingDuration(): number {
+    const startDate = this.bookingStartDate();
+    if (!startDate) return 240;
     const campusStart = campusTimeParts(startDate).minutes;
     const band = BOOKING_BANDS.find(
       ([from, to]) => campusStart >= from && campusStart < to,
     );
     const bandEnd = band?.[1] ?? BOOKING_BANDS[BOOKING_BANDS.length - 1][1];
-    const maxDuration = Math.max(30, Math.min(240, bandEnd - campusStart));
-    const duration = Math.min(Math.max(30, Math.round(minutes / 15) * 15), maxDuration);
+    return Math.max(30, Math.min(240, bandEnd - campusStart));
+  }
+
+  protected setBookingDuration(minutes: number): void {
+    const startDate = this.bookingStartDate();
+    if (!startDate) return;
+    const duration = Math.min(Math.max(30, Math.round(minutes / 15) * 15), this.maxBookingDuration());
     const endDate = new Date(startDate.getTime() + duration * 60000);
     this.bookingForm.controls.end.setValue(hhmm(endDate.getHours() * 60 + endDate.getMinutes()));
+  }
+
+  private bookingStartDate(): Date | null {
+    const { date, start } = this.bookingForm.getRawValue();
+    if (!date || !start) return null;
+    const startDate = new Date(`${date}T${start}`);
+    return Number.isNaN(startDate.valueOf()) ? null : startDate;
   }
 
   protected retryBookingSpaces(): void {

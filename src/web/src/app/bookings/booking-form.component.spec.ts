@@ -6,7 +6,7 @@ import { AuthSessionService } from '../auth/auth-session.service';
 import { LoginResponse } from '../auth/auth.models';
 import { SpacesApiService } from '../spaces/spaces-api.service';
 import { EquipmentCatalogItemDto, SpaceAvailabilityDto, SpaceDto } from '../spaces/spaces.models';
-import { BookingFormComponent } from './booking-form.component';
+import { BookingFormComponent, bookingPrefill } from './booking-form.component';
 
 const LOGIN_RESPONSE: LoginResponse = {
   token: 'token-123',
@@ -656,5 +656,43 @@ describe('BookingFormComponent', () => {
     const request = httpTesting.expectOne('/api/bookings');
     expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
     request.flush({ referenceCode: 'SC-261027-TOKEN' }, { status: 201, statusText: 'Created' });
+  });
+});
+
+describe('bookingPrefill', () => {
+  const now = new Date('2026-10-29T08:00:00Z');
+
+  it('reads the space and the slot from a Prenota link', () => {
+    const start = new Date('2026-10-30T09:00:00Z');
+    const prefill = bookingPrefill('?spazio=space-3&inizio=2026-10-30T09:00:00Z&fine=2026-10-30T10:30:00Z', now);
+
+    expect(prefill.spaceId).toBe('space-3');
+    expect(prefill.slot?.start).toBe(
+      `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`,
+    );
+    const [h, m] = prefill.slot!.end.split(':').map(Number);
+    const [sh, sm] = prefill.slot!.start.split(':').map(Number);
+    expect(h * 60 + m - (sh * 60 + sm)).toBe(90);
+  });
+
+  it('keeps only the first hour of a free span longer than four hours', () => {
+    const prefill = bookingPrefill('?spazio=s&inizio=2026-10-30T07:00:00Z&fine=2026-10-30T13:00:00Z', now);
+    const [h, m] = prefill.slot!.end.split(':').map(Number);
+    const [sh, sm] = prefill.slot!.start.split(':').map(Number);
+    expect(h * 60 + m - (sh * 60 + sm)).toBe(60);
+  });
+
+  it('moves a slot already under way to the next quarter hour', () => {
+    const prefill = bookingPrefill('?spazio=s&inizio=2026-10-29T07:00:00Z&fine=2026-10-29T10:00:00Z', now);
+    const quarter = new Date('2026-10-29T08:15:00Z');
+    expect(prefill.slot?.start).toBe(
+      `${String(quarter.getHours()).padStart(2, '0')}:${String(quarter.getMinutes()).padStart(2, '0')}`,
+    );
+  });
+
+  it('drops a past or malformed slot but keeps the space', () => {
+    expect(bookingPrefill('?spazio=s&inizio=2026-10-28T09:00:00Z&fine=2026-10-28T10:00:00Z', now).slot).toBeNull();
+    expect(bookingPrefill('?spazio=s&inizio=x&fine=y', now)).toEqual({ spaceId: 's', slot: null });
+    expect(bookingPrefill('', now)).toEqual({ spaceId: '', slot: null });
   });
 });

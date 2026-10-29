@@ -1,0 +1,85 @@
+// Same split as the login: the indigo head on the left, the form on a lilac field
+.register-page {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  min-height: calc(100svh - 72px);
+}
+
+.register-intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  .page-head-inner {
+    width: 100%;
+    margin: 0;
+  }
+}
+
+.register-panel {
+  display: grid;
+  place-items: center;
+  padding: clamp(32px, 5vw, 72px) var(--gutter);
+  background: var(--lilac);
+}
+
+.register-card {
+  width: min(100%, 720px);
+  padding: clamp(28px, 4vw, 48px);
+  background: var(--ground);
+
+  h2 {
+    margin-bottom: 24px;
+    font-size: clamp(28px, 2.8vw, 38px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.registration-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 20px;
+}
+
+.registration-actions,
+.register-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 20px;
+  margin-top: 20px;
+}
+
+.register-confirmation p {
+  max-width: 48ch;
+}
+
+.register-alt {
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 16px;
+
+  a {
+    color: var(--brand);
+    font-weight: 700;
+    text-underline-offset: 4px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .register-page {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .registration-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -15,6 +15,7 @@ import {
   SpaceAvailabilityDto,
   SpaceDto,
   TimelineSegmentStatus,
+  bookingHref,
   buildDailyTimeline,
   extractSpaceFeatures,
   formatEquipmentLabel,
@@ -43,6 +44,15 @@ export class SpaceAvailabilityPage implements OnInit {
   private routeSubscription: Subscription | null = null;
   private broadcastChannel: BroadcastChannel | null = null;
 
+  protected readonly bookingHref = bookingHref;
+
+  // A slot can still be booked only while at least half an hour of it lies ahead.
+  protected canBook(segment: DailyTimelineSegment): boolean {
+    return (
+      (segment.status === 'free' || segment.status === 'partial') &&
+      Date.parse(segment.endIso) - Date.now() >= 30 * 60000
+    );
+  }
   protected readonly typeLabels = SPACE_TYPE_LABELS;
   protected readonly modeLabels = SPACE_MODE_LABELS;
   protected readonly modeHints = SPACE_MODE_HINTS;

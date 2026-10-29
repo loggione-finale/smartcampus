@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-forbidden-page',
-  imports: [MatButtonModule, MatIconModule],
+  imports: [MatButtonModule],
   templateUrl: './forbidden.page.html',
   styleUrl: './forbidden.page.scss',
 })

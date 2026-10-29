@@ -1,0 +1,89 @@
+<section class="register-page" aria-labelledby="register-title">
+  <div class="register-intro page-head">
+    <div class="page-head-inner">
+      <a class="back-link" href="/">
+        <span aria-hidden="true">←</span> Torna alla home
+      </a>
+      <div class="page-title">
+        <h1 id="register-title">Registrati e trova il tuo spazio.</h1>
+        <p class="page-lead">
+          Crea il tuo profilo studente con matricola, email e numero di telefono. Ti segnaliamo
+          subito i campi da correggere, prima ancora di inviare.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="register-panel">
+    @if (registrationResult()) {
+      <div class="register-card register-confirmation" role="status">
+        <h2>Benvenuto in SmartCampus.</h2>
+        <p>Il tuo account è stato creato. Accedi con l’email o la matricola e la password scelta.</p>
+        <div class="register-actions">
+          <a mat-flat-button class="btn" [href]="loginHref()">Accedi</a>
+          <button mat-button type="button" (click)="resetRegistration()">Registra un altro account</button>
+        </div>
+      </div>
+    } @else {
+      <div class="register-card">
+        <h2>Il tuo profilo</h2>
+        <form class="registration-form" [formGroup]="registrationForm" (ngSubmit)="submitRegistration()" novalidate>
+          @if (registrationError(); as error) {
+            <p class="notice notice-error" role="alert">{{ error }}</p>
+          }
+
+          <div class="registration-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Matricola</mat-label>
+              <input matInput formControlName="matricola" inputmode="numeric" autocomplete="username" />
+              <mat-hint>Esattamente 10 cifre</mat-hint>
+              @if (fieldError('matricola'); as error) { <mat-error>{{ error }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Nome</mat-label>
+              <input matInput formControlName="firstName" autocomplete="given-name" />
+              @if (fieldError('firstName'); as error) { <mat-error>{{ error }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Cognome</mat-label>
+              <input matInput formControlName="lastName" autocomplete="family-name" />
+              @if (fieldError('lastName'); as error) { <mat-error>{{ error }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" autocomplete="email" />
+              @if (fieldError('email'); as error) { <mat-error>{{ error }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Telefono</mat-label>
+              <input matInput type="tel" formControlName="phoneNumber" autocomplete="tel" />
+              <mat-hint>Formato: +39 seguito da 9 o 10 cifre</mat-hint>
+              @if (fieldError('phoneNumber'); as error) { <mat-error>{{ error }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Password</mat-label>
+              <input matInput type="password" formControlName="password" autocomplete="new-password" />
+              <mat-hint>Almeno 10 caratteri, una lettera e una cifra</mat-hint>
+              @if (fieldError('password'); as error) { <mat-error>{{ error }}</mat-error> }
+            </mat-form-field>
+          </div>
+
+          <div class="registration-actions">
+            <button mat-flat-button class="btn" type="submit" [disabled]="registrationSubmitting()">
+              {{ registrationSubmitting() ? 'Registrazione in corso…' : 'Crea account' }}
+            </button>
+          </div>
+        </form>
+
+        <p class="register-alt">
+          Hai già un account? <a [href]="loginHref()">Accedi</a>.
+        </p>
+      </div>
+    }
+  </div>
+</section>

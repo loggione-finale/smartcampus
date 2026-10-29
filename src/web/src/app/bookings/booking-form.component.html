@@ -1,9 +1,8 @@
 <section class="booking" id="prenota" aria-labelledby="booking-title">
   <div class="booking-intro" data-reveal>
-    <p class="eyebrow">Una fascia, un posto per te</p>
     <h2 id="booking-title">Prenota senza sorprese.</h2>
     <p>Scegli lo spazio e la fascia oraria. Il sistema controlla sovrapposizioni, disponibilità e commenti finali prima di confermare.</p>
-    <p class="booking-note">Gli orari sono interpretati nel fuso del dispositivo e inviati al servizio in UTC.</p>
+    <p class="booking-note">Gli orari seguono il fuso orario del tuo dispositivo.</p>
   </div>
 
   <form class="booking-form" [formGroup]="bookingForm" (ngSubmit)="submitBooking()" novalidate data-reveal>
@@ -98,18 +97,25 @@
         <span>Durata</span>
         <strong>{{ bookingDuration() }} minuti</strong>
       </div>
-      <mat-slider min="30" max="240" step="15" discrete showTickMarks>
+      <mat-slider min="30" [max]="maxBookingDuration()" step="15" discrete showTickMarks>
         <input
           matSliderThumb
           [value]="bookingDuration()"
+          (input)="setBookingDuration(+$any($event.target).value)"
           (valueChange)="setBookingDuration($event)"
           aria-label="Durata della prenotazione in minuti"
         />
       </mat-slider>
-      <p class="duration-hint">Da 30 minuti a 4 ore, a passi di 15 minuti.</p>
+      <p class="duration-hint">
+        @if (maxBookingDuration() < 240) {
+          Da 30 a {{ maxBookingDuration() }} minuti, a passi di 15: la fascia oraria scelta finisce prima.
+        } @else {
+          Da 30 minuti a 4 ore, a passi di 15 minuti.
+        }
+      </p>
     </div>
 
-    <button mat-flat-button class="booking-submit" type="submit" [disabled]="bookingState() === 'submitting'">
+    <button mat-flat-button class="btn booking-submit" type="submit" [disabled]="bookingState() === 'submitting'">
       {{ bookingState() === 'submitting' ? 'Invio in corso…' : 'Conferma prenotazione' }}
     </button>
     @if (bookingState() === 'success') { <p class="booking-feedback success" role="status">{{ bookingMessage() }} <strong>Codice: {{ bookingReference() }}</strong></p> }

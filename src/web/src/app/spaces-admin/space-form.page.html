@@ -1,16 +1,18 @@
-<section class="admin-hero">
-  <div class="admin-inner">
-    <p class="eyebrow">AREA PERSONALE</p>
-    <h1>{{ spaceId ? 'Modifica spazio' : 'Nuovo spazio' }}</h1>
+<header class="page-head">
+  <div class="page-head-inner">
+    <app-admin-nav current="spaces" />
+    <div class="page-title">
+      <h1>{{ spaceId ? 'Modifica spazio' : 'Nuovo spazio' }}</h1>
+    </div>
   </div>
-</section>
+</header>
 
-<section class="admin-body">
+<section class="page-body">
   @if (error(); as message) {
-    <p class="form-alert" role="alert">{{ message }}</p>
+    <p class="notice notice-error" role="alert">{{ message }}</p>
   }
 
-  <form class="space-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <form class="panel space-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
     <mat-form-field appearance="outline">
       <mat-label>Nome</mat-label>
       <input matInput formControlName="name" maxlength="100" />

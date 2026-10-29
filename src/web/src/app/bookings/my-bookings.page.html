@@ -1,34 +1,35 @@
 <section class="bookings-page" aria-labelledby="bookings-title">
-  <div class="bookings-hero">
-    <a class="back-link" href="/account">
-      <span aria-hidden="true">←</span> Torna all’area personale
-    </a>
-    <p class="eyebrow">AREA PERSONALE</p>
-    <h1 id="bookings-title">Le mie prenotazioni</h1>
-    <p class="bookings-lead">
-      Le prenotazioni in cui sei organizzatore o partecipante, con spazio, data, fascia oraria e
-      stato. Le prenotazioni annullate restano qui, con lo stato ben visibile.
-    </p>
-  </div>
+  <header class="page-head">
+    <div class="page-head-inner">
+      <a class="back-link" href="/account">
+        <span aria-hidden="true">←</span> Area personale
+      </a>
+      <div class="page-title">
+        <h1 id="bookings-title">Le mie prenotazioni</h1>
+        <p class="page-lead">
+          Le prenotazioni in cui sei organizzatore o partecipante, con spazio, data, fascia oraria e
+          stato. Le prenotazioni annullate restano qui, con lo stato ben visibile.
+        </p>
+      </div>
+    </div>
+  </header>
 
-  <div class="bookings-content">
+  <div class="page-body">
     @if (errorMessage(); as error) {
-      <section class="state-panel state-error" role="alert" data-testid="error-state">
+      <section class="state-box notice-error" role="alert" data-testid="error-state">
         <mat-icon class="state-icon" aria-hidden="true">cloud_off</mat-icon>
-        <p class="section-tag">PRENOTAZIONI NON DISPONIBILI</p>
         <h2>Non riusciamo a caricare le prenotazioni</h2>
         <p>{{ error }}</p>
         <button mat-flat-button class="btn" type="button" (click)="refresh()">Riprova</button>
       </section>
     } @else if (loading()) {
-      <div class="loading-box" role="status" data-testid="loading-state">
-        <span class="loading-spinner" aria-hidden="true"></span>
+      <div class="state-box" role="status" data-testid="loading-state">
+        <span class="spinner" aria-hidden="true"></span>
         <p>Caricamento delle prenotazioni in corso…</p>
       </div>
     } @else if (bookings().length === 0) {
-      <section class="state-panel" role="status" data-testid="empty-state">
+      <section class="state-box" role="status" data-testid="empty-state">
         <mat-icon class="state-icon" aria-hidden="true">event_available</mat-icon>
-        <p class="section-tag">NESSUNA PRENOTAZIONE</p>
         <h2>Non hai ancora prenotazioni</h2>
         <p>Quando prenoti uno spazio del campus, lo trovi qui con il suo stato.</p>
         <a mat-flat-button class="btn" href="/spaces">Cerca uno spazio</a>
@@ -38,7 +39,7 @@
         <h2 aria-live="polite" data-testid="bookings-count">{{ countLabel() }}</h2>
         <button
           mat-stroked-button
-          class="refresh-btn"
+          class="btn-line"
           type="button"
           (click)="refresh()"
           [disabled]="loading()"
@@ -49,25 +50,22 @@
       </div>
 
       @if (actionSuccess(); as message) {
-        <p class="inline-success" role="status" data-testid="action-success">{{ message }}</p>
+        <p class="notice notice-success" role="status" data-testid="action-success">{{ message }}</p>
       }
 
       @if (invitationsUnavailable()) {
-        <p class="inline-alert" role="alert" data-testid="invitations-unavailable">
+        <p class="notice notice-error" role="alert" data-testid="invitations-unavailable">
           Non è stato possibile caricare gli inviti in attesa. Premi «Aggiorna» per riprovare.
         </p>
       }
 
       @if (actionError(); as error) {
-        <p class="inline-alert" role="alert" data-testid="action-error">{{ error }}</p>
+        <p class="notice notice-error" role="alert" data-testid="action-error">{{ error }}</p>
       }
 
       @for (section of sections(); track section.key) {
         <section class="booking-section" [attr.aria-labelledby]="section.key + '-title'">
-          <div class="section-head">
-            <p class="section-tag">{{ section.tag }}</p>
-            <h2 [id]="section.key + '-title'">{{ section.title }}</h2>
-          </div>
+          <h2 class="section-title" [id]="section.key + '-title'">{{ section.title }}</h2>
 
           <ul class="booking-list" [attr.data-testid]="section.key + '-list'">
             @for (booking of section.bookings; track booking.id) {
@@ -78,10 +76,16 @@
               >
                 <div class="booking-top">
                   <div class="booking-badges">
-                    <span class="status-badge" [attr.data-status]="booking.status">
+                    <span
+                      class="badge"
+                      [class.badge-ok]="booking.status === 'Confirmed'"
+                      [class.badge-danger]="booking.status === 'Cancelled'"
+                      [class.badge-warn]="booking.status === 'AwaitingComment'"
+                      [class.badge-muted]="booking.status === 'Closed'"
+                    >
                       {{ statusLabels[booking.status] }}
                     </span>
-                    <span class="role-badge">{{ roleLabels[booking.role] }}</span>
+                    <span class="badge">{{ roleLabels[booking.role] }}</span>
                   </div>
                   <span class="booking-reference">{{ booking.referenceCode }}</span>
                 </div>
@@ -101,7 +105,7 @@
                 </ul>
 
                 @if (booking.hasPendingInvitation) {
-                  <div class="notice notice-invite" data-testid="pending-invitation">
+                  <div class="card-notice" data-testid="pending-invitation">
                     <mat-icon aria-hidden="true">mail</mat-icon>
                     <div>
                       @if (invitationExpired(booking)) {
@@ -144,12 +148,12 @@
                 }
 
                 @if (booking.hasPendingClosureComment) {
-                  <div class="notice notice-comment" data-testid="pending-comment-notice">
+                  <div class="card-notice card-notice-warn" data-testid="pending-comment-notice">
                     <mat-icon aria-hidden="true">rate_review</mat-icon>
                     <div>
                       <p class="notice-title">Prenotazione conclusa senza commento</p>
                       <p>Il commento finale non è ancora stato inserito.</p>
-                      <a mat-stroked-button class="closure-link" [href]="closureLink(booking)">
+                      <a mat-stroked-button class="btn-line" [href]="closureLink(booking)">
                         Scrivi il commento
                       </a>
                     </div>
@@ -180,6 +184,7 @@
                           </button>
                           <button
                             mat-stroked-button
+                            class="btn-line"
                             type="button"
                             (click)="dismissCancel()"
                             [disabled]="cancellingBookingId() !== null"
@@ -192,7 +197,7 @@
                     } @else {
                       <button
                         mat-stroked-button
-                        class="cancel-btn"
+                        class="btn-line btn-danger cancel-btn"
                         type="button"
                         (click)="promptCancel(booking)"
                         [disabled]="cancellingBookingId() !== null"

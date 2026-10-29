@@ -98,7 +98,7 @@ public class OutboxEmailE2ETests(BookingsApiFactory factory) : IClassFixture<Boo
             if (invitation.UserId is null)
             {
                 Assert.Contains(
-                    $"/?returnUrl=%2Finvitations%2F{invitation.Id}#registrazione",
+                    $"/register?returnUrl=%2Finvitations%2F{invitation.Id}",
                     mail.Body);
             }
             else

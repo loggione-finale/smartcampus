@@ -23,6 +23,7 @@ import {
   extractSpaceFeatures,
   formatEquipmentLabel,
   formatFloorLabel,
+  bookingHref,
   romeLocalToUtcIso,
   todayInRome,
   utcIsoToRomeTime,
@@ -208,6 +209,11 @@ export class SpacesCatalogPage implements OnInit {
     const endTime = utcIsoToRomeTime(endIso);
     const day = startIso.slice(0, 10);
     return startTime && endTime ? `${day} · ${startTime}–${endTime}` : day;
+  }
+
+  protected spaceBookingHref(spaceId: string): string {
+    const slot = this.appliedSlot();
+    return bookingHref(spaceId, slot?.startIso, slot?.endIso);
   }
 
   protected spaceAvailabilityHref(spaceId: string): string {

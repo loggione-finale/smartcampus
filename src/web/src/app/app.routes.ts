@@ -1,7 +1,14 @@
 import { Routes } from '@angular/router';
-import { adminGuard, authGuard } from './auth/auth.guard';
+import { adminGuard, authGuard, legacyRegistrationGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
+  // The home itself is drawn by App; this route only forwards old registration links.
+  { path: '', pathMatch: 'full', canActivate: [legacyRegistrationGuard], children: [] },
+  {
+    path: 'register',
+    loadComponent: () => import('./auth/register.page').then((m) => m.RegisterPage),
+    title: 'Registrati · SmartCampus',
+  },
   {
     path: 'login',
     loadComponent: () => import('./auth/login.page').then((m) => m.LoginPage),

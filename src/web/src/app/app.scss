@@ -1,7 +1,6 @@
 // Dark grounds take a cream focus ring
 .topbar,
 .hero,
-.services,
 .contact-panel,
 .footer {
   --focus: var(--cream);
@@ -73,6 +72,7 @@
 .auth-button.mat-mdc-button {
   --mat-button-text-label-text-color: var(--cream);
   --mat-button-text-label-text-size: 17px;
+  --mat-button-text-label-text-weight: 500;
   min-height: 44px;
 }
 
@@ -92,8 +92,7 @@
   background: var(--night);
 }
 
-.hero-photo,
-.services-photo {
+.hero-photo {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -179,115 +178,6 @@ h1 {
   &:focus-visible svg {
     transform: translateX(10px);
   }
-}
-
-// Registration: shared validation rules presented in a compact Material form
-.registration {
-  display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
-  gap: clamp(40px, 7vw, 112px);
-  align-items: start;
-  padding: var(--section) var(--gutter);
-  color: var(--on-dark);
-  background: var(--night);
-}
-
-.registration-heading {
-  position: sticky;
-  top: 112px;
-
-  h2 {
-    max-width: 12ch;
-    margin-top: 16px;
-    font-size: clamp(38px, 4.5vw, 68px);
-    font-weight: 900;
-    line-height: 0.98;
-    letter-spacing: -0.03em;
-  }
-
-  > p:last-child {
-    max-width: 38ch;
-    margin-top: 28px;
-    color: var(--cream);
-  }
-}
-
-.registration-form {
-  padding: clamp(24px, 4vw, 48px);
-  color: var(--ink);
-  background: var(--ground);
-
-  mat-form-field {
-    width: 100%;
-  }
-}
-
-.registration-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 20px;
-}
-
-.registration-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.form-note {
-  color: #5d5870;
-  font-size: 14px;
-}
-
-.form-alert {
-  margin-bottom: 20px;
-  padding: 14px 16px;
-  color: #7a2119;
-  background: #ffe8e4;
-  border-left: 4px solid var(--offline);
-}
-
-.registration-confirmation {
-  grid-column: 1 / -1;
-  max-width: 760px;
-  margin: 0 auto;
-  padding: clamp(32px, 6vw, 80px);
-  text-align: center;
-  background: var(--lilac);
-  color: var(--ink);
-
-  h2 {
-    margin: 16px auto;
-    font-size: clamp(38px, 5vw, 72px);
-    font-weight: 900;
-    line-height: 1;
-    letter-spacing: -0.03em;
-  }
-
-  > p:not(.eyebrow) {
-    max-width: 48ch;
-    margin: 0 auto 28px;
-  }
-}
-
-.confirmation-icon {
-  display: grid;
-  width: 56px;
-  height: 56px;
-  margin: 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--on-dark);
-  background: var(--brand);
-  font-size: 32px;
-  font-weight: 800;
-}
-
-.text-button {
-  display: block;
-  margin: 16px auto 0;
 }
 
 // Intro: the question, the answer, the three moves
@@ -423,8 +313,7 @@ h1 {
   transform: scale(1.06);
 }
 
-.space h3,
-.service h3 {
+.space h3 {
   font-size: clamp(24px, 2vw, 30px);
   font-weight: 800;
   line-height: 1.1;
@@ -463,81 +352,6 @@ h1 {
   &:hover .arrow-icon,
   &:focus-visible .arrow-icon {
     transform: translate(3px, -3px);
-  }
-}
-
-// Services: the campus walk behind, three services and their live status
-.services {
-  position: relative;
-  padding: var(--section) var(--gutter);
-  overflow: hidden;
-  color: var(--on-dark);
-  background: var(--night);
-
-  > :not(img) {
-    position: relative;
-  }
-}
-
-.services-lead {
-  max-width: 52ch;
-  margin: 0 auto clamp(56px, 7vw, 112px);
-  font-size: clamp(19px, 1.5vw, 22px);
-  text-align: center;
-  color: var(--cream);
-}
-
-.service-list {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(40px, 5vw, 80px);
-  padding: 0;
-  list-style: none;
-  text-align: center;
-}
-
-.service {
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-
-  ul {
-    padding: 0;
-    list-style: none;
-  }
-}
-
-.service-icon {
-  width: 72px;
-  height: 72px;
-  font-size: 72px;
-  color: var(--cream);
-}
-
-.health {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-  font-weight: 700;
-}
-
-.health-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--cream);
-
-  [data-health='checking'] & {
-    animation: pulse 1s ease-in-out infinite alternate;
-  }
-
-  [data-health='online'] & {
-    background: var(--online);
-  }
-
-  [data-health='offline'] & {
-    background: var(--offline);
   }
 }
 
@@ -660,12 +474,6 @@ h1 {
   }
 }
 
-@keyframes pulse {
-  to {
-    opacity: 0.3;
-  }
-}
-
 @media (max-width: 1024px) {
   .space-list {
     grid-template-columns: repeat(2, 1fr);
@@ -697,27 +505,13 @@ h1 {
   }
 
   .intro,
-  .contact,
-  .registration {
+  .contact {
     grid-template-columns: 1fr;
   }
 
-
-  .registration-heading {
-    position: static;
-  }
 }
 
 @media (max-width: 600px) {
-  .registration-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .service-list {
-    grid-template-columns: 1fr;
-    gap: 96px;
-  }
-
   .space-list {
     gap: 32px 16px;
   }

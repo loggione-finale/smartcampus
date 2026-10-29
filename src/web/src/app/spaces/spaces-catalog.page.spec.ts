@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { SpacesCatalogPage } from './spaces-catalog.page';
 import {
+  bookingHref,
   SpaceDto,
   hasOverlappingUnavailability,
   romeLocalToUtcIso,
@@ -63,6 +64,13 @@ const SAMPLE_SPACES: SpaceDto[] = [
 ];
 
 describe('Spaces time & availability helpers', () => {
+  it('links Prenota to the home booking form with the space and the optional slot', () => {
+    expect(bookingHref('a b')).toBe('/?spazio=a+b#prenota');
+    expect(bookingHref('s1', '2026-10-30T09:00:00.000Z', '2026-10-30T10:00:00.000Z')).toBe(
+      '/?spazio=s1&inizio=2026-10-30T09%3A00%3A00.000Z&fine=2026-10-30T10%3A00%3A00.000Z#prenota',
+    );
+  });
+
   it('converts 10:00 Europe/Rome to 09:00 UTC in winter and 08:00 UTC in summer', () => {
     expect(romeLocalToUtcIso('2026-01-15', '10:00')).toBe('2026-01-15T09:00:00.000Z');
     expect(romeLocalToUtcIso('2026-07-15', '10:00')).toBe('2026-07-15T08:00:00.000Z');
