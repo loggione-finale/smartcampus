@@ -107,7 +107,7 @@ describe('RegisterPage', () => {
   });
 
   it('navigates to the login with returnUrl after registration without a session', async () => {
-    // Link dalla mail all'invitato non registrato (#233): la query sta prima del frammento.
+    // Link from the email to an unregistered invitee (#233): query precedes the fragment.
     const { fixture, app } = await openRegister('?returnUrl=%2Finvitations%2Fabc');
 
     app.registrationForm.setValue({
@@ -122,7 +122,7 @@ describe('RegisterPage', () => {
 
     const request = httpTesting.expectOne('/api/users/auth/register');
     expect(request.request.method).toBe('POST');
-    // La rotta /invitations è protetta: senza sessione l'authGuard manda al login con returnUrl.
+    // The /invitations route is protected: without a session, authGuard redirects to login with returnUrl.
     request.flush({}, { status: 201, statusText: 'Created' });
     await fixture.whenStable();
     fixture.detectChanges();
@@ -131,7 +131,7 @@ describe('RegisterPage', () => {
   });
 
   it('navigates to the invitation after registration with a session', async () => {
-    // Come sopra, ma con la sessione attiva: si atterra direttamente sull'invito.
+    // As above, but with an active session: lands directly on the invitation.
     const session = TestBed.inject(AuthSessionService);
     session.store(LOGIN_RESPONSE);
     const { fixture, app } = await openRegister('?returnUrl=%2Finvitations%2Fabc');
@@ -153,12 +153,12 @@ describe('RegisterPage', () => {
     fixture.detectChanges();
 
     expect(TestBed.inject(Router).url).toBe('/invitations/abc');
-    // La pagina inviti caricata dalla rotta fa la sua GET: la chiudiamo qui.
+    // The invitations page loaded by the route performs its GET request: resolve it here.
     httpTesting.match((r) => r.url.endsWith('/api/invitations/mine')).forEach((r) => r.flush([]));
   });
 
   it('stays on the page after registration when returnUrl is external', async () => {
-    // returnUrl esterno (//host): safeReturnUrl lo scarta, si resta sulla pagina con la conferma.
+    // External returnUrl (//host): safeReturnUrl rejects it, staying on the page with confirmation.
     const { fixture, app } = await openRegister('?returnUrl=%2F%2Fevil.example');
 
     app.registrationForm.setValue({

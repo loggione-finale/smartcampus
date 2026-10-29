@@ -93,10 +93,10 @@ export class RegisterPage {
     this.http.post('/api/users/auth/register', request).subscribe({
       next: () => {
         this.registrationSubmitting.set(false);
-        // Chi arriva dal link di registrazione della mail di invito torna
-        // all'invito dopo l'iscrizione (la rotta /invitations è protetta:
-        // se non ha ancora la sessione passa dal login con returnUrl).
-        // safeReturnUrl scarta i percorsi esterni (//host, backslash, /login).
+        // Users arriving from the registration link in an invitation email return
+        // to the invitation after signing up (the /invitations route is protected:
+        // if not logged in yet, they pass through login with returnUrl).
+        // safeReturnUrl rejects external paths (//host, backslash, /login).
         const returnUrl = safeReturnUrl(this.registrationReturnUrl());
         if (returnUrl) {
           void this.router.navigateByUrl(returnUrl);

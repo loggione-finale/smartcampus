@@ -13,8 +13,8 @@ using SmartCampus.Bookings.Tests.Support;
 namespace SmartCampus.Bookings.Tests.Features.Notifications;
 
 /// <summary>
-/// La coda di outbox non deve mai far fallire l'operazione HTTP già salvata:
-/// i .eml li scrive il dispatcher in background, con esito tracciato sulla riga.
+/// The outbox queue must never fail an already saved HTTP operation:
+/// the background dispatcher writes .eml files, tracking the outcome on the row.
 /// </summary>
 public class EmailOutboxDispatcherTests(BookingsApiFactory factory) : IClassFixture<BookingsApiFactory>
 {
@@ -39,7 +39,7 @@ public class EmailOutboxDispatcherTests(BookingsApiFactory factory) : IClassFixt
     {
         var client = factory.CreateAuthenticatedClient(Guid.NewGuid(), "organizer@smartcampus.test");
 
-        // Percorso non scrivibile: su Windows un file esistente al posto della cartella.
+        // Unwritable path: on Windows an existing file in place of the directory.
         var blockedDirectory = Path.Combine(
             Path.GetTempPath(), "smartcampus-tests-blocked", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.GetDirectoryName(blockedDirectory)!);
@@ -101,7 +101,7 @@ public class EmailOutboxDispatcherTests(BookingsApiFactory factory) : IClassFixt
             .Single(f => File.ReadAllText(f).Contains(referenceCode));
         Assert.Contains(sent.Subject, File.ReadAllText(eml));
 
-        // Un secondo colpo di dispatch non riscrive nulla: la riga è già Sent.
+        // A second dispatch run writes nothing: the row is already Sent.
         await dispatcher.DispatchPendingAsync(CancellationToken.None);
         Assert.Single(
             Directory.GetFiles(factory.PickupDirectory, "*.eml"),

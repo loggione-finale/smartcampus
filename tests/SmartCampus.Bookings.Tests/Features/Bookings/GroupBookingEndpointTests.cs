@@ -212,7 +212,7 @@ public class GroupBookingEndpointTests(BookingsApiFactory factory) : IClassFixtu
             ParticipantEmails: ["invitato@smartcampus.test"]));
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
 
-        // Con 2 posti occupati restano 1 posto libero: 2 nuovi partecipanti oltre l'organizzatore superano la capienza.
+        // With 2 occupied seats 1 seat remains free: 2 new participants plus the organizer exceed capacity.
         var second = factory.CreateAuthenticatedClient(Guid.NewGuid(), "secondo@smartcampus.test");
         var response = await second.PostAsJsonAsync("/bookings", new CreateBookingRequest(
             spaceId, start, start.AddHours(1),
