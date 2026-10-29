@@ -127,6 +127,26 @@ public partial class SyntheticDataConsistencyTests
     }
 
     [Fact]
+    public void Spaces_have_unique_ids_and_names_and_cover_every_type_and_several_buildings()
+    {
+        var spaces = data.Spaces.EnumerateArray().ToList();
+        var ids = spaces.Select(s => s.GetProperty("_id").GetString()!.ToLowerInvariant()).ToList();
+        var names = spaces.Select(s => s.GetProperty("name").GetString()!).ToList();
+
+        Assert.Equal(ids.Count, ids.Distinct().Count());
+        Assert.Equal(names.Count, names.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.True(spaces.Count >= 15, $"spaces.json has {spaces.Count} spaces, expected at least 15");
+
+        var types = spaces.Select(s => s.GetProperty("type").GetString()).Distinct().ToList();
+        Assert.Contains("Classroom", types);
+        Assert.Contains("Lab", types);
+        Assert.Contains("StudyRoom", types);
+
+        var buildings = spaces.Select(s => s.GetProperty("building").GetString()).Distinct().ToList();
+        Assert.True(buildings.Count >= 5, $"spaces.json uses {buildings.Count} buildings, expected at least 5");
+    }
+
+    [Fact]
     public void Spaces_in_the_bookings_seed_match_spaces_json()
     {
         var problems = new List<string>();

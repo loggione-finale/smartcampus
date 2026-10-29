@@ -1,6 +1,6 @@
 <div class="availability-shell">
-  <section class="availability-hero" aria-labelledby="availability-title">
-    <div class="availability-hero-inner">
+  <section class="page-head" aria-labelledby="availability-title">
+    <div class="page-head-inner">
       <a
         class="back-link"
         href="/spaces"
@@ -10,28 +10,36 @@
         <span aria-hidden="true">←</span> Torna al catalogo spazi
       </a>
 
-      @if (space(); as s) {
-        <div class="hero-badges">
-          <span class="badge badge-type">{{ typeLabels[s.type] }}</span>
-          <span class="badge badge-mode" [attr.data-mode]="s.mode">{{ modeLabels[s.mode] }}</span>
-          @if (!s.isActive) {
-            <span class="badge badge-inactive">Spazio disattivato</span>
+      <div class="page-title">
+        @if (space(); as s) {
+          <h1 id="availability-title" data-testid="space-title">{{ s.name }}</h1>
+          <p class="page-lead">
+            {{ s.building }} · {{ floorLabel(s.floor) }} · <strong>{{ s.capacity }} posti</strong>
+          </p>
+          <p class="hero-hint">{{ modeHints[s.mode] }}</p>
+          <div class="hero-badges">
+            <span class="badge">{{ typeLabels[s.type] }}</span>
+            <span class="badge" [class.badge-brand]="s.mode === 'Mixed'">{{ modeLabels[s.mode] }}</span>
+            @if (!s.isActive) {
+              <span class="badge badge-danger">Spazio disattivato</span>
+            }
+          </div>
+          @if (s.isActive) {
+            <div class="page-head-actions">
+              <a mat-flat-button class="btn" [href]="bookingHref(s.id)" data-testid="book-space-link">
+                Prenota questo spazio
+              </a>
+            </div>
           }
-        </div>
-        <h1 id="availability-title" data-testid="space-title">{{ s.name }}</h1>
-        <p class="hero-meta">
-          {{ s.building }} · {{ floorLabel(s.floor) }} · <strong>{{ s.capacity }} posti</strong>
-        </p>
-        <p class="hero-hint">{{ modeHints[s.mode] }}</p>
-      } @else {
-        <p class="eyebrow">DISPONIBILITÀ GIORNALIERA</p>
-        <h1 id="availability-title">Dettaglio disponibilità spazio</h1>
-      }
+        } @else {
+          <h1 id="availability-title">Disponibilità dello spazio</h1>
+        }
+      </div>
     </div>
   </section>
 
-  <section class="availability-body">
-    <div class="date-toolbar" aria-label="Controlli data e aggiornamento">
+  <section class="page-body">
+    <div class="panel date-toolbar" aria-label="Controlli data e aggiornamento">
       <div class="date-picker-group">
         <mat-form-field appearance="outline" class="date-field">
           <mat-label>Giorno (ora di Roma)</mat-label>
@@ -95,7 +103,7 @@
     </div>
 
     @if (errorMessage(); as error) {
-      <div class="error-banner" role="alert" data-testid="availability-error">
+      <div class="notice notice-error" role="alert" data-testid="availability-error">
         <p>{{ error }}</p>
         @if (!notFound()) {
           <button mat-flat-button class="btn" type="button" (click)="reloadAvailability()">
@@ -104,14 +112,14 @@
         }
       </div>
     } @else if (loading() && !availability()) {
-      <div class="loading-box" role="status" data-testid="availability-loading">
-        <span class="loading-spinner" aria-hidden="true"></span>
+      <div class="state-box" role="status" data-testid="availability-loading">
+        <span class="spinner" aria-hidden="true"></span>
         <p>Caricamento delle fasce di disponibilità in corso…</p>
       </div>
     } @else if (space(); as s) {
       <div class="space-info-strip">
         <div>
-          <p class="strip-label">Strumentazione in aula</p>
+          <p class="field-label">Strumentazione in aula</p>
           @if (s.equipment.length > 0) {
             <ul class="tag-list">
               @for (eq of s.equipment; track eq) {
@@ -126,7 +134,7 @@
         @if (spaceFeatures(s); as feats) {
           @if (feats.length > 0) {
             <div>
-              <p class="strip-label">Caratteristiche</p>
+              <p class="field-label">Caratteristiche</p>
               <ul class="tag-list">
                 @for (feat of feats; track feat) {
                   <li class="tag">{{ feat }}</li>
@@ -158,13 +166,29 @@
 
             <div class="segment-details">
               <div class="segment-header">
-                <span class="status-pill" [attr.data-status]="segment.status">
+                <span
+                  class="badge"
+                  [class.badge-ok]="segment.status === 'free'"
+                  [class.badge-warn]="segment.status === 'partial'"
+                  [class.badge-danger]="segment.status === 'occupied'"
+                  [class.badge-muted]="segment.status === 'unavailable' || segment.status === 'inactive'"
+                >
                   {{ statusBadgeLabel(segment.status, s.mode === 'Mixed') }}
                 </span>
                 <span class="segment-summary-text">
                   {{ segmentSummary(segment, s.mode === 'Mixed') }}
                 </span>
               </div>
+
+              @if (s.isActive && canBook(segment)) {
+                <a
+                  class="segment-book"
+                  [href]="bookingHref(s.id, segment.startIso, segment.endIso)"
+                  data-testid="book-segment-link"
+                >
+                  Prenota {{ segment.startTimeRome }}–{{ segment.endTimeRome }} <span aria-hidden="true">→</span>
+                </a>
+              }
 
               @if (s.mode === 'Mixed' && segment.status !== 'unavailable' && segment.status !== 'inactive') {
                 <div class="seats-meter" aria-hidden="true">

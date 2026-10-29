@@ -104,4 +104,70 @@ public class MyInvitationsEndpointTests(BookingsApiFactory factory) : IClassFixt
             nameof(InvitationStatus.Expired),
             invitations[0].GetProperty("status").GetString());
     }
+
+    [Fact]
+    public async Task An_invitation_includes_the_booking_details()
+    {
+        var userId = Guid.NewGuid();
+        var email = $"{Guid.NewGuid():N}@smartcampus.test";
+        await CreateInvitationAsync(userId, email, InvitationStatus.Invited);
+        await CreateInvitationAsync(null, email, InvitationStatus.Accepted);
+        await CreateInvitationAsync(Guid.NewGuid(), email, InvitationStatus.Left);
+
+        var client = factory.CreateAuthenticatedClient(userId, email);
+        var response = await client.GetAsync("/invitations/mine");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var invitations = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var invitation = invitations[0];
+
+        Assert.Equal("Aula 1", invitation.GetProperty("spaceName").GetString());
+        Assert.Equal("Edificio A", invitation.GetProperty("spaceBuilding").GetString());
+        Assert.Equal(
+            Start,
+            DateTime.Parse(invitation.GetProperty("start").GetString()!).ToUniversalTime());
+        Assert.Equal(
+            Start.AddHours(2),
+            DateTime.Parse(invitation.GetProperty("end").GetString()!).ToUniversalTime());
+
+        // Every invitation is created on its own booking, so the invited one
+        // counts only its own participant row (the declined one is not shown).
+        Assert.Equal(1, invitation.GetProperty("participantCount").GetInt32());
+    }
+
+    [Fact]
+    public async Task The_participant_count_excludes_the_organizer_and_declined_invitations()
+    {
+        var userId = Guid.NewGuid();
+        var email = $"{Guid.NewGuid():N}@smartcampus.test";
+        var booking = BookingTestData.NewBooking(Guid.NewGuid(), Start, Start.AddHours(2));
+        var invited = BookingTestData.NewInvitation(booking, userId, InvitationStatus.Invited);
+        invited.Email = email;
+        booking.Invitations.Add(invited);
+
+        var organizer = BookingTestData.NewInvitation(booking, Guid.NewGuid(), InvitationStatus.Accepted, ParticipantRole.Organizer);
+        booking.Invitations.Add(organizer);
+
+        var declined = BookingTestData.NewInvitation(booking, Guid.NewGuid(), InvitationStatus.Left);
+        booking.Invitations.Add(declined);
+
+        var expired = BookingTestData.NewInvitation(booking, Guid.NewGuid(), InvitationStatus.Expired);
+        booking.Invitations.Add(expired);
+
+
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BookingsDbContext>();
+        dbContext.Bookings.Add(booking);
+        await dbContext.SaveChangesAsync();
+
+        var client = factory.CreateAuthenticatedClient(userId, email);
+        var response = await client.GetAsync("/invitations/mine");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var invitations = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(1, invitations.GetArrayLength());
+
+        // Only pending and accepted participants count: the organizer is not a
+        // participant, while declined and expired ones are out of the booking.
+        Assert.Equal(1, invitations[0].GetProperty("participantCount").GetInt32());    }
 }

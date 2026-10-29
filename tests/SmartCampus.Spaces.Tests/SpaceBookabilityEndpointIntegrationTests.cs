@@ -178,5 +178,10 @@ public class SpaceBookabilityEndpointIntegrationTests : IClassFixture<WebApplica
         var response = await client.GetAsync(url);
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+
+        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(
+            "The spaces database is temporarily unreachable.",
+            problem.RootElement.GetProperty("detail").GetString());
     }
 }

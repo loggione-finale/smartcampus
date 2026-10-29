@@ -19,6 +19,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { merge } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 import { AuthSessionService } from '../auth/auth-session.service';
 
 type BookingSpace = {
@@ -55,8 +56,16 @@ const FALLBACK_EQUIPMENT: EquipmentCatalogItemDto[] = [
   { code: 'microphone', name: 'Microfono', description: '', isStandard: true, requiresNotes: false },
 ];
 
+// Decision 32: a booking can start at most 15 days from now, like the Bookings validator.
+const MAX_ADVANCE_DAYS = 15;
+
 function localDate(date: Date): string {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+function addDays(isoDate: string, days: number): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return localDate(new Date(year, month - 1, day + days));
 }
 
 function hhmm(totalMinutes: number): string {
@@ -90,7 +99,7 @@ const BOOKING_BANDS: ReadonlyArray<readonly [number, number]> = [
 ];
 
 // First full hour that starts in the future inside a bookable band, whatever the device time zone.
-function defaultBookingSlot(now: Date = new Date()): { date: string; start: string; end: string } {
+export function defaultBookingSlot(now: Date = new Date()): { date: string; start: string; end: string } {
   const step = 15 * 60000;
   const firstSlot = Math.ceil((now.getTime() + 60000) / step) * step;
 
@@ -118,6 +127,39 @@ function defaultBookingSlot(now: Date = new Date()): { date: string; start: stri
   }
 
   return { date: localDate(now), start: '09:00', end: '10:00' };
+}
+
+// "Prenota" links from the home, the catalog and a space's day view: /book?spazio=<id>&inizio=<iso>&fine=<iso>.
+// A slot already under way starts at the next quarter hour; a past or malformed one falls back to
+// the default slot; a free span longer than four hours keeps its first hour.
+export function bookingPrefill(search: string, now: Date = new Date()): {
+  spaceId: string;
+  slot: { date: string; start: string; end: string } | null;
+} {
+  const params = new URLSearchParams(search);
+  let start = new Date(params.get('inizio') ?? '');
+  let end = new Date(params.get('fine') ?? '');
+  if (start <= now) {
+    const step = 15 * 60000;
+    start = new Date(Math.ceil((now.getTime() + 60000) / step) * step);
+  }
+  const valid =
+    !Number.isNaN(start.valueOf()) &&
+    !Number.isNaN(end.valueOf()) &&
+    end.getTime() - start.getTime() >= 30 * 60000;
+  if (valid && end.getTime() - start.getTime() > 240 * 60000) {
+    end = new Date(start.getTime() + 60 * 60000);
+  }
+  return {
+    spaceId: params.get('spazio') ?? '',
+    slot: valid
+      ? {
+          date: localDate(start),
+          start: hhmm(start.getHours() * 60 + start.getMinutes()),
+          end: hhmm(end.getHours() * 60 + end.getMinutes()),
+        }
+      : null,
+  };
 }
 
 function toBookingSpace(space: SpaceDto): BookingSpace {
@@ -224,10 +266,14 @@ export class BookingFormComponent {
   protected readonly participantError = signal('');
   protected readonly emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  private readonly initialSlot = defaultBookingSlot();
+  // Read from the route, not window.location: after the login redirect the browser URL may still be /login.
+  private readonly prefill = bookingPrefill(
+    new URLSearchParams(inject(ActivatedRoute, { optional: true })?.snapshot.queryParams ?? {}).toString(),
+  );
+  private readonly initialSlot = this.prefill.slot ?? defaultBookingSlot();
 
   protected readonly bookingForm = new FormGroup({
-    spaceId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    spaceId: new FormControl(this.prefill.spaceId, { nonNullable: true, validators: [Validators.required] }),
     date: new FormControl(this.initialSlot.date, { nonNullable: true, validators: [Validators.required] }),
     start: new FormControl(this.initialSlot.start, { nonNullable: true, validators: [Validators.required] }),
     end: new FormControl(this.initialSlot.end, { nonNullable: true, validators: [Validators.required] }),
@@ -235,7 +281,32 @@ export class BookingFormComponent {
   });
 
   protected readonly minimumBookingDate = this.todayLocal();
+  protected readonly maximumBookingDate = addDays(this.minimumBookingDate, MAX_ADVANCE_DAYS);
   protected readonly participantTotal = computed(() => 1 + this.participantEmails().length);
+
+  // The slider reads the duration from the form values, so typing a start or end time moves it.
+  private readonly bookingFormValue = toSignal(this.bookingForm.valueChanges, {
+    initialValue: this.bookingForm.getRawValue(),
+  });
+  protected readonly bookingDuration = computed(() => {
+    const { date, start, end } = this.bookingFormValue();
+    if (!date || !start || !end) return 60;
+    const minutes =
+      (new Date(`${date}T${end}`).getTime() - new Date(`${date}T${start}`).getTime()) / 60000;
+    return Number.isFinite(minutes) && minutes >= 30 && minutes <= 240 ? minutes : 60;
+  });
+
+  // The longest booking that still ends inside the band of the chosen start: the slider stops there.
+  protected readonly maxBookingDuration = computed(() => {
+    const startDate = this.bookingStartDate();
+    if (!startDate) return 240;
+    const campusStart = campusTimeParts(startDate).minutes;
+    const band = BOOKING_BANDS.find(
+      ([from, to]) => campusStart >= from && campusStart < to,
+    );
+    const bandEnd = band?.[1] ?? BOOKING_BANDS[BOOKING_BANDS.length - 1][1];
+    return Math.max(30, Math.min(240, bandEnd - campusStart));
+  });
 
   private readonly selectedSpaceId = toSignal(this.bookingForm.controls.spaceId.valueChanges, {
     initialValue: this.bookingForm.controls.spaceId.value,
@@ -296,8 +367,10 @@ export class BookingFormComponent {
       this.bookingForm.controls.start.valueChanges,
       this.bookingForm.controls.end.valueChanges,
     ).subscribe(() => this.refreshMixedSeats());
-    this.loadBookingSpaces();
-    this.loadEquipmentCatalog();
+    if (!this.session.isAdmin()) {
+      this.loadBookingSpaces();
+      this.loadEquipmentCatalog();
+    }
   }
 
   protected submitBooking(): void {
@@ -442,29 +515,20 @@ export class BookingFormComponent {
     this.equipmentError.set('');
   }
 
-  protected bookingDuration(): number {
-    const { date, start, end } = this.bookingForm.getRawValue();
-    if (!date || !start || !end) return 60;
-    const minutes =
-      (new Date(`${date}T${end}`).getTime() - new Date(`${date}T${start}`).getTime()) / 60000;
-    return Number.isFinite(minutes) && minutes >= 30 && minutes <= 240 ? minutes : 60;
-  }
-
+  // The slider calls this while dragging too, so the duration and the end time follow the thumb.
   protected setBookingDuration(minutes: number): void {
-    const { date, start } = this.bookingForm.getRawValue();
-    if (!date || !start) return;
-    const startDate = new Date(`${date}T${start}`);
-    if (Number.isNaN(startDate.valueOf())) return;
-
-    const campusStart = campusTimeParts(startDate).minutes;
-    const band = BOOKING_BANDS.find(
-      ([from, to]) => campusStart >= from && campusStart < to,
-    );
-    const bandEnd = band?.[1] ?? BOOKING_BANDS[BOOKING_BANDS.length - 1][1];
-    const maxDuration = Math.max(30, Math.min(240, bandEnd - campusStart));
-    const duration = Math.min(Math.max(30, Math.round(minutes / 15) * 15), maxDuration);
+    const startDate = this.bookingStartDate();
+    if (!startDate) return;
+    const duration = Math.min(Math.max(30, Math.round(minutes / 15) * 15), this.maxBookingDuration());
     const endDate = new Date(startDate.getTime() + duration * 60000);
     this.bookingForm.controls.end.setValue(hhmm(endDate.getHours() * 60 + endDate.getMinutes()));
+  }
+
+  private bookingStartDate(): Date | null {
+    const { date, start } = this.bookingFormValue();
+    if (!date || !start) return null;
+    const startDate = new Date(`${date}T${start}`);
+    return Number.isNaN(startDate.valueOf()) ? null : startDate;
   }
 
   protected retryBookingSpaces(): void {
@@ -563,6 +627,8 @@ export class BookingFormComponent {
 
     if (startDate <= new Date()) {
       errors.start = 'L’inizio deve essere nel futuro.';
+    } else if (startDate.getTime() > Date.now() + MAX_ADVANCE_DAYS * 86400000) {
+      errors.date = 'Puoi prenotare al massimo 15 giorni in anticipo.';
     }
 
     if (startDate.getMinutes() % 15 !== 0 || startDate.getSeconds() !== 0) {

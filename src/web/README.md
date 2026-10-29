@@ -24,12 +24,13 @@ Per esempio, `/api/spaces/health` viene inoltrato a `http://localhost:5101/healt
 
 ## Registrazione
 
-La pagina di registrazione è disponibile nella sezione `#registrazione` e invia i dati a
+La registrazione ha una pagina sua, `/register`, e invia i dati a
 `POST /api/users/auth/register`. Le regole client rispecchiano quelle del servizio Users; gli errori
 di validazione (`400`) e i duplicati (`409`) vengono mostrati sul campo interessato.
 
-Per simulare un accesso da invito usa `http://localhost:4200/?invite=demo#registrazione`: dopo una
-registrazione riuscita viene mostrata la conferma dell’invito.
+La mail d'invito a chi non è registrato punta a `/register?returnUrl=%2Finvitations%2F<id>`: dopo la
+registrazione si torna all'invito (passando dal login se manca la sessione). I vecchi link
+`/?returnUrl=…#registrazione` vengono reindirizzati a `/register`.
 
 ## Accesso e sessione
 
@@ -63,7 +64,9 @@ npm test -- --watch=false --browsers=ChromeHeadless
 
 ## Prenotare uno spazio
 
-La form è disponibile nella sezione `#prenota`: seleziona spazio, data e fascia oraria, poi aggiungi
+La form è nella pagina `/book` (serve l'accesso). La home mostra un'anteprima (spazio, giorno, ora) che
+porta a `/book` già compilata, come i pulsanti "Prenota" del catalogo e della disponibilità
+(`/book?spazio=<id>&inizio=<iso>&fine=<iso>`). Nella pagina seleziona spazio, data e fascia oraria, poi aggiungi
 facoltativamente le email dei partecipanti. Le email non valide, i duplicati e l'email del responsabile
 vengono rifiutati; il form mostra il totale dei partecipanti e lo confronta con la capienza dell'aula
 (o con i posti liberi di un'aula mista) prima di inviare. Con almeno un partecipante compare la selezione

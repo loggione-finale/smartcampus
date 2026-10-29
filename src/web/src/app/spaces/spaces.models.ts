@@ -231,6 +231,19 @@ function getRomeOffsetMs(utcMs: number): number {
 }
 
 /**
+ * Link to the booking page, preselecting the space and, when known, the slot
+ * (UTC instants; the form shows them in the device time zone).
+ */
+export function bookingHref(spaceId: string, startIso?: string, endIso?: string): string {
+  const params = new URLSearchParams({ spazio: spaceId });
+  if (startIso && endIso) {
+    params.set('inizio', startIso);
+    params.set('fine', endIso);
+  }
+  return `/book?${params.toString()}`;
+}
+
+/**
  * Converts a local calendar date (YYYY-MM-DD) and wall-clock time (HH:mm)
  * in Europe/Rome into an ISO 8601 UTC string ending with 'Z'.
  */

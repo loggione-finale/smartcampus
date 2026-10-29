@@ -3,11 +3,12 @@ using SmartCampus.Bookings.Api.Features.Equipment;
 
 namespace SmartCampus.Bookings.Api.Features.Bookings;
 
-public class BookingRequestValidator(TimeProvider timeProvider)
+public class BookingRequestValidator(TimeProvider timeProvider, TimeSpan? maximumAdvance = null)
 {
     public static readonly TimeSpan SlotLength = TimeSpan.FromMinutes(15);
     public static readonly TimeSpan MinimumDuration = TimeSpan.FromMinutes(30);
     public static readonly TimeSpan MaximumDuration = TimeSpan.FromHours(4);
+    public static readonly TimeSpan DefaultMaximumAdvance = TimeSpan.FromDays(15);
 
     public IReadOnlyDictionary<string, string[]> Validate(
         CreateBookingRequest request,
@@ -59,9 +60,14 @@ public class BookingRequestValidator(TimeProvider timeProvider)
             errors[nameof(request.End)] = ["The end must be after the start."];
         }
 
-        if (request.Start <= timeProvider.GetUtcNow())
+        var now = timeProvider.GetUtcNow();
+        if (request.Start <= now)
         {
             errors[nameof(request.Start)] = ["The start must be in the future."];
+        }
+        else if (request.Start > now + (maximumAdvance ?? DefaultMaximumAdvance))
+        {
+            errors[nameof(request.Start)] = ["A booking can start at most 15 days from now."];
         }
 
         if (errors.ContainsKey(nameof(request.End)))

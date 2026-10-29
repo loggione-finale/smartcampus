@@ -17,6 +17,7 @@
       <a class="auth-link" href="/account">Area personale</a>
       <button mat-button class="auth-button" type="button" (click)="logout()">Esci</button>
     } @else {
+      <a class="auth-link" href="/register">Registrati</a>
       <a class="auth-link" href="/login">Accedi</a>
     }
   </div>
@@ -47,6 +48,10 @@
         <span>Esci</span>
       </button>
     } @else {
+      <a mat-menu-item href="/register">
+        <mat-icon>person_add</mat-icon>
+        <span>Registrati</span>
+      </a>
       <a mat-menu-item href="/login">
         <mat-icon>login</mat-icon>
         <span>Accedi</span>
@@ -90,89 +95,7 @@
     </div>
   </section>
 
-  <app-booking-form />
-
-  <section class="registration" id="registrazione" aria-labelledby="registration-title">
-    @if (registrationResult(); as result) {
-      <div
-        class="registration-confirmation"
-        id="conferma-registrazione"
-        role="status"
-      >
-        <span class="confirmation-icon" aria-hidden="true">✓</span>
-        <p class="eyebrow">REGISTRAZIONE COMPLETATA</p>
-        <h2 id="registration-title">Benvenuto in SmartCampus.</h2>
-        <p>Il tuo account è stato creato. Ora puoi cercare uno spazio e preparare la tua giornata.</p>
-        <a mat-flat-button class="btn" href="#spazi">Esplora gli spazi</a>
-        <button mat-button type="button" class="text-button" (click)="resetRegistration()">
-          Registra un altro account
-        </button>
-      </div>
-    } @else {
-      <div class="registration-heading">
-        <p class="eyebrow">NUOVO ACCOUNT</p>
-        <h2 id="registration-title">Registrati e trova il tuo spazio.</h2>
-        <p>
-          Crea il tuo profilo studente. Usiamo gli stessi controlli del servizio Users per darti un feedback
-          chiaro già mentre compili.
-        </p>
-      </div>
-
-      <form class="registration-form" [formGroup]="registrationForm" (ngSubmit)="submitRegistration()" novalidate>
-        @if (registrationError(); as error) {
-          <p class="form-alert" role="alert">{{ error }}</p>
-        }
-
-        <div class="registration-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Matricola</mat-label>
-            <input matInput formControlName="matricola" inputmode="numeric" autocomplete="username" />
-            <mat-hint>Esattamente 10 cifre</mat-hint>
-            @if (fieldError('matricola'); as error) { <mat-error>{{ error }}</mat-error> }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Nome</mat-label>
-            <input matInput formControlName="firstName" autocomplete="given-name" />
-            @if (fieldError('firstName'); as error) { <mat-error>{{ error }}</mat-error> }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Cognome</mat-label>
-            <input matInput formControlName="lastName" autocomplete="family-name" />
-            @if (fieldError('lastName'); as error) { <mat-error>{{ error }}</mat-error> }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Email</mat-label>
-            <input matInput type="email" formControlName="email" autocomplete="email" />
-            @if (fieldError('email'); as error) { <mat-error>{{ error }}</mat-error> }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Telefono</mat-label>
-            <input matInput type="tel" formControlName="phoneNumber" autocomplete="tel" />
-            <mat-hint>Formato: +39 seguito da 9 o 10 cifre</mat-hint>
-            @if (fieldError('phoneNumber'); as error) { <mat-error>{{ error }}</mat-error> }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Password</mat-label>
-            <input matInput type="password" formControlName="password" autocomplete="new-password" />
-            <mat-hint>Almeno 10 caratteri, una lettera e una cifra</mat-hint>
-            @if (fieldError('password'); as error) { <mat-error>{{ error }}</mat-error> }
-          </mat-form-field>
-        </div>
-
-        <div class="registration-actions">
-          <button mat-flat-button class="btn" type="submit" [disabled]="registrationSubmitting()">
-            {{ registrationSubmitting() ? 'Registrazione in corso…' : 'Crea account' }}
-          </button>
-          <span class="form-note">L’account viene creato con ruolo User.</span>
-        </div>
-      </form>
-    }
-  </section>
+  <app-booking-teaser />
 
   <section class="intro" id="come-funziona" aria-labelledby="intro-title">
     <div class="intro-text" data-reveal>
@@ -225,48 +148,6 @@
     </ul>
   </section>
 
-  <section class="services" id="servizi" aria-labelledby="services-title">
-    <img
-      class="services-photo"
-      src="assets/students-walking-towards-komaba-campus-university-of.jpg"
-      alt=""
-      width="1920"
-      height="1446"
-      loading="lazy"
-    />
-
-    <div class="ghost-row on-dark">
-      <span class="ghost" aria-hidden="true">Servizi</span>
-      <h2 id="services-title">Servizi</h2>
-      <span class="ghost" aria-hidden="true">Servizi</span>
-    </div>
-    <p class="services-lead" data-reveal>
-      Tre servizi ASP.NET Core dietro un solo portale. Lo stato qui sotto è letto adesso, tramite il
-      proxy di sviluppo.
-    </p>
-
-    <ul class="service-list">
-      @for (service of services(); track service.name) {
-        <li class="service" data-reveal>
-          <mat-icon class="service-icon" aria-hidden="true">{{ service.icon }}</mat-icon>
-          <h3>{{ service.name }}</h3>
-          <p>{{ service.summary }}</p>
-          <ul>
-            @for (feature of service.features; track feature) {
-              <li>{{ feature }}</li>
-            }
-          </ul>
-          <p class="health" [attr.data-health]="service.health" role="status">
-            <span class="health-dot" aria-hidden="true"></span>{{ healthLabel[service.health] }}
-          </p>
-          <a class="text-link" [href]="service.healthUrl" target="_blank" rel="noreferrer">
-            Apri /health <span class="arrow-icon" aria-hidden="true">↗</span>
-          </a>
-        </li>
-      }
-    </ul>
-  </section>
-
   <section class="contact" id="contatti" aria-labelledby="contact-title">
     <div class="contact-head" data-reveal>
       <h2 id="contact-title">Ti serve uno spazio? Parliamone!</h2>
@@ -300,7 +181,7 @@
 <footer class="footer">
   <p class="footer-mark" aria-hidden="true">smart<span>campus</span></p>
   <div class="footer-meta">
-    <p>© {{ year }} SmartCampus · ambiente di sviluppo</p>
+    <p>© {{ year }} SmartCampus</p>
     <p class="credits">
       Foto: “Sias Library - Students Studying 2017”, Gary Todd, CC0 · “Graz University-Library
       reading-room”, Dr. Marcus Gossler, CC BY-SA 3.0 · “Students at Lecture Hall”, Zahraswaty, CC BY

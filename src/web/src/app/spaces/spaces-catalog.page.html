@@ -1,32 +1,28 @@
 <div class="catalog-shell">
-  <section class="catalog-hero" aria-labelledby="catalog-title">
-    <div class="catalog-hero-inner">
+  <section class="page-head" aria-labelledby="catalog-title">
+    <div class="page-head-inner">
       <a class="back-link" href="/">
         <span aria-hidden="true">←</span> Torna alla home
       </a>
-      <p class="eyebrow">CATALOGO DEL CAMPUS</p>
-      <h1 id="catalog-title">Spazi e aule disponibili</h1>
-      <p class="catalog-lead">
-        Cerca tra aule, laboratori e sale studio combinando tipologia, modalità d’uso, capienza e
-        strumenti, oppure individua subito gli spazi liberi in una fascia oraria.
-      </p>
+      <div class="page-title">
+        <h1 id="catalog-title">Spazi e aule disponibili</h1>
+        <p class="page-lead">
+          Cerca tra aule, laboratori e sale studio combinando tipologia, modalità d’uso, capienza e
+          strumenti, oppure individua subito gli spazi liberi in una fascia oraria.
+        </p>
+      </div>
     </div>
   </section>
 
   <section class="catalog-controls" aria-labelledby="filters-title">
     <form
-      class="filters-panel"
+      class="panel filters-panel"
       [formGroup]="filterForm"
       (ngSubmit)="applyFilters()"
       novalidate
       data-testid="filters-form"
     >
-      <div class="panel-header">
-        <div>
-          <p class="section-tag">FILTRI COMBINABILI</p>
-          <h2 id="filters-title">Affina la ricerca</h2>
-        </div>
-      </div>
+      <h2 id="filters-title" class="section-title">Affina la ricerca</h2>
 
       <div class="filters-grid">
         <mat-form-field appearance="outline">
@@ -112,8 +108,8 @@
       <div class="slot-box" aria-labelledby="slot-title">
         <div class="slot-header">
           <div>
-            <p class="section-tag">DISPONIBILITÀ IN FASCIA ORARIA (ORA DI ROMA)</p>
-            <h3 id="slot-title">Cerca solo le aule libere in un orario</h3>
+            <h3 id="slot-title">Solo le aule libere in un orario</h3>
+            <p class="slot-hint">Orari in ora di Roma.</p>
           </div>
           <div class="preset-group" role="group" aria-label="Fasce orarie rapide">
             @for (preset of timeBandPresets; track preset.label) {
@@ -192,27 +188,26 @@
       </h2>
 
       @if (appliedSlot(); as slot) {
-        <p class="slot-active-pill" data-testid="active-slot-pill">
+        <p class="badge badge-brand slot-active-pill" data-testid="active-slot-pill">
           Liberi il {{ slot.date }} · {{ slot.startTime }}–{{ slot.endTime }}
         </p>
       }
     </div>
 
     @if (errorMessage(); as error) {
-      <div class="error-banner" role="alert" data-testid="error-banner">
+      <div class="notice notice-error" role="alert" data-testid="error-banner">
         <p>{{ error }}</p>
         <button mat-flat-button class="btn" type="button" (click)="applyFilters()">
           Riprova
         </button>
       </div>
     } @else if (loading()) {
-      <div class="loading-box" role="status" data-testid="loading-state">
-        <span class="loading-spinner" aria-hidden="true"></span>
+      <div class="state-box" role="status" data-testid="loading-state">
+        <span class="spinner" aria-hidden="true"></span>
         <p>Caricamento degli spazi in corso…</p>
       </div>
     } @else if (hasLoadedOnce() && spaces().length === 0) {
-      <div class="empty-state" role="status" data-testid="empty-state">
-        <p class="section-tag">NESSUN RISULTATO</p>
+      <div class="state-box" role="status" data-testid="empty-state">
         <h3>Nessuna aula corrisponde ai filtri selezionati.</h3>
         @if (appliedSlot()) {
           <p>
@@ -240,12 +235,12 @@
         @for (space of spaces(); track space.id) {
           <li class="space-card" data-testid="space-card">
             <div class="card-badges">
-              <span class="badge badge-type">{{ typeLabels[space.type] }}</span>
-              <span class="badge badge-mode" [attr.data-mode]="space.mode">
+              <span class="badge badge-night">{{ typeLabels[space.type] }}</span>
+              <span class="badge" [class.badge-brand]="space.mode === 'Mixed'">
                 {{ modeLabels[space.mode] }}
               </span>
               @if (appliedSlot()) {
-                <span class="badge badge-available">Libero nella fascia</span>
+                <span class="badge badge-ok">Libero nella fascia</span>
               }
             </div>
 
@@ -259,7 +254,7 @@
             <p class="card-mode-hint">{{ modeHints[space.mode] }}</p>
 
             <div class="card-section">
-              <p class="card-section-label">Strumentazione</p>
+              <p class="field-label">Strumentazione</p>
               @if (space.equipment.length > 0) {
                 <ul class="tag-list" aria-label="Strumenti presenti">
                   @for (eq of space.equipment; track eq) {
@@ -274,7 +269,7 @@
             @if (spaceFeatures(space); as features) {
               @if (features.length > 0) {
                 <div class="card-section">
-                  <p class="card-section-label">Caratteristiche</p>
+                  <p class="field-label">Caratteristiche</p>
                   <ul class="tag-list" aria-label="Caratteristiche dello spazio">
                     @for (feat of features; track feat) {
                       <li class="tag">{{ feat }}</li>
@@ -286,7 +281,7 @@
 
             @if (space.unavailabilities.length > 0) {
               <div class="card-maintenance">
-                <p class="card-section-label">Chiusure programmate</p>
+                <p class="field-label">Chiusure programmate</p>
                 <ul>
                   @for (window of space.unavailabilities; track window.id) {
                     <li>
@@ -299,6 +294,17 @@
             }
 
             <div class="card-footer">
+              <a mat-flat-button class="btn card-book" [href]="spaceBookingHref(space.id)" data-testid="book-space-link">
+                {{ appliedSlot() ? 'Prenota questa fascia' : 'Prenota' }}
+              </a>
+              <a
+                mat-flat-button
+                class="btn card-book"
+                [href]="spaceBookingHref(space.id)"
+                data-testid="book-space-link"
+              >
+                Prenota
+              </a>
               <a
                 class="card-action"
                 [href]="spaceAvailabilityHref(space.id)"

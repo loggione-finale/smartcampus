@@ -1,10 +1,19 @@
-<div class="admin-shell">
-  <header class="admin-head">
-    <p class="eyebrow">AREA PERSONALE</p>
-    <h1>Avvisi ed eccezioni</h1>
-  </header>
+<header class="page-head">
+  <div class="page-head-inner">
+    <app-admin-nav current="alerts" />
+    <div class="page-title">
+      <h1>Avvisi ed eccezioni</h1>
+      <p class="page-lead">
+        Nuove prenotazioni, richieste di attrezzature, manutenzioni e problemi segnalati. Risolvi
+        l’avviso o annulla la prenotazione collegata.
+      </p>
+    </div>
+  </div>
+</header>
 
-  <form class="filters" (ngSubmit)="load()" aria-label="Filtri avvisi">
+<div class="page-body">
+
+  <form class="panel filters" (ngSubmit)="load()" aria-label="Filtri avvisi">
     <label>
       Stato
       <select name="status" [(ngModel)]="statusFilter" (ngModelChange)="load()">
@@ -22,24 +31,24 @@
         }
       </select>
     </label>
-    <button type="submit" class="btn" [disabled]="loading()">Aggiorna</button>
+    <button mat-flat-button type="submit" class="btn" [disabled]="loading()">Aggiorna</button>
   </form>
 
   <p class="feedback" role="status">{{ feedback() }}</p>
 
   <div aria-live="polite">
     @if (loading()) {
-      <p class="state">Caricamento in corso…</p>
+      <div class="state-box"><span class="spinner" aria-hidden="true"></span><p>Caricamento in corso…</p></div>
     } @else if (error(); as message) {
-      <p class="state state-error" role="alert">{{ message }}</p>
+      <p class="notice notice-error" role="alert">{{ message }}</p>
     } @else if (visible().length === 0) {
-      <p class="state">Nessun avviso corrisponde ai filtri.</p>
+      <div class="state-box"><h2>Nessun avviso</h2><p>Nessun avviso corrisponde ai filtri scelti.</p></div>
     } @else {
       <ul class="alert-list">
         @for (a of visible(); track a.id) {
           <li class="alert" [class.alert-open]="a.status === 'Open'">
             <div class="alert-head">
-              <span class="badge" [attr.data-status]="a.status">{{ a.status === 'Open' ? 'Aperto' : 'Gestito' }}</span>
+              <span class="badge" [class.badge-danger]="a.status === 'Open'" [class.badge-ok]="a.status === 'Handled'">{{ a.status === 'Open' ? 'Aperto' : 'Gestito' }}</span>
               <strong>{{ kindLabels[a.kind] }}</strong>
               <time [attr.datetime]="a.createdAt">{{ a.createdAt | date: 'dd/MM/yyyy HH:mm' }}</time>
             </div>
@@ -66,7 +75,7 @@
                     Nota (facoltativa)
                     <input type="text" maxlength="500" [name]="'note-' + a.id" [(ngModel)]="notes[a.id]" />
                   </label>
-                  <button type="button" class="btn" [disabled]="busyId() === a.id" (click)="resolve(a)">Risolvi</button>
+                  <button mat-flat-button type="button" class="btn" [disabled]="busyId() === a.id" (click)="resolve(a)">Risolvi</button>
                 </div>
               }
 
@@ -77,6 +86,7 @@
                     <input type="text" maxlength="500" [name]="'reason-' + a.id" [(ngModel)]="reasons[a.id]" />
                   </label>
                   <button
+                    mat-flat-button
                     type="button"
                     class="btn btn-danger"
                     [disabled]="busyId() === a.id || !reasons[a.id]?.trim()"

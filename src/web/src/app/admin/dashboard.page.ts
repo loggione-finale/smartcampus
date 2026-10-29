@@ -1,11 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { SPACE_TYPE_OPTIONS, todayInRome, utcIsoToRomeTime } from '../spaces/spaces.models';
 import { AdminApiService } from './admin-api.service';
+import { AdminNavComponent } from './admin-nav.component';
 import { BOOKING_STATUS_LABELS, DashboardBooking, DashboardSpace } from './admin.models';
 
 // The API may return timestamps without the "Z" suffix: they are UTC.
@@ -13,7 +15,15 @@ const asUtc = (iso: string): string => (/(Z|[+-]\d\d:\d\d)$/.test(iso) ? iso : `
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule],
+  imports: [
+    AdminNavComponent,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatTableModule,
+  ],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
 })

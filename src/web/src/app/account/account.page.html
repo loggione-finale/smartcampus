@@ -1,24 +1,22 @@
 <section class="account-page" aria-labelledby="account-title">
-  <div class="account-hero">
-    <a class="back-link" href="/">
-      <span aria-hidden="true">←</span> Torna alla home
-    </a>
-    <p class="eyebrow">AREA PERSONALE</p>
-    <h1 id="account-title">Ciao, {{ user()?.firstName ?? 'utente' }}.</h1>
-    <p class="account-lead">
-      Qui trovi i dati del tuo profilo e il ruolo con cui accedi alle funzioni di SmartCampus.
-    </p>
-  </div>
-
-  <div class="account-content">
-    <article class="account-card" aria-labelledby="profile-title">
-      <div class="card-heading">
-        <mat-icon aria-hidden="true">account_circle</mat-icon>
-        <div>
-          <p class="section-tag">PROFILO</p>
-          <h2 id="profile-title">{{ user()?.displayName ?? 'Profilo' }}</h2>
-        </div>
+  <header class="page-head">
+    <div class="page-head-inner">
+      <a class="back-link" href="/">
+        <span aria-hidden="true">←</span> Torna alla home
+      </a>
+      <div class="page-title">
+        <h1 id="account-title">Ciao, {{ user()?.firstName ?? 'utente' }}.</h1>
+        <p class="page-lead">
+          I dati del tuo profilo e le scorciatoie per prenotare, ritrovare le prenotazioni e
+          confermare gli inviti.
+        </p>
       </div>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <article class="panel account-card" aria-labelledby="profile-title">
+      <h2 id="profile-title" class="section-title">{{ user()?.displayName ?? 'Profilo' }}</h2>
 
       <dl class="profile-list">
         <div>
@@ -42,15 +40,16 @@
           <dd>{{ memberSince() }}</dd>
         </div>
       </dl>
-
-      <div class="account-actions">
-        <a mat-flat-button class="btn" href="/spaces">Cerca uno spazio</a>
-        <a mat-stroked-button class="text-action" href="/bookings">Le mie prenotazioni</a>
-        @if (isAdmin()) {
-          <a mat-button class="text-action" href="/admin">Pannello amministratore</a>
-        }
-        <button mat-button class="text-action" type="button" (click)="logout()">Esci</button>
-      </div>
     </article>
+
+    <nav class="account-actions" aria-label="Azioni dell’area personale">
+      <a mat-flat-button class="btn" href="/spaces">Cerca uno spazio</a>
+      <a mat-stroked-button class="btn-line" href="/bookings">Le mie prenotazioni</a>
+      <a mat-stroked-button class="btn-line" href="/invitations">I miei inviti</a>
+      @if (isAdmin()) {
+        <a mat-stroked-button class="btn-line" href="/admin">Pannello amministratore</a>
+      }
+      <button mat-button class="text-action" type="button" (click)="logout()">Esci</button>
+    </nav>
   </div>
 </section>

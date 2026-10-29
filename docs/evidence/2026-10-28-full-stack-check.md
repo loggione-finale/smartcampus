@@ -39,6 +39,6 @@ Gli altri passi (accesso, catalogo, conflitto `409`, adiacenza, annullamento alt
 
 - **Non è la prova dell'interfaccia di #91.** Nessuno ha cliccato i passi nel browser: c'è solo il rendering di due pagine. Restano le prove a mano su due sistemi operativi e su uno smartphone vero, con la tabella di `docs/demo-path.md`.
 - Un solo PC (Linux), Chrome headless, un solo giro.
-- Con PostgreSQL fermo, il comportamento (`503` in pochi secondi) è in una PR a parte (#213): qui non è provato.
+- Con PostgreSQL fermo il comportamento è stato corretto con #218, già su `main`, e qui non è provato. È stato ripetuto il 29/10 nelle [prove di guasto](2026-10-28-failure-tests.md#ripetizione-dopo-le-correzioni-2910): `503` leggibile in circa 7 s.
 - Il copione non è nel repository: ognuno ripete i passi a mano o scrive il suo.
 - Non prova la prova a voce con il gruppo, che resta da fare.

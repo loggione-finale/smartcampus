@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { AdminNavComponent } from '../admin/admin-nav.component';
 import { Router } from '@angular/router';
 import { SPACE_TYPE_LABELS, SpaceDto, formatFloorLabel } from '../spaces/spaces.models';
 import { SpacesAdminApiService } from './spaces-admin-api.service';
@@ -8,7 +9,7 @@ import { describeAdminError } from './spaces-admin-error';
 
 @Component({
   selector: 'app-spaces-admin-list-page',
-  imports: [MatButtonModule],
+  imports: [AdminNavComponent, MatButtonModule],
   templateUrl: './spaces-admin-list.page.html',
   styleUrl: './spaces-admin.page.scss',
 })

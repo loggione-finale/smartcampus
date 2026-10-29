@@ -1,44 +1,45 @@
 <section class="login-page" aria-labelledby="login-title">
-  <div class="login-intro">
-    <a class="back-link" href="/">
-      <span aria-hidden="true">←</span> Torna alla home
-    </a>
-    <p class="eyebrow">AREA RISERVATA</p>
-    <h1 id="login-title">Accedi a SmartCampus.</h1>
-    <p class="login-lead">
-      Entra con l’email o la matricola del tuo profilo. Il tuo ruolo decide quali funzioni vedi
-      nell’area personale.
-    </p>
+  <div class="login-intro page-head">
+    <div class="page-head-inner">
+      <a class="back-link" href="/">
+        <span aria-hidden="true">←</span> Torna alla home
+      </a>
+      <div class="page-title">
+        <h1 id="login-title">Accedi a SmartCampus.</h1>
+        <p class="page-lead">
+          Entra con l’email o la matricola del tuo profilo e ritrova spazi, prenotazioni e inviti.
+        </p>
+      </div>
 
-    <ul class="login-points">
-      <li>
-        <mat-icon aria-hidden="true">verified_user</mat-icon>
-        <span>Il token firmato dal servizio Users resta valido per 8 ore.</span>
-      </li>
-      <li>
-        <mat-icon aria-hidden="true">schedule</mat-icon>
-        <span>Se la sessione scade, torni qui e riprendi dal punto in cui eri.</span>
-      </li>
-      <li>
-        <mat-icon aria-hidden="true">admin_panel_settings</mat-icon>
-        <span>Le funzioni del personale sono visibili solo agli account Admin.</span>
-      </li>
-    </ul>
+      <ul class="login-points">
+        <li>
+          <mat-icon aria-hidden="true">event_available</mat-icon>
+          <span>Prenota aule, laboratori e sale studio con il tuo profilo.</span>
+        </li>
+        <li>
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          <span>Se la sessione scade, torni qui e riprendi dal punto in cui eri.</span>
+        </li>
+        <li>
+          <mat-icon aria-hidden="true">mail</mat-icon>
+          <span>Conferma gli inviti alle prenotazioni di gruppo dall’area personale.</span>
+        </li>
+      </ul>
+    </div>
   </div>
 
   <div class="login-panel">
     <div class="login-card">
-      <p class="section-tag">ACCESSO</p>
       <h2>Entra con il tuo profilo</h2>
       <p class="login-hint">Puoi usare l’email oppure la matricola di 10 cifre.</p>
 
       @if (notice(); as message) {
-        <p class="form-notice" role="status" aria-live="polite">{{ message }}</p>
+        <p class="notice notice-success" role="status" aria-live="polite">{{ message }}</p>
       }
 
       <form [formGroup]="loginForm" (ngSubmit)="submit()" novalidate data-testid="login-form">
         @if (errorMessage(); as message) {
-          <p class="form-alert" role="alert">{{ message }}</p>
+          <p class="notice notice-error" role="alert">{{ message }}</p>
         }
 
         <mat-form-field appearance="outline">
@@ -93,7 +94,7 @@
 
       <p class="login-alt">
         Non hai ancora un account?
-        <a href="/#registrazione">Registrati dalla home</a>.
+        <a href="/register">Registrati</a>.
       </p>
     </div>
   </div>

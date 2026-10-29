@@ -179,5 +179,151 @@
     ],
     "createdAt": "2026-10-26T08:00:00Z",
     "updatedAt": "2026-10-26T08:00:00Z"
+  },
+  {
+    "_id": "3f2a9c1e-0000-4000-8000-000000000009",
+    "name": "Aula 301",
+    "type": "Classroom",
+    "mode": "Dedicated",
+    "building": "Edificio C",
+    "floor": 3,
+    "capacity": 40,
+    "isActive": true,
+    "features": {
+      "projector": true,
+      "blackboard": true
+    },
+    "equipment": [
+      "videoprojector"
+    ],
+    "unavailabilities": [],
+    "createdAt": "2026-10-26T08:00:00Z",
+    "updatedAt": "2026-10-26T08:00:00Z"
+  },
+  {
+    "_id": "3f2a9c1e-0000-4000-8000-000000000010",
+    "name": "Aula 302",
+    "type": "Classroom",
+    "mode": "Mixed",
+    "building": "Edificio C",
+    "floor": 3,
+    "capacity": 20,
+    "isActive": true,
+    "features": {
+      "movableDesks": true,
+      "projector": true
+    },
+    "equipment": [
+      "videoprojector",
+      "interactive-whiteboard"
+    ],
+    "unavailabilities": [],
+    "createdAt": "2026-10-26T08:00:00Z",
+    "updatedAt": "2026-10-26T08:00:00Z"
+  },
+  {
+    "_id": "3f2a9c1e-0000-4000-8000-000000000011",
+    "name": "Laboratorio Reti",
+    "type": "Lab",
+    "mode": "Dedicated",
+    "building": "Edificio B",
+    "floor": 0,
+    "capacity": 18,
+    "isActive": true,
+    "features": {
+      "workstations": 18,
+      "software": [
+        "Wireshark",
+        "Cisco Packet Tracer"
+      ],
+      "projector": true
+    },
+    "equipment": [
+      "videoprojector"
+    ],
+    "unavailabilities": [],
+    "createdAt": "2026-10-26T08:00:00Z",
+    "updatedAt": "2026-10-26T08:00:00Z"
+  },
+  {
+    "_id": "3f2a9c1e-0000-4000-8000-000000000012",
+    "name": "Laboratorio Elettronica",
+    "type": "Lab",
+    "mode": "Dedicated",
+    "building": "Edificio D",
+    "floor": 1,
+    "capacity": 16,
+    "isActive": true,
+    "features": {
+      "workstations": 16,
+      "software": [
+        "KiCad",
+        "LTspice"
+      ]
+    },
+    "equipment": [],
+    "unavailabilities": [],
+    "createdAt": "2026-10-26T08:00:00Z",
+    "updatedAt": "2026-10-26T08:00:00Z"
+  },
+  {
+    "_id": "3f2a9c1e-0000-4000-8000-000000000013",
+    "name": "Sala Studio Biblioteca",
+    "type": "StudyRoom",
+    "mode": "Mixed",
+    "building": "Biblioteca",
+    "floor": 1,
+    "capacity": 20,
+    "isActive": true,
+    "features": {
+      "powerOutlets": true,
+      "wifiHighSpeed": true,
+      "quietZone": true
+    },
+    "equipment": [],
+    "unavailabilities": [],
+    "createdAt": "2026-10-26T08:00:00Z",
+    "updatedAt": "2026-10-26T08:00:00Z"
+  },
+  {
+    "_id": "3f2a9c1e-0000-4000-8000-000000000014",
+    "name": "Sala Lavoro di Gruppo",
+    "type": "StudyRoom",
+    "mode": "Dedicated",
+    "building": "Biblioteca",
+    "floor": 2,
+    "capacity": 8,
+    "isActive": true,
+    "features": {
+      "powerOutlets": true,
+      "wifiHighSpeed": true,
+      "whiteboard": true
+    },
+    "equipment": [],
+    "unavailabilities": [],
+    "createdAt": "2026-10-26T08:00:00Z",
+    "updatedAt": "2026-10-26T08:00:00Z"
+  },
+  {
+    "_id": "3f2a9c1e-0000-4000-8000-000000000015",
+    "name": "Aula Conferenze",
+    "type": "Classroom",
+    "mode": "Dedicated",
+    "building": "Edificio Centrale",
+    "floor": 1,
+    "capacity": 80,
+    "isActive": true,
+    "features": {
+      "audioSystem": true,
+      "projector": true
+    },
+    "equipment": [
+      "videoprojector",
+      "audio-kit",
+      "microphone"
+    ],
+    "unavailabilities": [],
+    "createdAt": "2026-10-26T08:00:00Z",
+    "updatedAt": "2026-10-26T08:00:00Z"
   }
 ]

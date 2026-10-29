@@ -1,32 +1,41 @@
-<main class="invitations-container">
-  <header class="invitations-header">
-    <h1>I tuoi inviti</h1>
-    <p class="subtitle">
-      Conferma la partecipazione alle prenotazioni per cui sei stato invitato, entro la scadenza.
-    </p>
-  </header>
+<header class="page-head">
+  <div class="page-head-inner">
+    <a class="back-link" href="/account">
+      <span aria-hidden="true">←</span> Area personale
+    </a>
+    <div class="page-title">
+      <h1>I tuoi inviti</h1>
+      <p class="page-lead">
+        Conferma la partecipazione alle prenotazioni per cui sei stato invitato, entro la scadenza.
+      </p>
+    </div>
+  </div>
+</header>
 
+<main class="page-body">
   @if (successMessage()) {
-    <div class="message-banner success-banner" role="status">{{ successMessage() }}</div>
+    <div class="notice notice-success" role="status">{{ successMessage() }}</div>
   }
 
   @if (errorMessage()) {
-    <div class="message-banner error-banner" role="alert">{{ errorMessage() }}</div>
+    <div class="notice notice-error" role="alert">{{ errorMessage() }}</div>
   }
 
   @if (loading()) {
-    <div class="loading-state">
-      <p>Caricamento inviti in corso...</p>
+    <div class="state-box">
+      <span class="spinner" aria-hidden="true"></span>
+      <p>Caricamento inviti in corso…</p>
     </div>
   } @else if (loadError()) {
-    <div class="empty-state">
+    <div class="state-box notice-error">
       <h2>Inviti non disponibili</h2>
       <p>{{ loadError() }}</p>
     </div>
   } @else if (invitations().length === 0) {
-    <div class="empty-state">
+    <div class="state-box">
       <h2>Nessun invito in attesa</h2>
       <p>Non hai inviti da confermare al momento.</p>
+      <a mat-flat-button class="btn" href="/spaces">Cerca uno spazio</a>
     </div>
   } @else {
     <ul class="invitation-list">
@@ -38,7 +47,24 @@
           <div class="invitation-info">
             <div class="invitation-meta">
               <span class="role">{{ invitation.role === 'Organizer' ? 'Responsabile' : 'Partecipante' }}</span>
-              <span class="status" [attr.data-status]="invitation.status">{{ statusLabel(invitation.status) }}</span>
+              <span
+                class="badge"
+                [class.badge-warn]="invitation.status === 'Invited'"
+                [class.badge-ok]="invitation.status === 'Accepted'"
+                [class.badge-danger]="invitation.status === 'Expired'"
+              >{{ statusLabel(invitation.status) }}</span>
+            </div>
+            <div class="invitation-booking">
+              <span class="space">{{ invitation.spaceName }}</span>
+              <span class="building">{{ invitation.spaceBuilding }}</span>
+            </div>
+            <div class="invitation-when">
+              <span class="date">{{ formatInvitationDate(invitation.start) }}</span>
+              <span class="time">{{ formatInvitationTimeRange(invitation.start, invitation.end) }}</span>
+              <span class="duration">· {{ formatInvitationDuration(invitation.start, invitation.end) }}</span>
+            </div>
+            <div class="invitation-participants">
+              {{ formatInvitationParticipants(invitation.participantCount) }}
             </div>
             <div class="invitation-deadline">
               <strong>Scadenza:</strong> {{ formatDeadline(invitation.expiresAt) }}
@@ -48,12 +74,12 @@
             @if (invitation.status === 'Invited') {
               <button
                 mat-flat-button
-                color="primary"
+                class="btn"
                 type="button"
                 [disabled]="acceptingId() !== null"
                 (click)="confirm(invitation)"
               >
-                {{ acceptingId() === invitation.id ? 'Conferma in corso...' : 'Conferma' }}
+                {{ acceptingId() === invitation.id ? 'Conferma in corso…' : 'Conferma' }}
               </button>
             }
           </div>

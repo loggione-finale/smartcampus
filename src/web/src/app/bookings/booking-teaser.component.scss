@@ -1,0 +1,70 @@
+// Home preview: the purple field with three choices, the rest happens on /book
+.booking {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(320px, 6fr);
+  gap: clamp(40px, 8vw, 128px);
+  align-items: center;
+  padding: var(--section) var(--gutter);
+  color: var(--cream);
+  background: var(--brand);
+}
+
+.booking-intro {
+  max-width: 42ch;
+
+  h2 {
+    margin-bottom: 28px;
+    font-size: clamp(42px, 5vw, 76px);
+    line-height: 0.96;
+    letter-spacing: -0.04em;
+  }
+
+  p {
+    font-size: clamp(19px, 1.5vw, 22px);
+    line-height: 1.45;
+  }
+}
+
+.booking-teaser {
+  display: grid;
+  gap: 8px;
+  padding: clamp(24px, 4vw, 48px);
+  color: var(--ink);
+  background: var(--ground);
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .text-link {
+    justify-self: start;
+    margin-top: 8px;
+  }
+}
+
+.teaser-times {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 860px) {
+  .booking {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .booking-teaser {
+    padding: 20px;
+  }
+
+  .teaser-times {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

@@ -1,72 +1,9 @@
-.invitations-container {
-  max-width: 720px;
-  margin: 2rem auto;
-  padding: 0 1rem;
-}
-
-.invitations-header {
-  margin-bottom: 1.5rem;
-
-  h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin: 0 0 0.5rem 0;
-    color: #1a202c;
-  }
-
-  .subtitle {
-    color: #4a5568;
-    margin: 0;
-    font-size: 0.95rem;
-  }
-}
-
-.message-banner {
-  padding: 0.85rem 1.25rem;
-  border-radius: 6px;
-  margin-bottom: 1.25rem;
-  font-size: 0.95rem;
-
-  &.success-banner {
-    background-color: #f0fff4;
-    border: 1px solid #9ae6b4;
-    color: #22543d;
-  }
-
-  &.error-banner {
-    background-color: #fff5f5;
-    border: 1px solid #feb2b2;
-    color: #9b2c2c;
-  }
-}
-
-.loading-state,
-.empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-  background: #f7fafc;
-  border-radius: 8px;
-  border: 1px dashed #cbd5e0;
-
-  h2 {
-    font-size: 1.25rem;
-    margin: 0 0 0.5rem 0;
-    color: #2d3748;
-  }
-
-  p {
-    color: #718096;
-    margin: 0;
-  }
-}
-
 .invitation-list {
-  list-style: none;
+  display: grid;
+  gap: 16px;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  list-style: none;
 }
 
 .invitation-card {
@@ -74,65 +11,73 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
+  gap: 16px 24px;
+  padding: 24px 28px;
+  background: var(--lilac);
+  transition: background-color 0.3s var(--ease);
 
+  // The invitation opened from the email link
   &.highlighted {
-    border-color: #3182ce;
-    background: #ebf8ff;
-  }
+    color: var(--on-dark);
+    background: var(--night);
 
-  .invitation-meta {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.35rem;
-
-    .role {
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #4a5568;
+    .invitation-deadline {
+      color: var(--cream);
     }
 
-    .status {
-      font-size: 0.8rem;
-      font-weight: 600;
-      padding: 0.15rem 0.5rem;
-      border-radius: 999px;
-      background: #edf2f7;
-      color: #2d3748;
-
-      &[data-status='Invited'] {
-        background: #feebc8;
-        color: #7b341e;
-      }
-
-      &[data-status='Accepted'] {
-        background: #c6f6d5;
-        color: #22543d;
-      }
-
-      &[data-status='Expired'] {
-        background: #fed7d7;
-        color: #742a2a;
-      }
+    .btn.mat-mdc-unelevated-button {
+      --mat-button-filled-container-color: var(--cream);
+      --mat-button-filled-label-text-color: var(--ink);
     }
   }
+}
 
-  .invitation-deadline {
-    font-size: 0.9rem;
-    color: #4a5568;
-  }
+.invitation-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-bottom: 6px;
+}
 
-  .invitation-actions button {
-    padding: 0.6rem 1.25rem;
-    font-weight: 600;
-  }
+.invitation-booking,
+.invitation-when {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-bottom: 4px;
+}
+
+.invitation-booking .space {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.invitation-booking .building,
+.invitation-when .duration,
+.invitation-participants {
+  color: var(--muted);
+}
+
+.invitation-when .time {
+  font-variant-numeric: tabular-nums;
+}
+
+.invitation-participants {
+  margin-bottom: 4px;
+}
+
+.role {
+  font-size: clamp(22px, 2.2vw, 28px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.invitation-deadline {
+  font-size: 16px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 480px) {
@@ -141,8 +86,7 @@
     align-items: stretch;
   }
 
-  .invitation-actions {
-    display: flex;
-    justify-content: flex-end;
+  .invitation-actions .btn {
+    width: 100%;
   }
 }

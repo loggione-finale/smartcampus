@@ -1,49 +1,27 @@
 <section class="admin-page" aria-labelledby="admin-title">
-  <div class="admin-hero">
-    <a class="back-link" href="/">
-      <span aria-hidden="true">←</span> Torna alla home
-    </a>
-    <p class="eyebrow">AREA DEL PERSONALE</p>
-    <h1 id="admin-title">Pannello amministratore.</h1>
-    <p class="admin-lead">
-      Accesso riservato al ruolo Admin. Le pagine di gestione arrivano con le issue dedicate; questa
-      pagina conferma che il tuo profilo può entrare nell’area del personale.
-    </p>
-  </div>
-
-  <div class="admin-content">
-    <article class="admin-card" aria-labelledby="admin-user-title">
-      <div class="card-heading">
-        <mat-icon aria-hidden="true">admin_panel_settings</mat-icon>
-        <div>
-          <p class="section-tag">SESSIONE ADMIN</p>
-          <h2 id="admin-user-title">{{ user()?.displayName ?? 'Amministratore' }}</h2>
-        </div>
+  <header class="page-head">
+    <div class="page-head-inner">
+      <a class="back-link" href="/">
+        <span aria-hidden="true">←</span> Torna alla home
+      </a>
+      <div class="page-title">
+        <h1 id="admin-title">Pannello amministratore.</h1>
+        <p class="page-lead">
+          Ciao, {{ user()?.displayName ?? 'Amministratore' }}. Da qui segui le aule del giorno, gli
+          avvisi aperti, i report di utilizzo e il catalogo degli spazi.
+        </p>
       </div>
+    </div>
+  </header>
 
-      <p class="admin-note">
-        Il ruolo <strong>Admin</strong> è letto dalla risposta del login e il server verifica il token
-        su ogni chiamata. Un account <strong>User</strong> non può aprire questa rotta.
-      </p>
+  <div class="page-body">
+    <ul class="admin-links">
+      <li><a class="text-link" href="/admin/dashboard">Dashboard aule</a></li>
+      <li><a class="text-link" href="/admin/alerts">Avvisi ed eccezioni</a></li>
+      <li><a class="text-link" href="/admin/report">Report di utilizzo</a></li>
+      <li><a class="text-link" href="/admin/spaces">Gestione spazi</a></li>
+    </ul>
 
-      <ul class="admin-links">
-        <li>
-          <mat-icon aria-hidden="true">dashboard</mat-icon>
-          <span>Dashboard e avvisi saranno collegati dalle pagine admin già previste dal backlog.</span>
-        </li>
-        <li>
-          <mat-icon aria-hidden="true">meeting_room</mat-icon>
-          <a href="/spaces">Catalogo spazi</a>
-        </li>
-        <li>
-          <mat-icon aria-hidden="true">account_circle</mat-icon>
-          <a href="/account">Area personale</a>
-        </li>
-      </ul>
-
-      <div class="admin-actions">
-        <button mat-button class="text-action" type="button" (click)="logout()">Esci</button>
-      </div>
-    </article>
+    <button mat-button class="text-action" type="button" (click)="logout()">Esci</button>
   </div>
 </section>

@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { SpacesCatalogPage } from './spaces-catalog.page';
 import {
+  bookingHref,
   SpaceDto,
   hasOverlappingUnavailability,
   romeLocalToUtcIso,
@@ -63,6 +64,13 @@ const SAMPLE_SPACES: SpaceDto[] = [
 ];
 
 describe('Spaces time & availability helpers', () => {
+  it('links Prenota to the booking page with the space and the optional slot', () => {
+    expect(bookingHref('a b')).toBe('/book?spazio=a+b');
+    expect(bookingHref('s1', '2026-10-30T09:00:00.000Z', '2026-10-30T10:00:00.000Z')).toBe(
+      '/book?spazio=s1&inizio=2026-10-30T09%3A00%3A00.000Z&fine=2026-10-30T10%3A00%3A00.000Z',
+    );
+  });
+
   it('converts 10:00 Europe/Rome to 09:00 UTC in winter and 08:00 UTC in summer', () => {
     expect(romeLocalToUtcIso('2026-01-15', '10:00')).toBe('2026-01-15T09:00:00.000Z');
     expect(romeLocalToUtcIso('2026-07-15', '10:00')).toBe('2026-07-15T08:00:00.000Z');
@@ -134,6 +142,26 @@ describe('SpacesCatalogPage', () => {
       '[data-testid="open-availability-link"]',
     ) as HTMLAnchorElement | null;
     expect(firstLink?.getAttribute('href')).toBe('/spaces/3f2a9c1e-0000-4000-8000-000000000001');
+  });
+
+  it('shows a Prenota link on every card pointing to the booking form with the space', () => {
+    fixture.detectChanges();
+    httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
+    fixture.detectChanges();
+
+    const cards = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>(
+        '[data-testid="space-card"]',
+      ),
+    );
+    expect(cards.length).toBe(SAMPLE_SPACES.length);
+
+    cards.forEach((card, index) => {
+      const link = card.querySelector<HTMLAnchorElement>('[data-testid="book-space-link"]');
+      expect(link).withContext(`card ${index} has no Prenota link`).not.toBeNull();
+      expect(link?.textContent?.trim()).toBe('Prenota');
+      expect(link?.getAttribute('href')).toBe(`/book?spazio=${SAMPLE_SPACES[index].id}`);
+    });
   });
 
   it('sends combined filter query parameters to GET /api/spaces/spaces', () => {
@@ -227,6 +255,42 @@ describe('SpacesCatalogPage', () => {
     expect(detailLink?.getAttribute('href')).toBe(
       '/spaces/3f2a9c1e-0000-4000-8000-000000000002?date=2026-10-28',
     );
+  });
+
+  it('offers quick time bands aligned with the booking bands (08-14, 14-19, 19-23)', () => {
+    fixture.detectChanges();
+    httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const chips = () =>
+      Array.from(host.querySelectorAll<HTMLButtonElement>('.preset-chip:not(.preset-clear)'));
+    expect(chips().map((chip) => chip.textContent?.trim())).toEqual([
+      'Mattina (08:00–14:00)',
+      'Pomeriggio (14:00–19:00)',
+      'Sera (19:00–23:00)',
+    ]);
+
+    // Winter date (CET, UTC+1): each band must reach the availability API as the whole band.
+    const expected = [
+      ['2026-01-15T07:00:00.000Z', '2026-01-15T13:00:00.000Z'],
+      ['2026-01-15T13:00:00.000Z', '2026-01-15T18:00:00.000Z'],
+      ['2026-01-15T18:00:00.000Z', '2026-01-15T22:00:00.000Z'],
+    ];
+    const component = fixture.componentInstance as unknown as {
+      filterForm: SpacesCatalogPage['filterForm'];
+    };
+    component.filterForm.patchValue({ date: '2026-01-15' });
+
+    expected.forEach(([start, end], index) => {
+      chips()[index].click();
+      httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
+      const req = httpTesting.expectOne('/api/bookings/availability');
+      expect(req.request.body.start).toBe(start);
+      expect(req.request.body.end).toBe(end);
+      req.flush([]);
+      fixture.detectChanges();
+    });
   });
 
   it('validates invalid or incomplete time slot before calling backend APIs', () => {

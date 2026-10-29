@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using SmartCampus.Auth;
+using SmartCampus.Bookings.Api.Features.Bookings;
 using SmartCampus.Bookings.Api.Features.Bookings.Users;
 using SmartCampus.Bookings.Api.Features.Bookings.Spaces;
 using SmartCampus.Bookings.Api.Features.Equipment;
@@ -40,6 +41,8 @@ public class BookingsApiFactory : WebApplicationFactory<Program>
         {
             services.RemoveAll<ISpacesClient>();
             services.AddSingleton<ISpacesClient>(Spaces);
+            services.RemoveAll<BookingRequestValidator>();
+            services.AddSingleton(sp => new BookingRequestValidator(sp.GetRequiredService<TimeProvider>(), TimeSpan.FromDays(10000)));
             services.RemoveAll<ISpaceEquipmentClient>();
             services.AddSingleton<ISpaceEquipmentClient>(SpaceEquipment);
             services.RemoveAll<IUsersClient>();

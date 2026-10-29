@@ -135,7 +135,7 @@ public class SpacesDataSeederTests
         await seeder.SeedAsync();
 
         Assert.NotNull(insertedSpaces);
-        Assert.Equal(8, insertedSpaces.Count);
+        Assert.Equal(15, insertedSpaces.Count);
 
         var studio = insertedSpaces.Single(s => s.Id == "3f2a9c1e-0000-4000-8000-000000000003");
         Assert.Equal("Sala Studio Piano Terra", studio.Name);
