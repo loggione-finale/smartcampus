@@ -2,7 +2,7 @@ using SmartCampus.Bookings.Api.Domain;
 
 namespace SmartCampus.Bookings.Api.Features.Notifications;
 
-/// <summary>Una mail in uscita, pronta per l'invio.</summary>
+/// <summary>An outgoing email ready for dispatch.</summary>
 public record OutgoingEmail(
     string ToAddress,
     string Subject,
@@ -11,11 +11,11 @@ public record OutgoingEmail(
     Guid? BookingId = null);
 
 /// <summary>
-/// I modelli di email dei cinque eventi notificati: prenotazione creata,
-/// invito a utente registrato, invito a utente non registrato, scadenza dell'invito,
-/// annullamento della prenotazione.
-/// I tempi sono formattati nel fuso orario del campus (<see cref="BookingTimeBands.CampusTimeZone"/>),
-/// non in UTC.
+/// Email templates for the five notification events: booking created,
+/// invitation to registered user, invitation to unregistered user, invitation expiry,
+/// booking cancellation.
+/// Times are formatted in the campus time zone (<see cref="BookingTimeBands.CampusTimeZone"/>),
+/// not in UTC.
 /// </summary>
 public static class NotificationTemplates
 {

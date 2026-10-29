@@ -182,8 +182,8 @@ public class GroupBookingEndpointTests(BookingsApiFactory factory) : IClassFixtu
             Assert.All(sent, e => Assert.Equal(OutboxEmailStatus.Sent, e.Status));
         }
 
-        // Nel frattempo il servizio reale può aver già processato altre code della stessa suite:
-        // si contano solo i .eml di questa prenotazione, riconosciuti dal codice nel nome file.
+        // In the meantime the background service may have processed other queues from the same test suite:
+        // count only the .eml files for this booking, identified by the reference code in file contents.
         var bookingReference = await dbContext.Bookings
             .Where(b => b.Id == bookingId)
             .Select(b => b.ReferenceCode)
@@ -212,7 +212,7 @@ public class GroupBookingEndpointTests(BookingsApiFactory factory) : IClassFixtu
             ParticipantEmails: ["invitato@smartcampus.test"]));
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
 
-        // Con 2 posti occupati restano 1 posto libero: 2 nuovi partecipanti oltre l'organizzatore superano la capienza.
+        // With 2 occupied seats 1 seat remains free: 2 new participants plus the organizer exceed capacity.
         var second = factory.CreateAuthenticatedClient(Guid.NewGuid(), "secondo@smartcampus.test");
         var response = await second.PostAsJsonAsync("/bookings", new CreateBookingRequest(
             spaceId, start, start.AddHours(1),

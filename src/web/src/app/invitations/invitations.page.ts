@@ -23,7 +23,7 @@ const ACCEPT_ERROR_MESSAGES: Record<AcceptInvitationError, string> = {
   unknown: 'Si è verificato un errore durante la conferma. Riprova più tardi.',
 };
 
-/** Stati dopo i quali l'invito non è più confermabile: la card va aggiornata. */
+/** Terminal states after which an invitation is no longer confirmable: the card must update. */
 const NOT_CONFIRMABLE_ERRORS: readonly AcceptInvitationError[] = ['expired', 'not-found'];
 
 @Component({
@@ -101,8 +101,8 @@ export class InvitationsPage implements OnInit {
       error: (error: AcceptInvitationError) => {
         this.acceptingId.set(null);
         this.errorMessage.set(ACCEPT_ERROR_MESSAGES[error] ?? ACCEPT_ERROR_MESSAGES.unknown);
-        // Scaduto o inesistente: l'invito non è più confermabile,
-        // la card torna con lo stato reale invece del bottone attivo.
+        // Expired or non-existent: the invitation can no longer be confirmed;
+        // the card displays its actual status instead of an active button.
         if (NOT_CONFIRMABLE_ERRORS.includes(error)) {
           const newStatus: InvitationStatus =
             error === 'expired' ? 'Expired' : 'Cancelled';

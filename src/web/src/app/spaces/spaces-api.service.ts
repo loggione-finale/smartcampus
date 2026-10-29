@@ -16,7 +16,7 @@ const MAX_BATCH_AVAILABILITY_IDS = 200;
 
 export class BookingsAvailabilityError extends Error {
   constructor(public readonly causeError: HttpErrorResponse) {
-    super('Impossibile verificare la disponibilità sul servizio Bookings.');
+    super('Unable to verify availability on the Bookings service.');
     this.name = 'BookingsAvailabilityError';
   }
 }

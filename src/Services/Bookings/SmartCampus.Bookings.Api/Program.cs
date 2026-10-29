@@ -71,5 +71,5 @@ app.MapHealthChecks("/health");
 
 app.Run();
 
-// Rende Program visibile ai progetti di test (test di integrazione)
+// Make Program visible to test projects (integration tests)
 public partial class Program { }

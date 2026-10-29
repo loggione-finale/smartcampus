@@ -256,7 +256,7 @@ describe('InvitationsPage', () => {
     expect(component['errorMessage']()).toBe(
       'Invito scaduto: sei stato escluso dalla prenotazione.',
     );
-    // L'invito scaduto non resta confermabile: la card mostra lo stato reale.
+    // An expired invitation is no longer confirmable: the card reflects the actual state.
     expect(component['invitations']()[0].status).toBe('Expired');
   });
 
@@ -294,7 +294,7 @@ describe('InvitationsPage', () => {
     fixture.detectChanges();
 
     expect(component['errorMessage']()).toBe('Invito non trovato.');
-    // Un invito inesistente non resta confermabile: la card mostra lo stato reale.
+    // A non-existent invitation is no longer confirmable: the card reflects the actual state.
     expect(component['invitations']()[0].status).toBe('Cancelled');
   });
 

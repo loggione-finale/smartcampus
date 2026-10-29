@@ -5,20 +5,20 @@ public class NotificationOptions
     public const string SectionName = "Notifications";
 
     /// <summary>
-    /// Cartella pickup dove <see cref="System.Net.Mail.SmtpClient"/> scrive i file .eml.
-    /// In modalità pickup directory non parte alcuna mail verso un server reale.
+    /// Pickup directory where <see cref="System.Net.Mail.SmtpClient"/> writes .eml files.
+    /// In pickup directory mode no email is dispatched to an actual mail server.
     /// </summary>
     public string PickupDirectoryLocation { get; set; } = "mail-outbox";
 
     /// <summary>
-    /// Base URL del portale web usato nei link presenti nei corpi delle mail
-    /// (per esempio il link di conferma dell'invito).
+    /// Base URL of the web portal used in links within email bodies
+    /// (e.g. the invitation confirmation link).
     /// </summary>
     public string WebAppBaseUrl { get; set; } = "http://localhost:4200";
 
-    /// <summary>Mittente delle mail di notifica.</summary>
+    /// <summary>Sender address for notification emails.</summary>
     public string FromAddress { get; set; } = "no-reply@smartcampus.test";
 
-    /// <summary>Intervallo tra i sondaggi della coda di outbox da parte del dispatcher, in secondi.</summary>
+    /// <summary>Interval between outbox queue polls by the dispatcher, in seconds.</summary>
     public int DispatchIntervalSeconds { get; set; } = 5;
 }

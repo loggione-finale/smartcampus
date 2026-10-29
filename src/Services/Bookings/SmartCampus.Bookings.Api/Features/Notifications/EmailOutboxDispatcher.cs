@@ -6,10 +6,10 @@ using SmartCampus.Bookings.Api.Domain;
 namespace SmartCampus.Bookings.Api.Features.Notifications;
 
 /// <summary>
-/// Servizio in background che scrive i file .eml della coda di outbox.
-/// Le code sono inserite con stato <see cref="OutboxEmailStatus.Pending"/> nella stessa
-/// transazione della prenotazione: la scrittura del file avviene qui, fuori dalla richiesta
-/// HTTP, così un problema della pickup directory non fa fallire un'operazione già salvata.
+/// Background service that writes .eml files from the outbox queue.
+/// Entries are inserted with status <see cref="OutboxEmailStatus.Pending"/> within the same
+/// booking transaction: file writing occurs here, outside of the HTTP request,
+/// so that a pickup directory issue does not fail an already saved operation.
 /// </summary>
 public class EmailOutboxDispatcher(
     IServiceScopeFactory scopeFactory,
@@ -28,7 +28,7 @@ public class EmailOutboxDispatcher(
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
-                // Arresto regolare del servizio.
+                // Regular service shutdown.
             }
             catch (Exception exception)
             {
@@ -38,16 +38,16 @@ public class EmailOutboxDispatcher(
     }
 
     /// <summary>
-    /// Un colpo di dispatch: scrive il .eml di ogni mail in stato Pending e la marca Sent,
-    /// oppure Failed con LastError se la pickup directory rifiuta la scrittura.
-    /// Esposto per i test, indipendente dal timer.
+    /// A dispatch iteration: writes the .eml file for each Pending email and marks it Sent,
+    /// or Failed with LastError if the pickup directory rejects writing.
+    /// Exposed for testing, independent of the timer.
     /// </summary>
     internal async Task DispatchPendingAsync(CancellationToken cancellationToken)
     {
         using var scope = scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<BookingsDbContext>();
-        // Il sender usa le opzioni di questo dispatcher, così un override in test
-        // (o in un host separato) si applica anche alla consegna.
+        // The sender uses this dispatcher's options, so test overrides
+        // (or in a separate host) also apply to delivery.
         var sender = new PickupDirectoryEmailSender(options);
 
         var pending = await dbContext.OutboxEmails
