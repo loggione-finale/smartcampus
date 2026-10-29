@@ -3,11 +3,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminApiService } from './admin-api.service';
+import { AdminNavComponent } from './admin-nav.component';
 import { ALERT_KIND_LABELS, AdminAlert, AlertKind, AlertStatus } from './admin.models';
 
 @Component({
   selector: 'app-alerts-page',
-  imports: [DatePipe, FormsModule],
+  imports: [AdminNavComponent, DatePipe, FormsModule],
   templateUrl: './alerts.page.html',
   styleUrl: './alerts.page.scss',
 })
