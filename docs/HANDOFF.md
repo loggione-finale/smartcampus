@@ -152,7 +152,7 @@ Elenco completo: [evidence/README.md](evidence/README.md). Le principali:
 1. Autenticazione tra i servizi, così `GET /users` può richiedere il login.
 2. Vincolo dei partecipanti per fascia nel database (come quello sulle persone).
 3. Strumento "Altro" con nota e risposta dell'admin all'utente (R8).
-4. Prova dell'interfaccia su Linux e sul telefono, e prova a voce, se non fatte prima della consegna (#93, #51).
+4. Prova a voce della presentazione con tutto il gruppo, se non fatta prima della consegna (#51).
 5. `409` sulla registrazione doppia; `503` con PostgreSQL fermo entro 5 s.
 6. Misure reali d'uso con il campus, per verificare il valore dichiarato come stima.
 
