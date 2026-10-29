@@ -95,4 +95,33 @@ public class BookingRequestValidatorTests
 
         Assert.Equal(valid, _validator.Validate(request).Count == 0);
     }
+
+    [Fact]
+    public void Accepts_a_start_exactly_15_days_ahead()
+    {
+        var validator = new BookingRequestValidator(new FakeTimeProvider(Now));
+        var start = Now.AddDays(15);
+
+        Assert.Empty(validator.Validate(new CreateBookingRequest(SpaceId, start, start.AddHours(1))));
+    }
+
+    [Fact]
+    public void Rejects_a_start_more_than_15_days_ahead_on_the_start_field()
+    {
+        var validator = new BookingRequestValidator(new FakeTimeProvider(Now));
+        var start = Now.AddDays(15).AddMinutes(15);
+
+        var errors = validator.Validate(new CreateBookingRequest(SpaceId, start, start.AddHours(1)));
+
+        Assert.Equal(["A booking can start at most 15 days from now."], errors[nameof(CreateBookingRequest.Start)]);
+    }
+
+    [Fact]
+    public void The_advance_limit_can_be_relaxed()
+    {
+        var validator = new BookingRequestValidator(new FakeTimeProvider(Now), TimeSpan.FromDays(40));
+        var start = Now.AddDays(30);
+
+        Assert.DoesNotContain(nameof(CreateBookingRequest.Start), validator.Validate(new CreateBookingRequest(SpaceId, start, start.AddHours(1))).Keys);
+    }
 }
