@@ -229,6 +229,42 @@ describe('SpacesCatalogPage', () => {
     );
   });
 
+  it('offers quick time bands aligned with the booking bands (08-14, 14-19, 19-23)', () => {
+    fixture.detectChanges();
+    httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const chips = () =>
+      Array.from(host.querySelectorAll<HTMLButtonElement>('.preset-chip:not(.preset-clear)'));
+    expect(chips().map((chip) => chip.textContent?.trim())).toEqual([
+      'Mattina (08:00–14:00)',
+      'Pomeriggio (14:00–19:00)',
+      'Sera (19:00–23:00)',
+    ]);
+
+    // Winter date (CET, UTC+1): each band must reach the availability API as the whole band.
+    const expected = [
+      ['2026-01-15T07:00:00.000Z', '2026-01-15T13:00:00.000Z'],
+      ['2026-01-15T13:00:00.000Z', '2026-01-15T18:00:00.000Z'],
+      ['2026-01-15T18:00:00.000Z', '2026-01-15T22:00:00.000Z'],
+    ];
+    const component = fixture.componentInstance as unknown as {
+      filterForm: SpacesCatalogPage['filterForm'];
+    };
+    component.filterForm.patchValue({ date: '2026-01-15' });
+
+    expected.forEach(([start, end], index) => {
+      chips()[index].click();
+      httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
+      const req = httpTesting.expectOne('/api/bookings/availability');
+      expect(req.request.body.start).toBe(start);
+      expect(req.request.body.end).toBe(end);
+      req.flush([]);
+      fixture.detectChanges();
+    });
+  });
+
   it('validates invalid or incomplete time slot before calling backend APIs', () => {
     fixture.detectChanges();
     httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
