@@ -1,7 +1,7 @@
 # SmartCampus: guida al progetto (hand-off)
 
 > Il punto di partenza per chi prende in mano il progetto: valutatori, nuovi membri, noi stessi fra qualche mese.
-> Riassume e rimanda ai documenti di dettaglio, senza ripeterli. Aggiornata il 29/10/2026 sul `main` della release `v0.2`.
+> Riassume e rimanda ai documenti di dettaglio, senza ripeterli. Aggiornata il 29/10/2026 sul `main` della release `v0.2.1`.
 
 ## 1. Il prodotto in breve
 
@@ -31,7 +31,7 @@ prenotazioni, uso dichiarato e dati mancanti.
 | Piattaforma | Avvio con un comando, CI su ogni PR, prove di sistema | `scripts/dev-up`; Actions |
 
 Rilasci: [`v0.1`](https://github.com/loggione-finale/smartcampus/releases/tag/v0.1) (Sprint 1) e [`v0.2`](https://github.com/loggione-finale/smartcampus/releases/tag/v0.2) (Sprint 2 e
-iper-sprint). Cosa è entrato con l'iper-sprint del 29/10: [piano](hyper-sprint-2026-10-29.md) e note
+iper-sprint) e `v0.2.1` (interfaccia uniforme e correzioni dopo la `v0.2`). Cosa è entrato con l'iper-sprint del 29/10: [piano](hyper-sprint-2026-10-29.md) e note
 della `v0.2`.
 
 ## 3. Architettura in una pagina
@@ -144,9 +144,6 @@ Elenco completo: [evidence/README.md](evidence/README.md). Le principali:
 | Due registrazioni simultanee con la stessa email danno `500` invece di `409` | Caso raro, trovato nell'audit del 29/10 | Users, `RegisterUserHandler` |
 | Outbox delle email e richieste di strumenti senza lock tra istanze | Oggi c'è una sola istanza | Bookings |
 | Strumento "Altro" con nota e risposta dell'admin all'utente (R8) | Fuori tempo | Sviluppo futuro |
-| Commenti tecnici in parte in italiano (#249, PR #251 in bozza) | Rischio di conflitti a ridosso della consegna | Debito tecnico |
-| Stile uniforme delle pagine (PR #255) e "Prenota" dalla card del catalogo (H9, PR #269) | Arrivati dopo il freeze; la #255 è in conflitto con `main` su 15 file | Da fondere dopo la `v0.2`, solo se provati nel browser |
-| La mail di annullamento dice "annullata dall'amministrazione" anche quando annulla chi ha prenotato | Trovato nella prova delle mail del 29/10 | Correzione in corso (vedi issue) |
 | La dashboard admin mostra solo le aule con almeno una prenotazione; nessun avviso né gestione delle chiusure per manutenzione | Controllo dei requisiti admin (H10, #243) | Le aule libere in una fascia si vedono dalla ricerca del catalogo |
 | Avvio non provato su macOS; agente "implementer" mai usato | Tempo | [avvio da zero](evidence/2026-10-27-startup-from-scratch.md), [agents](agents/implementer.md) |
 
@@ -155,7 +152,7 @@ Elenco completo: [evidence/README.md](evidence/README.md). Le principali:
 1. Autenticazione tra i servizi, così `GET /users` può richiedere il login.
 2. Vincolo dei partecipanti per fascia nel database (come quello sulle persone).
 3. Strumento "Altro" con nota e risposta dell'admin all'utente (R8).
-4. `PR #255` (stile) ripresa pagina per pagina; `#251` (commenti in inglese) su `main` aggiornato.
+4. Prova dell'interfaccia su Linux e sul telefono, e prova a voce, se non fatte prima della consegna (#93, #51).
 5. `409` sulla registrazione doppia; `503` con PostgreSQL fermo entro 5 s.
 6. Misure reali d'uso con il campus, per verificare il valore dichiarato come stima.
 

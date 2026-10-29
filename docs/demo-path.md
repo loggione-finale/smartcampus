@@ -90,7 +90,7 @@ Una riga a persona, dopo aver seguito il percorso nel browser:
 
 | Sistema | Browser | Chi | Data | Passi riusciti | Differenze | Bug aperti |
 |---|---|---|---|---|---|---|
-| Windows 11 | | | | | | |
+| Windows 11 | Browser integrato dell'app Claude (Chromium) | asprenolapo, con Claude Code | 28/10 e 29/10 | Accesso (1), catalogo con filtri e fasce (2), prenotazione da `/book` con slider e data massima (4), gruppo con ospite non registrato: mail `.eml`, registrazione, login e conferma (13), le mie prenotazioni, area admin (14). I passi 5–12 e 15 sono provati sull'API, non nel browser | Link della mail che non scorreva al form, etichetta dei chip sovrapposta, finestre del catalogo diverse dalle fasce, doppio pulsante "Prenota" | Nessuno aperto: corretti con #259, #263, #253, #273 |
 | Linux o macOS | | | | | | |
 | Smartphone (ora di Roma e layout stretto) | | | | | | |
 
