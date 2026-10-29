@@ -141,16 +141,19 @@ describe('SpacesCatalogPage', () => {
     httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
     fixture.detectChanges();
 
-    const links = Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
-        '[data-testid="book-space-link"]',
+    const cards = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>(
+        '[data-testid="space-card"]',
       ),
     );
-    expect(links.length).toBe(SAMPLE_SPACES.length);
-    expect(links[0].textContent?.trim()).toBe('Prenota');
-    expect(links.map((l) => l.getAttribute('href'))).toEqual(
-      SAMPLE_SPACES.map((s) => `/?spazio=${s.id}#prenota`),
-    );
+    expect(cards.length).toBe(SAMPLE_SPACES.length);
+
+    cards.forEach((card, index) => {
+      const link = card.querySelector<HTMLAnchorElement>('[data-testid="book-space-link"]');
+      expect(link).withContext(`card ${index} has no Prenota link`).not.toBeNull();
+      expect(link?.textContent?.trim()).toBe('Prenota');
+      expect(link?.getAttribute('href')).toBe(`/?spazio=${SAMPLE_SPACES[index].id}#prenota`);
+    });
   });
 
   it('sends combined filter query parameters to GET /api/spaces/spaces', () => {
