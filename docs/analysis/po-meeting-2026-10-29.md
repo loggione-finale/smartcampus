@@ -1,5 +1,9 @@
 # Incontro con il Product Owner – giovedì 29/10/2026
 
+> **Esito: la Review si è tenuta in anticipo, il 28/10 sera.** Le risposte alle domande 1–5 sono le decisioni 29–33 e
+> le nuove richieste sono R1–R9, in [po-decisions.md](po-decisions.md). Il lavoro che ne segue è nel piano
+> dell'[iper-sprint](../hyper-sprint-2026-10-29.md).
+
 > Materiale per la Sprint Review con il PO del giorno di consegna (#83). Recupera la Review dello Sprint 1, saltata
 > il 27/10 ([process.md](../process.md)), e fa la Review dello Sprint 2. Le decisioni prese si registrano in
 > [po-decisions.md](po-decisions.md) dalla riga 29 in poi. Durata indicativa: **20 minuti**.
