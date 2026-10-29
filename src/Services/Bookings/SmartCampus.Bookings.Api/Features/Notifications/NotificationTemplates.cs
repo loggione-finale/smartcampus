@@ -61,14 +61,22 @@ public static class NotificationTemplates
         "invitation-expired",
         booking.Id);
 
-    public static OutgoingEmail BookingCancelled(Booking booking, string toAddress) => new(
-        toAddress,
-        $"Prenotazione annullata {booking.ReferenceCode} - {booking.SpaceNameSnapshot}",
-        $"La prenotazione di {booking.SpaceNameSnapshot} ({Period(booking)}) " +
-        $"con codice {booking.ReferenceCode} è stata annullata dall'amministrazione. " +
-        $"Motivo: {booking.CancellationReason}.",
-        "booking-cancelled",
-        booking.Id);
+    public static OutgoingEmail BookingCancelled(Booking booking, string toAddress)
+    {
+        var cancelledByOrganizer = booking.CancelledBy == booking.OrganizerId;
+        var who = cancelledByOrganizer ? "da chi l'ha prenotata" : "dall'amministrazione";
+        var reason = string.IsNullOrWhiteSpace(booking.CancellationReason)
+            ? ""
+            : $" Motivo: {booking.CancellationReason.Trim()}.";
+
+        return new(
+            toAddress,
+            $"Prenotazione annullata {booking.ReferenceCode} - {booking.SpaceNameSnapshot}",
+            $"La prenotazione di {booking.SpaceNameSnapshot} ({Period(booking)}) " +
+            $"con codice {booking.ReferenceCode} è stata annullata {who}.{reason}",
+            "booking-cancelled",
+            booking.Id);
+    }
 
     private static string Period(Booking booking) =>
         $"{CampusTime(booking.Period.LowerBound):dd/MM/yyyy HH:mm} - {CampusTime(booking.Period.UpperBound):HH:mm}";
