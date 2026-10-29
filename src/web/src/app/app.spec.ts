@@ -109,7 +109,6 @@ describe('App', () => {
     await router.navigateByUrl('/?returnUrl=%2Finvitations%2Fabc#registrazione');
     expect(router.url).toBe('/register?returnUrl=%2Finvitations%2Fabc');
   });
-  });
 
   it('shows the login entry when anonymous and the personal area when authenticated', () => {
     const fixture = TestBed.createComponent(App);
