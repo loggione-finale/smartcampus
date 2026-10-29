@@ -39,9 +39,11 @@ servizi); dopo `dev-down` nessuna porta tra 5101, 5102, 5103 e 4200 risponde.
 | Data | Chi | Sistema operativo | Comando | Esito | Note |
 |---|---|---|---|---|---|
 | 28/10/2026 | asprenolapo | Windows 11, PowerShell 5.1, .NET SDK 10.0.401, Docker 29.8.0 | `.\scripts\dev-up.ps1` | `JWT_SECRET` generata; 4 `OK`; login e `bookings/mine` `200` tramite il proxy; dopo `dev-down.ps1` nessuna porta risponde | Checkout nuovo da `main` senza `node_modules` (il 1° avvio esegue `npm ci`), volumi dei database già esistenti. 2° avvio: build in 2,4 s e tutto `OK` in meno di un minuto |
-| | | macOS o Linux | `./scripts/dev-up.sh` | | |
+| 29/10/2026 | Rhaastrake | Fedora 44 (kernel 7.2.13, SELinux `Enforcing`), bash, .NET SDK 10.0.113, Docker 29.8.2, Node 24.18 | `./scripts/dev-up.sh` | Con la correzione di #262: `JWT_SECRET` generata nel `.env`; 4 `OK` (Spaces, Bookings, Users, frontend) in 19 s; login da `http://localhost:4200/api/users/auth/login` e `GET /api/bookings/mine` `200` con 3 prenotazioni del seed; catalogo con 8 spazi; dopo `dev-down.sh` nessuna porta risponde | Clone nuovo di `main` (`dc54921`), `.env` con password nuove, volumi dei database cancellati con `docker compose down -v`. **1° tentativo fallito**: SELinux impediva ai container di leggere `init.sh` e `init.js` (`Permission denied`), quindi gli utenti dei database non venivano creati e i servizi rispondevano `password authentication failed`; risolto con l'opzione `z` nei due montaggi di `docker-compose.yml`. I 19 s sono a caldo (`node_modules` e build già presenti dal tentativo precedente): il tempo a freddo non è stato misurato |
+| | | macOS | `./scripts/dev-up.sh` | | |
 
 ## Limiti noti
 
 - Il README non è ancora stato provato con il frontend: si aggiorna questa prova dopo #19.
-- `dev-up.sh` non è ancora stato eseguito su macOS o Linux: la riga sopra è da compilare.
+- `dev-up.sh` è provato su Windows (28/10) e su Linux (29/10, Fedora con SELinux); non è stato provato su macOS.
+- Su Linux con SELinux serve l'opzione `z` nei montaggi degli script di inizializzazione (#262): senza, i database partono ma senza gli utenti dei servizi.
