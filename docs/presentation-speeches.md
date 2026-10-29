@@ -34,7 +34,7 @@ scadenza si mostra a voce, perché aspettare due ore non si può."
 prenotate e libere, riceve un avviso per ogni prenotazione e per gli strumenti mancanti, annulla con un motivo e
 una mail, e legge le statistiche costruite dai commenti finali. Perché? Il secondo obiettivo del progetto è capire
 come gli spazi vengono usati davvero. Nella demo: dashboard, avvisi e un utente normale che riceve `403`. Ho anche
-fatto un audit del backend, che ha trovato due difetti reali nel servizio Users."
+fatto un audit del backend, che ha trovato due difetti reali nel servizio Users, corretti prima della consegna."
 
 ## fedeericodl: accesso, disponibilità, commento finale
 

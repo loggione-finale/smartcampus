@@ -1,8 +1,7 @@
 # SmartCampus: guida al progetto (hand-off)
 
 > Il punto di partenza per chi prende in mano il progetto: valutatori, nuovi membri, noi stessi fra qualche mese.
-> Riassume e rimanda ai documenti di dettaglio, senza ripeterli. Aggiornata il 29/10/2026 sul `main` della consegna;
-> le righe marcate _(dopo il freeze)_ si confermano con la release `v0.2`.
+> Riassume e rimanda ai documenti di dettaglio, senza ripeterli. Aggiornata il 29/10/2026 sul `main` della release `v0.2`.
 
 ## 1. Il prodotto in breve
 
@@ -31,8 +30,8 @@ prenotazioni, uso dichiarato e dati mancanti.
 | Accesso | Registrazione, login con email o matricola, token JWT di 8 ore | Login e registrazione |
 | Piattaforma | Avvio con un comando, CI su ogni PR, prove di sistema | `scripts/dev-up`; Actions |
 
-Rilasci: [`v0.1`](https://github.com/loggione-finale/smartcampus/releases/tag/v0.1) (Sprint 1) e `v0.2` (Sprint 2 e
-iper-sprint, _(dopo il freeze)_). Cosa è entrato con l'iper-sprint del 29/10: [piano](hyper-sprint-2026-10-29.md) e note
+Rilasci: [`v0.1`](https://github.com/loggione-finale/smartcampus/releases/tag/v0.1) (Sprint 1) e [`v0.2`](https://github.com/loggione-finale/smartcampus/releases/tag/v0.2) (Sprint 2 e
+iper-sprint). Cosa è entrato con l'iper-sprint del 29/10: [piano](hyper-sprint-2026-10-29.md) e note
 della `v0.2`.
 
 ## 3. Architettura in una pagina
@@ -66,8 +65,8 @@ Decise con il PO: [registro delle decisioni](analysis/po-decisions.md).
 |---|---|
 | Durata da 30 minuti a 4 ore, a passi di 15 minuti | PO, 27/10 |
 | Fasce, ora di Roma: mattina 08–14, pomeriggio 14–19, sera 19–23; niente prenotazioni a cavallo | 24, 29, 30 |
-| Una prenotazione per fascia e per giorno per chi prenota, **e anche per i partecipanti** | 24, 31 (H8, _(dopo il freeze)_) |
-| Al massimo **15 giorni** di anticipo; l'inizio deve essere nel futuro | 32 (H1 e H2, _(dopo il freeze)_) |
+| Una prenotazione per fascia e per giorno per chi prenota, **e anche per i partecipanti** | 24, 31 (H8, #260) |
+| Al massimo **15 giorni** di anticipo; l'inizio deve essere nel futuro | 32 (H1 #257, H2 #263) |
 | Nessuno spazio e nessuna persona prenotati due volte, anche con richieste simultanee | Sprint Goal 1 |
 | Singoli solo nelle aule miste; gruppi nelle dedicate o nelle miste fino a 4 persone; posti contati | 20 (#211) |
 | Gruppi: invito per email; chi non conferma entro 2 ore è escluso, il posto si libera, organizzatore ed escluso ricevono una mail | 17, story #103 |
@@ -141,12 +140,14 @@ Elenco completo: [evidence/README.md](evidence/README.md). Le principali:
 | Dati solo sintetici: provano il funzionamento, non i benefici per il campus | Vincolo del progetto | [value-and-costs.md](analysis/value-and-costs.md) |
 | Con PostgreSQL fermo il `503` arriva in circa 7 s invece di 5 | Timeout di 3 s più il nuovo tentativo; non cambiato dopo il freeze | [prove di guasto](evidence/2026-10-28-failure-tests.md) |
 | Il limite per fascia dei partecipanti è controllato nell'applicazione, non nel database | Poco tempo; con richieste simultanee può essere superato | H8 #245 |
-| `GET /users` è senza login: dice se un'email è registrata | Bookings chiama Users senza token; i dati personali sono stati tolti dalla risposta (H12 #261, _(dopo il freeze)_) | Sviluppo futuro: autenticazione tra servizi |
+| `GET /users` è senza login: dice se un'email è registrata | Bookings chiama Users senza token; i dati personali sono stati tolti dalla risposta (H12, #267) | Sviluppo futuro: autenticazione tra servizi |
 | Due registrazioni simultanee con la stessa email danno `500` invece di `409` | Caso raro, trovato nell'audit del 29/10 | Users, `RegisterUserHandler` |
 | Outbox delle email e richieste di strumenti senza lock tra istanze | Oggi c'è una sola istanza | Bookings |
 | Strumento "Altro" con nota e risposta dell'admin all'utente (R8) | Fuori tempo | Sviluppo futuro |
 | Commenti tecnici in parte in italiano (#249, PR #251 in bozza) | Rischio di conflitti a ridosso della consegna | Debito tecnico |
-| Stile uniforme delle pagine (PR #255) | Troppo grande da provare prima della consegna | Proposta per dopo |
+| Stile uniforme delle pagine (PR #255) e "Prenota" dalla card del catalogo (H9, PR #269) | Arrivati dopo il freeze; la #255 è in conflitto con `main` su 15 file | Da fondere dopo la `v0.2`, solo se provati nel browser |
+| La mail di annullamento dice "annullata dall'amministrazione" anche quando annulla chi ha prenotato | Trovato nella prova delle mail del 29/10 | Correzione in corso (vedi issue) |
+| La dashboard admin mostra solo le aule con almeno una prenotazione; nessun avviso né gestione delle chiusure per manutenzione | Controllo dei requisiti admin (H10, #243) | Le aule libere in una fascia si vedono dalla ricerca del catalogo |
 | Avvio non provato su macOS; agente "implementer" mai usato | Tempo | [avvio da zero](evidence/2026-10-27-startup-from-scratch.md), [agents](agents/implementer.md) |
 
 ## 10. Prossimi passi consigliati
@@ -170,4 +171,4 @@ Elenco completo: [evidence/README.md](evidence/README.md). Le principali:
 | Spaces e strumenti | AldAndrew0 | antoStr |
 | Frontend | Leo-prova | antoStr |
 
-Chi ha fatto cosa e perché, PR per PR: [team-work-map.md](team-work-map.md) _(PR #256)_.
+Chi ha fatto cosa e perché, PR per PR: [team-work-map.md](team-work-map.md).
