@@ -1,4 +1,4 @@
-14 | 11 |18 | 10 || 34 |15 | 39 |16 | 21 |24 | 41 |28 | 23 |# Mappa del lavoro: chi ha fatto cosa e perché
+# Mappa del lavoro: chi ha fatto cosa e perché
 
 > Fonte: le PR fuse su `main` dal 26/10 al 29/10 alle 12:30 (GitHub), con le issue e le decisioni che le hanno
 > motivate. Serve alla presentazione: ognuno rilegge la propria sezione e sa spiegare il proprio contributo e il suo
