@@ -107,7 +107,6 @@ export class App {
     });
   }
 
-
   protected logout(): void {
     this.session.clear();
     void this.router.navigate(['/login'], { queryParams: { reason: 'logout' } });
