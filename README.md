@@ -173,6 +173,7 @@ cd src/web && npm test -- --watch=false
 | `401` sulle prenotazioni dopo un login riuscito | Users e Bookings hanno chiavi JWT diverse: usa lo stesso `JWT_SECRET` per tutti e tre |
 | `NO <servizio> non risponde` alla fine di `dev-up` | Leggi `.dev/<servizio>.log` e `.dev/<servizio>.log.err`; di solito è una porta occupata o una password del `.env` cambiata dopo il primo avvio |
 | `Could not find a UserSecretsId` | Il proprietario del servizio non ha ancora eseguito `dotnet user-secrets init`: va fatto una volta, nel suo task |
+| PostgreSQL o MongoDB non ripartono con `error while creating mount source path ... file exists` | I container usano i file di `infra/` della copia del repository da cui sono stati creati, che non c'è più: `docker compose up -d --wait` dalla cartella che usi li ricrea, e i dati restano nei volumi |
 
 Prove di avvio da zero: [docs/evidence/2026-10-27-startup-from-scratch.md](docs/evidence/2026-10-27-startup-from-scratch.md).
 
