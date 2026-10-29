@@ -10,6 +10,8 @@ import {
   INVITATION_STATUS_LABELS,
   Invitation,
   InvitationStatus,
+  formatInvitationDate,
+  formatInvitationTimeRange,
 } from './invitations.models';
 
 const ACCEPT_ERROR_MESSAGES: Record<AcceptInvitationError, string> = {
@@ -63,6 +65,14 @@ export class InvitationsPage implements OnInit {
       timeStyle: 'short',
       timeZone: 'Europe/Rome',
     }).format(date);
+  }
+
+  protected formatInvitationDate(value: string): string {
+    return formatInvitationDate(value);
+  }
+
+  protected formatInvitationTimeRange(start: string, end: string): string {
+    return formatInvitationTimeRange(start, end);
   }
 
   protected confirm(invitation: Invitation): void {

@@ -40,6 +40,17 @@
               <span class="role">{{ invitation.role === 'Organizer' ? 'Responsabile' : 'Partecipante' }}</span>
               <span class="status" [attr.data-status]="invitation.status">{{ statusLabel(invitation.status) }}</span>
             </div>
+            <div class="invitation-booking">
+              <span class="space">{{ invitation.spaceName }}</span>
+              <span class="building">{{ invitation.spaceBuilding }}</span>
+            </div>
+            <div class="invitation-when">
+              <span class="date">{{ formatInvitationDate(invitation.start) }}</span>
+              <span class="time">{{ formatInvitationTimeRange(invitation.start, invitation.end) }}</span>
+            </div>
+            <div class="invitation-participants">
+              {{ invitation.participantCount }} partecipanti
+            </div>
             <div class="invitation-deadline">
               <strong>Scadenza:</strong> {{ formatDeadline(invitation.expiresAt) }}
             </div>
