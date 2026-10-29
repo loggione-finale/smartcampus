@@ -157,6 +157,10 @@ describe('SpacesCatalogPage', () => {
     expect(cards.length).toBe(SAMPLE_SPACES.length);
 
     cards.forEach((card, index) => {
+      // Exactly one button: #269 and #272 both added one and the merge kept both.
+      expect(card.querySelectorAll('[data-testid="book-space-link"]').length)
+        .withContext(`card ${index} must have exactly one Prenota link`)
+        .toBe(1);
       const link = card.querySelector<HTMLAnchorElement>('[data-testid="book-space-link"]');
       expect(link).withContext(`card ${index} has no Prenota link`).not.toBeNull();
       expect(link?.textContent?.trim()).toBe('Prenota');
