@@ -56,8 +56,16 @@ const FALLBACK_EQUIPMENT: EquipmentCatalogItemDto[] = [
   { code: 'microphone', name: 'Microfono', description: '', isStandard: true, requiresNotes: false },
 ];
 
+// Decision 32: a booking can start at most 15 days from now, like the Bookings validator.
+const MAX_ADVANCE_DAYS = 15;
+
 function localDate(date: Date): string {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+function addDays(isoDate: string, days: number): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return localDate(new Date(year, month - 1, day + days));
 }
 
 function hhmm(totalMinutes: number): string {
@@ -273,7 +281,32 @@ export class BookingFormComponent {
   });
 
   protected readonly minimumBookingDate = this.todayLocal();
+  protected readonly maximumBookingDate = addDays(this.minimumBookingDate, MAX_ADVANCE_DAYS);
   protected readonly participantTotal = computed(() => 1 + this.participantEmails().length);
+
+  // The slider reads the duration from the form values, so typing a start or end time moves it.
+  private readonly bookingFormValue = toSignal(this.bookingForm.valueChanges, {
+    initialValue: this.bookingForm.getRawValue(),
+  });
+  protected readonly bookingDuration = computed(() => {
+    const { date, start, end } = this.bookingFormValue();
+    if (!date || !start || !end) return 60;
+    const minutes =
+      (new Date(`${date}T${end}`).getTime() - new Date(`${date}T${start}`).getTime()) / 60000;
+    return Number.isFinite(minutes) && minutes >= 30 && minutes <= 240 ? minutes : 60;
+  });
+
+  // The longest booking that still ends inside the band of the chosen start: the slider stops there.
+  protected readonly maxBookingDuration = computed(() => {
+    const startDate = this.bookingStartDate();
+    if (!startDate) return 240;
+    const campusStart = campusTimeParts(startDate).minutes;
+    const band = BOOKING_BANDS.find(
+      ([from, to]) => campusStart >= from && campusStart < to,
+    );
+    const bandEnd = band?.[1] ?? BOOKING_BANDS[BOOKING_BANDS.length - 1][1];
+    return Math.max(30, Math.min(240, bandEnd - campusStart));
+  });
 
   private readonly selectedSpaceId = toSignal(this.bookingForm.controls.spaceId.valueChanges, {
     initialValue: this.bookingForm.controls.spaceId.value,
@@ -334,8 +367,10 @@ export class BookingFormComponent {
       this.bookingForm.controls.start.valueChanges,
       this.bookingForm.controls.end.valueChanges,
     ).subscribe(() => this.refreshMixedSeats());
-    this.loadBookingSpaces();
-    this.loadEquipmentCatalog();
+    if (!this.session.isAdmin()) {
+      this.loadBookingSpaces();
+      this.loadEquipmentCatalog();
+    }
   }
 
   protected submitBooking(): void {
@@ -480,26 +515,7 @@ export class BookingFormComponent {
     this.equipmentError.set('');
   }
 
-  protected bookingDuration(): number {
-    const { date, start, end } = this.bookingForm.getRawValue();
-    if (!date || !start || !end) return 60;
-    const minutes =
-      (new Date(`${date}T${end}`).getTime() - new Date(`${date}T${start}`).getTime()) / 60000;
-    return Number.isFinite(minutes) && minutes >= 30 && minutes <= 240 ? minutes : 60;
-  }
-
-  // The longest booking that still ends inside the band of the chosen start.
-  protected maxBookingDuration(): number {
-    const startDate = this.bookingStartDate();
-    if (!startDate) return 240;
-    const campusStart = campusTimeParts(startDate).minutes;
-    const band = BOOKING_BANDS.find(
-      ([from, to]) => campusStart >= from && campusStart < to,
-    );
-    const bandEnd = band?.[1] ?? BOOKING_BANDS[BOOKING_BANDS.length - 1][1];
-    return Math.max(30, Math.min(240, bandEnd - campusStart));
-  }
-
+  // The slider calls this while dragging too, so the duration and the end time follow the thumb.
   protected setBookingDuration(minutes: number): void {
     const startDate = this.bookingStartDate();
     if (!startDate) return;
@@ -509,7 +525,7 @@ export class BookingFormComponent {
   }
 
   private bookingStartDate(): Date | null {
-    const { date, start } = this.bookingForm.getRawValue();
+    const { date, start } = this.bookingFormValue();
     if (!date || !start) return null;
     const startDate = new Date(`${date}T${start}`);
     return Number.isNaN(startDate.valueOf()) ? null : startDate;
@@ -611,6 +627,8 @@ export class BookingFormComponent {
 
     if (startDate <= new Date()) {
       errors.start = 'L’inizio deve essere nel futuro.';
+    } else if (startDate.getTime() > Date.now() + MAX_ADVANCE_DAYS * 86400000) {
+      errors.date = 'Puoi prenotare al massimo 15 giorni in anticipo.';
     }
 
     if (startDate.getMinutes() % 15 !== 0 || startDate.getSeconds() !== 0) {

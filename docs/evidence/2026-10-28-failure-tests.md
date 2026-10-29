@@ -2,7 +2,8 @@
 
 > **Stato: eseguita il 28/10/2026.** Procedura ed esiti attesi sono stati scritti prima della prova (#189), come chiede
 > [evidence/README.md](README.md); la colonna "Esito osservato" riporta codice HTTP e tempo misurati con `curl`.
-> **Risultato: 10 scenari su 12 come atteso, 2 differenze aperte come Bug (#213, #224).**
+> **Risultato: 10 scenari su 12 come atteso, 2 differenze aperte come Bug (#213, #224).** Entrambe sono state
+> corrette (#218 e #231). Lo scenario 5 è stato ripetuto il 29/10: vedi [Ripetizione dopo le correzioni](#ripetizione-dopo-le-correzioni-2910).
 > Gli esiti attesi riguardano le **API**: su `main` il frontend ha solo catalogo, disponibilità e gestione spazi,
 > quindi prenotazioni, login e area admin si provano con chiamate HTTP.
 
@@ -91,8 +92,33 @@ Ogni differenza diventa un Bug con il numero dello scenario (DoD di #66).
 
 | Scenario | Differenza | Bug |
 |---|---|---|
-| 5 | Con PostgreSQL fermo Bookings **e Users** rispondono `500` dopo circa 82 s invece di `503` entro 5 s; `/health` `503` dopo 85–86 s. Causa: `EnableRetryOnFailure()` con i valori predefiniti e nessun gestore delle eccezioni | #213 |
-| 4 | Con MongoDB fermo Spaces risponde `503` corretto ma dopo 5,1 s, appena oltre il limite. Causa: `ServerSelectionTimeout` di 5 s | #224 |
+| 5 | Con PostgreSQL fermo Bookings **e Users** rispondono `500` dopo circa 82 s invece di `503` entro 5 s; `/health` `503` dopo 85–86 s. Causa: `EnableRetryOnFailure()` con i valori predefiniti e nessun gestore delle eccezioni | #213, corretto con #218 |
+| 4 | Con MongoDB fermo Spaces risponde `503` corretto ma dopo 5,1 s, appena oltre il limite. Causa: `ServerSelectionTimeout` di 5 s | #224, corretto con #231 (timeout a 3 s) |
+
+## Ripetizione dopo le correzioni (29/10)
+
+Scenario 5 ripetuto due volte il 29/10 su `main` (`29e1fbc`, con #218), avviato con `scripts/dev-up.ps1` su Windows 11,
+come chiesto da Rhaastrake. Il token di Giulia è stato preso prima di fermare PostgreSQL.
+
+| # | Chiamata | Esito atteso | Esito osservato (due ripetizioni) |
+|---|---|---|---|
+| 5 | `GET http://localhost:5101/spaces` | `200` | **200** in 0,14 s |
+| 5 | `GET /bookings/mine` | `503` con `detail` leggibile entro 5 s | **503** in 7,07–7,21 s, "The database is not reachable. Try again shortly." |
+| 5 | `POST /auth/login` | Come sopra | **503** in 7,05–7,20 s, stesso messaggio |
+| 5 | `/health` di Bookings e Users | `503` | **503** in 10,1 s |
+| 5b | Dopo `docker compose start postgres`: `GET /bookings/mine`, `POST /auth/login`, `/health` | `200` senza riavviare i servizi | **200** su tutte, servizi non riavviati |
+
+**Esito:** il difetto di #213 è risolto. Prima c'era un `500` senza messaggio dopo 82 s; ora c'è un `503` leggibile e la
+ripresa avviene da sola. **Resta una differenza:** circa 7 s invece di 5. La causa probabile è il timeout di connessione
+di 3 s (`Program.cs` di Bookings e Users) sommato al nuovo tentativo di `EnableRetryOnFailure`. La dichiariamo come limite: non si cambia
+dopo il freeze del 29/10.
+
+Lo scenario 4 (MongoDB fermo) non è stato ripetuto dopo #231: il timeout è passato da 5 a 3 secondi ed è verificato da
+un test di configurazione, non da una misura.
+
+Nota sulla prova: alla prima ripetizione PostgreSQL non è ripartito, con l'errore `mount source path ... file exists`. Il
+container era stato creato da una copia del repository poi cancellata. Ricreato con `docker compose up -d --wait` dalla
+cartella del repository, ha funzionato (vedi "Problemi frequenti" nel README). Non è un difetto dei servizi.
 
 ## Limiti
 
