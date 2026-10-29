@@ -31,7 +31,8 @@ public static class NotificationTemplates
         invitation.Email,
         $"Invito alla prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}",
         $"Sei stato invitato come utente registrato alla prenotazione {booking.SpaceNameSnapshot} " +
-        $"({Period(booking)}). Conferma entro {CampusTime(invitation.ExpiresAt):HH:mm}. " +
+        $"({Period(booking)}). Conferma entro il {CampusTime(invitation.ExpiresAt):dd/MM/yyyy} " +
+        $"alle {CampusTime(invitation.ExpiresAt):HH:mm}. " +
         $"Conferma qui: {webAppBaseUrl.TrimEnd('/')}/invitations/{invitation.Id}",
         "invitation",
         booking.Id);
@@ -40,7 +41,7 @@ public static class NotificationTemplates
         invitation.Email,
         $"Invito alla prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}",
         $"Sei stato invitato alla prenotazione {booking.SpaceNameSnapshot} " +
-        $"({Period(booking)}). Registrati sul portale entro {CampusTime(invitation.ExpiresAt):HH:mm} " +
+        $"({Period(booking)}). Registrati sul portale entro {CampusTime(invitation.ExpiresAt):dd/MM/yyyy HH:mm} " +
         $"e conferma il tuo invito. " +
         $"Registrati qui: {webAppBaseUrl.TrimEnd('/')}/?returnUrl=%2Finvitations%2F{invitation.Id}#registrazione",
         "invitation",
@@ -52,9 +53,11 @@ public static class NotificationTemplates
         $"Invito scaduto - prenotazione {booking.ReferenceCode} - {booking.SpaceNameSnapshot}",
         toOrganizer
             ? $"L'invito per {invitation.Email} alla prenotazione {booking.SpaceNameSnapshot} " +
-              $"({Period(booking)}) è scaduto alle {CampusTime(invitation.ExpiresAt):HH:mm} senza conferma."
+              $"({Period(booking)}) è scaduto il {CampusTime(invitation.ExpiresAt):dd/MM/yyyy} " +
+              $"alle {CampusTime(invitation.ExpiresAt):HH:mm} senza conferma."
             : $"Il tuo invito alla prenotazione {booking.SpaceNameSnapshot} " +
-              $"({Period(booking)}) è scaduto alle {CampusTime(invitation.ExpiresAt):HH:mm} senza conferma.",
+              $"({Period(booking)}) è scaduto il {CampusTime(invitation.ExpiresAt):dd/MM/yyyy} " +
+              $"alle {CampusTime(invitation.ExpiresAt):HH:mm} senza conferma.",
         "invitation-expired",
         booking.Id);
 

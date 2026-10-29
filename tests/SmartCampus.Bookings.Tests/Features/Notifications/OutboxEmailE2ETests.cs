@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SmartCampus.Bookings.Api.Data;
@@ -84,8 +85,17 @@ public class OutboxEmailE2ETests(BookingsApiFactory factory) : IClassFixture<Boo
         // Ogni evento produce la mail attesa: invito separato per registrato e non registrato.
         var invitationToExternal = emails.Single(e => e.ToAddress == "esterna@libero.test");
         Assert.Contains("Registrati sul portale", invitationToExternal.Body);
+        // The invitation expiry is shown with date and time, not just the time.
+        var expiresAtLine = Regex.Match(
+            invitationToExternal.Body,
+            @"Registrati sul portale entro \d{2}/\d{2}/\d{4} \d{2}:\d{2}");
+        Assert.True(expiresAtLine.Success, invitationToExternal.Body);
         var invitationToRegistered = emails.Single(e => e.ToAddress == "registrata@smartcampus.test");
         Assert.Contains("utente registrato", invitationToRegistered.Body);
+        var registeredDeadline = Regex.Match(
+            invitationToRegistered.Body,
+            @"Conferma entro il \d{2}/\d{2}/\d{4} alle \d{2}:\d{2}");
+        Assert.True(registeredDeadline.Success, invitationToRegistered.Body);
 
         // L'invito al non registrato punta alla registrazione con ritorno all'invito;
         // quello al registrato punta alla pagina di conferma.
