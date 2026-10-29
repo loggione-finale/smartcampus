@@ -136,6 +136,23 @@ describe('SpacesCatalogPage', () => {
     expect(firstLink?.getAttribute('href')).toBe('/spaces/3f2a9c1e-0000-4000-8000-000000000001');
   });
 
+  it('shows a Prenota link on every card pointing to the home booking form with the space', () => {
+    fixture.detectChanges();
+    httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);
+    fixture.detectChanges();
+
+    const links = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
+        '[data-testid="book-space-link"]',
+      ),
+    );
+    expect(links.length).toBe(SAMPLE_SPACES.length);
+    expect(links[0].textContent?.trim()).toBe('Prenota');
+    expect(links.map((l) => l.getAttribute('href'))).toEqual(
+      SAMPLE_SPACES.map((s) => `/?spazio=${s.id}#prenota`),
+    );
+  });
+
   it('sends combined filter query parameters to GET /api/spaces/spaces', () => {
     fixture.detectChanges();
     httpTesting.expectOne('/api/spaces/spaces').flush(SAMPLE_SPACES);

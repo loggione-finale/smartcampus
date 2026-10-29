@@ -210,6 +210,10 @@ export class SpacesCatalogPage implements OnInit {
     return startTime && endTime ? `${day} · ${startTime}–${endTime}` : day;
   }
 
+  protected spaceBookingHref(spaceId: string): string {
+    return `/?spazio=${encodeURIComponent(spaceId)}#prenota`;
+  }
+
   protected spaceAvailabilityHref(spaceId: string): string {
     const chosenDate = this.appliedSlot()?.date || this.filterForm.controls.date.value.trim();
     const encodedId = encodeURIComponent(spaceId);
