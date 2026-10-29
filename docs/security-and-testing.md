@@ -84,7 +84,7 @@
 
 | Rischio | Contromisura |
 |---|---|
-| **Accesso a prenotazioni altrui** (IDOR): cambiare l'id nella URL per vedere, annullare o fare check-in su una prenotazione non propria | Ogni operazione verifica che l'utente sia organizzatore o partecipante; altrimenti `404` (non si rivela che la prenotazione esiste) |
+| **Accesso a prenotazioni altrui** (IDOR): cambiare l'id nella URL per vedere o annullare una prenotazione non propria, commentarla o confermare l'invito di un altro | Non esiste una lettura per id: `GET /bookings/mine` restituisce solo le proprie. Il commento finale e l'invito di un altro rispondono `404`. **L'annullamento di una prenotazione altrui risponde `403`** ("solo l'organizzatore"): è una scelta del 28/10 (#96), perché gli id sono GUID non indovinabili, il rischio di rivelare che la prenotazione esiste è basso e il passo 7 della demo mostra proprio questo `403` |
 | Un partecipante annulla l'intera prenotazione | Solo `organizer_id` può annullare; un partecipante può solo uscire |
 | Il client invia campi che non gli spettano (`status`, `organizerId`, `checkedInAt`) | DTO di input senza questi campi; l'organizzatore è sempre l'utente corrente |
 | Prenotazioni sovrapposte per richieste simultanee | Vincoli di esclusione nel database (spazio e persona) |
@@ -104,9 +104,10 @@
 | Prenotazioni adiacenti (10–11 e 11–12): entrambe accettate | Integrazione |
 | Gruppo oltre la capienza: `422`; partecipante inesistente: `422` | Integrazione + tra servizi |
 | Spaces non risponde: `503`; Users non risponde: `503` solo per i gruppi | Tra servizi |
-| Annullare o fare check-in su una prenotazione altrui: `404` | Sicurezza |
+| Annullare una prenotazione altrui: `403`; commento finale su una prenotazione altrui: `404`; invito destinato a un'altra email: `404` | Sicurezza |
+| L'admin prova a prenotare: `403` (#96) | Sicurezza |
 | Un partecipante prova ad annullare: `403`; l'organizzatore prova a uscire: `400` | Sicurezza |
-| Statistiche con ruolo `Student`: `403` | Sicurezza |
+| Statistiche con ruolo `User`: `403` | Sicurezza |
 | Statistiche su dati sintetici noti: numeri uguali a quelli calcolati a mano | Integrazione |
 | Prenotazione nella notte del cambio dell'ora legale | Unitario |
 | Il test di concorrenza **fallisce** se si rimuove il vincolo | Verifica del test stesso |
