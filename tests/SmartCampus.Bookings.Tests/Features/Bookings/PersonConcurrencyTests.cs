@@ -6,10 +6,10 @@ using SmartCampus.Bookings.Tests.Support;
 namespace SmartCampus.Bookings.Tests.Features.Bookings;
 
 /// <summary>
-/// Test di concorrenza sulle persone (issue #62): molte prenotazioni simultanee, su spazi
-/// diversi, che includono la stessa persona nella stessa fascia; ne passa esattamente una.
-/// Gira sul database `bookings_test` reale (docker compose up, vedi infra/README.md).
-/// Il vincolo che rende vero il test è `ex_invitations_person_no_overlap` sulla tabella
+/// Concurrency tests on participants (issue #62): multiple simultaneous bookings across
+/// different spaces including the same person in the same time band; exactly one succeeds.
+/// Runs against the real `bookings_test` database (docker compose up, see infra/README.md).
+/// The constraint backing this test is `ex_invitations_person_no_overlap` on table
 /// `invitations` (docs/decisions/0005-vincoli-di-esclusione.md).
 /// </summary>
 [Collection(nameof(BookingConcurrencyCollection))]

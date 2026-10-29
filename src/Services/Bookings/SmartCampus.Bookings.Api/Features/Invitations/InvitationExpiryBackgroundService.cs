@@ -8,9 +8,9 @@ using SmartCampus.Bookings.Api.Features.Notifications;
 namespace SmartCampus.Bookings.Api.Features.Invitations;
 
 /// <summary>
-/// Servizio in background che porta a <see cref="InvitationStatus.Expired"/> gli inviti
-/// non confermati oltre la scadenza e mette in coda le mail di notifica.
-/// La scrittura è idempotente: un invito già scaduto non viene toccato una seconda volta.
+/// Background service that transitions unconfirmed invitations past their expiry to <see cref="InvitationStatus.Expired"/>
+/// and enqueues notification emails.
+/// Writes are idempotent: an already expired invitation will not be touched a second time.
 /// </summary>
 public class InvitationExpiryBackgroundService(
     IServiceScopeFactory scopeFactory,
@@ -30,7 +30,7 @@ public class InvitationExpiryBackgroundService(
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
-                // Arresto regolare del servizio.
+                // Regular service shutdown.
             }
             catch (Exception exception)
             {
@@ -56,13 +56,13 @@ public class InvitationExpiryBackgroundService(
 
         foreach (var invitation in dueInvitations)
         {
-            // La strategia di retry di Npgsql non supporta transazioni utente:
-            // per-invito si usa una strategia di esecuzione esplicita.
+            // Npgsql retry strategy does not support user-initiated transactions:
+            // an explicit execution strategy is used per invitation.
             var strategy = dbContext.Database.CreateExecutionStrategy();
             try
             {
-                // Clear() all'inizio: un nuovo tentativo non si porta dietro
-                // le mail tracciate dal tentativo precedente fallito.
+                // Clear() at start: a new attempt will not carry over
+                // tracked emails from a previous failed attempt.
                 await strategy.ExecuteAsync(async cancellationToken =>
                 {
                     dbContext.ChangeTracker.Clear();
@@ -95,8 +95,8 @@ public class InvitationExpiryBackgroundService(
             .BeginTransactionAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        // Riaggiorna lo stato dentro la transazione: un altro processo o
-        // una conferma potrebbero averlo cambiato nel frattempo.
+        // Refresh state within transaction: another process or
+        // confirmation might have changed it in the meantime.
         var affected = await dbContext.Invitations
             .Where(i => i.Id == invitation.Id && i.Status == InvitationStatus.Invited)
             .ExecuteUpdateAsync(

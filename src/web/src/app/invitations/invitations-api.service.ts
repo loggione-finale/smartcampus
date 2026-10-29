@@ -5,7 +5,7 @@ import { Invitation } from './invitations.models';
 
 export const AUTH_TOKEN_KEY = 'smartcampus.auth.token';
 
-/** Esiti espliciti dell'accettazione, mappati dai ProblemDetails del backend. */
+/** Explicit acceptance outcomes, mapped from backend ProblemDetails. */
 export type AcceptInvitationError = 'not-found' | 'expired' | 'conflict' | 'unknown';
 
 @Injectable({

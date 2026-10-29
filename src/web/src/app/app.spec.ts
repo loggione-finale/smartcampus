@@ -155,7 +155,7 @@ describe('App', () => {
   });
 
   it('navigates to the login with returnUrl after registration without a session', async () => {
-    // Link dalla mail all'invitato non registrato (#233): la query sta prima del frammento.
+    // Link from the email to an unregistered invitee (#233): query precedes the fragment.
     window.history.replaceState({}, '', '/?returnUrl=%2Finvitations%2Fabc');
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance as unknown as RegistrationTestApp;
@@ -173,7 +173,7 @@ describe('App', () => {
 
     const request = httpTesting.expectOne('/api/users/auth/register');
     expect(request.request.method).toBe('POST');
-    // La rotta /invitations è protetta: senza sessione l'authGuard manda al login con returnUrl.
+    // The /invitations route is protected: without a session, authGuard redirects to login with returnUrl.
     request.flush({}, { status: 201, statusText: 'Created' });
     await fixture.whenStable();
     fixture.detectChanges();
@@ -183,7 +183,7 @@ describe('App', () => {
   });
 
   it('navigates to the invitation after registration with a session', async () => {
-    // Come sopra, ma con la sessione attiva: si atterra direttamente sull'invito.
+    // As above, but with an active session: lands directly on the invitation.
     const session = TestBed.inject(AuthSessionService);
     session.store(LOGIN_RESPONSE);
     window.history.replaceState({}, '', '/?returnUrl=%2Finvitations%2Fabc');
@@ -208,13 +208,13 @@ describe('App', () => {
     fixture.detectChanges();
 
     expect(TestBed.inject(Router).url).toBe('/invitations/abc');
-    // La pagina inviti caricata dalla rotta fa la sua GET: la chiudiamo qui.
+    // The invitations page loaded by the route performs its GET request: resolve it here.
     httpTesting.match((r) => r.url.endsWith('/api/invitations/mine')).forEach((r) => r.flush([]));
     window.history.replaceState({}, '', '/');
   });
 
   it('stays on the home after registration when returnUrl is external', async () => {
-    // returnUrl esterno (//host): safeReturnUrl lo scarta, si resta sulla home.
+    // External returnUrl (//host): safeReturnUrl rejects it, staying on home.
     window.history.replaceState({}, '', '/?returnUrl=%2F%2Fevil.example');
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance as unknown as RegistrationTestApp;

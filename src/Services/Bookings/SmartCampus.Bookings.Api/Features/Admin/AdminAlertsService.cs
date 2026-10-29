@@ -4,10 +4,10 @@ using SmartCampus.Bookings.Api.Domain;
 namespace SmartCampus.Bookings.Api.Features.Admin;
 
 /// <summary>
-/// Gestisce la creazione degli avvisi per gli amministratori del campus.
-/// Nota sull'ambito transazionale: AdminAlertsService è registrato come Scoped e condivide il BookingsDbContext
-/// con gli altri servizi della richiesta HTTP corrente. Salva immediatamente l'avviso persistendo anche
-/// le eventuali entità già tracciate nel medesimo contesto.
+/// Handles alert creation for campus administrators.
+/// Transactional scope note: AdminAlertsService is registered as Scoped and shares BookingsDbContext
+/// with other services within the current HTTP request. It saves the alert immediately, persisting any
+/// entities already tracked in the same context.
 /// </summary>
 public class AdminAlertsService(BookingsDbContext dbContext, TimeProvider timeProvider) : IAdminAlerts
 {

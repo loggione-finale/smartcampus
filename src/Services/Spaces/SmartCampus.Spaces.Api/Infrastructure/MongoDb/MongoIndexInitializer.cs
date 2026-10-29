@@ -26,27 +26,27 @@ public class MongoIndexInitializer : IMongoIndexInitializer
 
             var indexModels = new List<CreateIndexModel<Space>>
             {
-                // Indice composto per ricerca con filtri (type, capacity, isActive) come da docs/data-model.md
+                // Compound index for search with filters (type, capacity, isActive) per docs/data-model.md
                 new(
                     builder.Ascending(s => s.Type).Ascending(s => s.Capacity).Ascending(s => s.IsActive),
                     new CreateIndexOptions { Name = "ix_spaces_type_capacity_isActive" }
                 ),
-                // Indice per software installato nei laboratori come da docs/data-model.md
+                // Index for software installed in labs per docs/data-model.md
                 new(
                     builder.Ascending("features.software"),
                     new CreateIndexOptions { Name = "ix_spaces_features_software" }
                 ),
-                // Indice testuale per ricerca per nome come da docs/data-model.md
+                // Text index for name search per docs/data-model.md
                 new(
                     builder.Text(s => s.Name),
                     new CreateIndexOptions { Name = "ix_spaces_name_text" }
                 ),
-                // Indice per modalità (Dedicated / Mixed)
+                // Index for mode (Dedicated / Mixed)
                 new(
                     builder.Ascending(s => s.Mode),
                     new CreateIndexOptions { Name = "ix_spaces_mode" }
                 ),
-                // Indice per strumenti disponibili (equipment)
+                // Index for available equipment
                 new(
                     builder.Ascending(s => s.Equipment),
                     new CreateIndexOptions { Name = "ix_spaces_equipment" }

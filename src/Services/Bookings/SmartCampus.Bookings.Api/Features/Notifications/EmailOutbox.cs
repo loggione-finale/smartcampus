@@ -6,30 +6,30 @@ using SmartCampus.Bookings.Api.Domain;
 namespace SmartCampus.Bookings.Api.Features.Notifications;
 
 /// <summary>
-/// Accoda le mail di notifica come righe in stato <see cref="OutboxEmailStatus.Pending"/>.
-/// Nessuna scrittura su disco qui: i file .eml li scrive <see cref="EmailOutboxDispatcher"/>
-/// fuori dalla richiesta HTTP, così un problema della pickup directory non fa fallire
-/// un'operazione già salvata.
-/// I metodi di accodamento sono sincroni e senza SaveChanges: aggiungono le righe al cambio
-/// di traccia e il chiamante le salva con la sua operazione.
+/// Enqueues notification emails as rows in <see cref="OutboxEmailStatus.Pending"/> status.
+/// No disk writes here: .eml files are written by <see cref="EmailOutboxDispatcher"/>
+/// outside of the HTTP request, so a pickup directory failure will not cause
+/// an already saved operation to fail.
+/// Enqueue methods are synchronous and do not call SaveChanges: they add entries to the change
+/// tracker and the caller persists them within its operation.
 /// </summary>
 public interface IEmailOutbox
 {
-    /// <summary>Accoda la mail di prenotazione creata al responsabile. Nessun indirizzo valido: nessuna mail.</summary>
+    /// <summary>Enqueues the booking-created email to the organizer. No valid address: no email.</summary>
     void EnqueueBookingCreatedEmail(Booking booking);
 
-    /// <summary>Accoda la mail di invito a un partecipante.</summary>
+    /// <summary>Enqueues an invitation email to a participant.</summary>
     void EnqueueInvitationEmail(Invitation invitation, Booking booking);
 
     /// <summary>
-    /// Accoda le mail di invito scaduto: all'invitato e al responsabile
-    /// (il cui indirizzo sta nell'invito con Role == Organizer).
+    /// Enqueues expired invitation emails: to the invitee and to the organizer
+    /// (whose address is in the invitation with Role == Organizer).
     /// </summary>
     void EnqueueInvitationExpiredEmails(Invitation invitation, Booking booking);
 
     /// <summary>
-    /// Accoda le mail di annullamento: al responsabile (indirizzo nell'invito con Role == Organizer,
-    /// OrganizerNameSnapshot contiene il nome, non un indirizzo) e ai partecipanti appena annullati.
+    /// Enqueues cancellation emails: to the organizer (address in the invitation with Role == Organizer,
+    /// OrganizerNameSnapshot contains the name, not an address) and to cancelled participants.
     /// </summary>
     void EnqueueBookingCancelledEmails(Booking booking);
 }
@@ -43,8 +43,8 @@ public sealed class EmailOutbox(
 {
     public void EnqueueBookingCreatedEmail(Booking booking)
     {
-        // L'indirizzo del responsabile sta nell'invito con Role == Organizer:
-        // OrganizerNameSnapshot contiene il nome visualizzato, non un indirizzo.
+        // Organizer address is in the invitation with Role == Organizer:
+        // OrganizerNameSnapshot contains the display name, not an address.
         var organizerInvitation = booking.Invitations
             .FirstOrDefault(i => i.Role == ParticipantRole.Organizer);
         if (organizerInvitation is null
@@ -74,8 +74,8 @@ public sealed class EmailOutbox(
                 NotificationTemplates.InvitationExpired(invitation, booking, invitation.Email, toOrganizer: false));
         }
 
-        // L'email del responsabile sta nell'invito con Role == Organizer:
-        // OrganizerNameSnapshot contiene il nome, non un indirizzo.
+        // Organizer email is in the invitation with Role == Organizer:
+        // OrganizerNameSnapshot contains the name, not an address.
         var organizerInvitation = booking.Invitations
             .FirstOrDefault(i => i.Role == ParticipantRole.Organizer);
         if (organizerInvitation is not null && MailAddress.TryCreate(organizerInvitation.Email, out _))
@@ -88,7 +88,7 @@ public sealed class EmailOutbox(
 
     public void EnqueueBookingCancelledEmails(Booking booking)
     {
-        // Come sopra: il destinatario del responsabile è l'invito con Role == Organizer.
+        // As above: the organizer recipient is the invitation with Role == Organizer.
         var organizerInvitation = booking.Invitations
             .FirstOrDefault(i => i.Role == ParticipantRole.Organizer);
         if (organizerInvitation is not null && MailAddress.TryCreate(organizerInvitation.Email, out _))

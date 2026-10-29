@@ -22,7 +22,7 @@ public class BookingsApiFactory : WebApplicationFactory<Program>
     public FakeUsersClient Users { get; } = new();
 
     /// <summary>
-    /// Cartella pickup usata dall'app in test: i .eml finiscono qui, non nella cwd.
+    /// Pickup directory used by the application under test: .eml files are placed here, not in cwd.
     /// </summary>
     public string PickupDirectory { get; } = Path.Combine(
         Path.GetTempPath(), "smartcampus-tests-outbox", Guid.NewGuid().ToString("N"));

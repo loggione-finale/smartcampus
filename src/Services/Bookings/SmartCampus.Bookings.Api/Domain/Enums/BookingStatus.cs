@@ -7,9 +7,9 @@ public enum BookingStatus
     Closed,
 
     /// <summary>
-    /// Stato derivato/calcolato temporalmente (esposto nei DTO verso i client come MyBookingResponse)
-    /// quando una prenotazione Confirmed ha superato l'orario di fine e attende il commento finale.
-    /// Non viene persistito sul database relazionale per garantire la consistenza temporale naturale.
+    /// Derived/computed temporal status (exposed in DTOs to clients such as MyBookingResponse)
+    /// when a Confirmed booking has passed its end time and awaits the closing comment.
+    /// It is not persisted in the relational database to ensure natural temporal consistency.
     /// </summary>
     AwaitingComment
 }

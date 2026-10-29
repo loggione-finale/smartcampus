@@ -67,7 +67,7 @@ public class PickupDirectoryEmailSenderTests : IDisposable
         {
             var lines = File.ReadLines(file).ToArray();
 
-            // Il corpo con UTF-8 è base64: si decodifica prima del confronto.
+            // The body with UTF-8 is base64: decode before comparison.
             var body = lines.Contains("Content-Transfer-Encoding: base64")
                 ? Encoding.UTF8.GetString(Convert.FromBase64String(
                     string.Concat(lines.SkipWhile(l => l.Length > 0).Skip(1))))
@@ -83,7 +83,7 @@ public class PickupDirectoryEmailSenderTests : IDisposable
     [Fact]
     public async Task Never_talks_to_an_smtp_server()
     {
-        // DeliveryMethod è pickup directory: l'invio non apre connessioni di rete.
+        // DeliveryMethod is pickup directory: sending does not open network connections.
         var email = NotificationTemplates.BookingCreated(
             BookingTestData.NewBooking(Guid.NewGuid(), Start, Start.AddHours(1)),
             "organizer@smartcampus.test");
@@ -96,7 +96,7 @@ public class PickupDirectoryEmailSenderTests : IDisposable
     [Fact]
     public void Templates_format_times_in_the_campus_timezone_not_utc()
     {
-        // 09:00 UTC = 11:00 ora italiana (CEST, UTC+2 a fine marzo).
+        // 09:00 UTC = 11:00 Italian time (CEST, UTC+2 in late March).
         var booking = BookingTestData.NewBooking(Guid.NewGuid(), Start, Start.AddHours(2));
         var invitation = BookingTestData.NewInvitation(booking, userId: null, InvitationStatus.Invited);
 
@@ -106,7 +106,7 @@ public class PickupDirectoryEmailSenderTests : IDisposable
         Assert.DoesNotContain("09:00", email.Body);
 
         var invitationEmail = NotificationTemplates.InvitationToUnregistered(invitation, booking, "http://localhost:4200");
-        // ExpiresAt coincide con l'inizio della prenotazione: 09:00 UTC = 11:00.
+        // ExpiresAt coincides with booking start: 09:00 UTC = 11:00.
         Assert.Contains("Registrati sul portale entro 11:00", invitationEmail.Body);
         Assert.Contains(
             "http://localhost:4200/?returnUrl=%2Finvitations%2F" + invitation.Id + "#registrazione",

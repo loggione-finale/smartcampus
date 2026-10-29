@@ -10,17 +10,17 @@ using SmartCampus.Bookings.Api.Domain;
 namespace SmartCampus.Bookings.Tests;
 
 /// <summary>
-/// Test di integrazione sulla concorrenza (issue #35): molte richieste simultanee sullo stesso
-/// spazio devono rispettare il vincolo di non sovrapposizione (aula dedicata) e la capienza
-/// (aula mista); due prenotazioni adiacenti sono entrambe accettate.
-/// Gira sul database `bookings_test` reale (docker compose up, vedi infra/README.md).
-/// La verifica negativa (test che fallisce senza vincolo o senza lock) è una prova manuale:
-/// la procedura è in docs/evidence/booking-concurrency.md, task #36.
+/// Concurrency integration tests (issue #35): multiple simultaneous requests on the same
+/// space must adhere to the non-overlapping constraint (dedicated space) and capacity
+/// (mixed space); two adjacent bookings are both accepted.
+/// Runs against the real `bookings_test` database (docker compose up, see infra/README.md).
+/// Negative verification (test failing without constraint or lock) is a manual test:
+/// procedure documented in docs/evidence/booking-concurrency.md, task #36.
 /// </summary>
 public sealed class BookingsTestDatabase : IAsyncLifetime
 {
-    // La password reale arriva dalla variabile d'ambiente BOOKINGS_TEST_CONNECTION_STRING
-    // (vedi infra/README.md); questa stringa è il fallback di sviluppo locale del gruppo.
+    // Real password comes from BOOKINGS_TEST_CONNECTION_STRING environment variable
+    // (see infra/README.md); this string is the team's local development fallback.
     internal static readonly string ConnectionString = Environment.GetEnvironmentVariable("BOOKINGS_TEST_CONNECTION_STRING")
         ?? "Host=localhost;Port=5432;Database=bookings_test;Username=bookings_app;Password=bookings";
 
@@ -29,13 +29,13 @@ public sealed class BookingsTestDatabase : IAsyncLifetime
     public async Task InitializeAsync()
     {
         _dataSource = NpgsqlDataSource.Create(ConnectionString);
-        // `bookings_app` non ha i diritti per ricreare il database: ripulisce solo le tabelle.
-        // I nomi delle tabelle sono fissi (niente input utente), il warning di SQL injection non si applica.
+        // `bookings_app` does not have rights to drop/recreate the database: it only truncates tables.
+        // Table names are hardcoded (no user input), SQL injection warning does not apply.
         await using var ctx = CreateContext();
         await ctx.Database.MigrateAsync();
         foreach (var table in new[] { "outbox_emails", "admin_alerts", "closing_comments", "equipment_requests", "invitations", "bookings" })
         {
-#pragma warning disable EF1002 // Nomi di tabella fissi, nessun input utente
+#pragma warning disable EF1002 // Fixed table names, no user input
             await ctx.Database.ExecuteSqlRawAsync($"TRUNCATE TABLE {table} CASCADE");
 #pragma warning restore EF1002
         }
@@ -145,10 +145,10 @@ public class BookingConcurrencyTests
     }
 
     /// <summary>
-    /// Quello che fa il servizio (#102): dentro una transazione prende `pg_advisory_xact_lock`
-    /// sullo spazio, conta i posti già occupati da prenotazioni `Confirmed` sovrapposte e
-    /// inserisce solo se la capienza lo consente. Senza il lock due richieste simultanee
-    /// leggerebbero lo stesso totale e supererebbero la capienza.
+    /// Service behavior (#102): acquires `pg_advisory_xact_lock` on the space within a transaction,
+    /// counts seats already occupied by overlapping `Confirmed` bookings, and
+    /// inserts only if capacity allows. Without the lock two concurrent requests
+    /// would read the same total and exceed capacity.
     /// </summary>
     private async Task<BookingOutcome> TryInsertMixedBookingWithLockAsync(
         Guid spaceId,

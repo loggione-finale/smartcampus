@@ -182,8 +182,8 @@ public class GroupBookingEndpointTests(BookingsApiFactory factory) : IClassFixtu
             Assert.All(sent, e => Assert.Equal(OutboxEmailStatus.Sent, e.Status));
         }
 
-        // Nel frattempo il servizio reale può aver già processato altre code della stessa suite:
-        // si contano solo i .eml di questa prenotazione, riconosciuti dal codice nel nome file.
+        // In the meantime the background service may have processed other queues from the same test suite:
+        // count only the .eml files for this booking, identified by the reference code in file contents.
         var bookingReference = await dbContext.Bookings
             .Where(b => b.Id == bookingId)
             .Select(b => b.ReferenceCode)

@@ -4,22 +4,22 @@ using Microsoft.Extensions.Options;
 
 namespace SmartCampus.Bookings.Api.Features.Notifications;
 
-/// <summary>La pickup directory non è scrivibile o il percorso non è valido.</summary>
+/// <summary>The pickup directory is not writable or the path is invalid.</summary>
 public sealed class NotificationDeliveryException(string message, Exception inner)
     : InvalidOperationException(message, inner);
 
 /// <summary>
-/// Invia le mail scrivendo un file .eml nella cartella pickup:
-/// <see cref="SmtpClient"/> con <see cref="SmtpDeliveryMethod.SpecifiedPickupDirectory"/>
-/// non apre alcuna connessione di rete.
-/// Se la pickup directory non è scrivibile, l'eccezione (<see cref="NotificationDeliveryException"/>)
-/// sale al chiamante: il dispatcher marca la riga come Failed e l'operazione HTTP non è affetta.
+/// Dispatches emails by writing a .eml file into the pickup directory:
+/// <see cref="SmtpClient"/> with <see cref="SmtpDeliveryMethod.SpecifiedPickupDirectory"/>
+/// does not open any network connections.
+/// If the pickup directory is not writable, the exception (<see cref="NotificationDeliveryException"/>)
+/// bubbles up to the caller: the dispatcher marks the row as Failed and HTTP operations are unaffected.
 /// </summary>
 public sealed class PickupDirectoryEmailSender(IOptions<NotificationOptions> options) : INotificationSender
 {
     public Task SendAsync(OutgoingEmail email, CancellationToken cancellationToken = default)
     {
-        // SmtpClient richiede un percorso assoluto per la pickup directory.
+        // SmtpClient requires an absolute path for the pickup directory.
         var pickupDirectory = Path.GetFullPath(options.Value.PickupDirectoryLocation);
         Directory.CreateDirectory(pickupDirectory);
 

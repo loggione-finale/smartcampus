@@ -113,8 +113,8 @@ public class EmailOutboxDispatcherTests(BookingsApiFactory factory) : IClassFixt
     {
         var spaceId = Guid.NewGuid();
         factory.Spaces.Behavior = _ => FakeSpacesClient.DefaultSpace();
-        // Il token ha ClaimTypes.Name = nome visualizzato ("Giulia Rossi"), non un indirizzo:
-        // prima della correzione il destinatario era quel nome e MailAddress sollevava FormatException.
+        // The token has ClaimTypes.Name = display name ("Giulia Rossi"), not an email address:
+        // prior to the fix, the recipient was set to that display name and MailAddress threw a FormatException.
         var client = factory.CreateAuthenticatedClient(
             Guid.NewGuid(), "organizer@smartcampus.test", displayName: "Giulia Rossi");
         var start = TestSlots.Next();

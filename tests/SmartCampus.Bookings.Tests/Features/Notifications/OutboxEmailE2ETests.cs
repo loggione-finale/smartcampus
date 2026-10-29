@@ -44,9 +44,9 @@ public class OutboxEmailE2ETests(BookingsApiFactory factory) : IClassFixture<Boo
             .ThenBy(e => e.ToAddress)
             .ToListAsync();
 
-        // L'invito registrato ha UserId, quello non registrato no:
-        // il componente BookingService prenota le mail solo per gli inviti con status Invited,
-        // entrambi i partecipanti lo sono, quindi si attendono due inviti + la prenotazione creata.
+        // A registered invitation has UserId, an unregistered one does not:
+        // BookingService queues emails only for invitations with status Invited;
+        // both participants are Invited, so two invitations + the booking-created email are expected.
         Assert.Equal(
             ["booking-created", "invitation", "invitation"],
             emails.Select(e => e.Kind));
@@ -55,11 +55,11 @@ public class OutboxEmailE2ETests(BookingsApiFactory factory) : IClassFixture<Boo
             emails.Select(e => e.ToAddress));
         Assert.All(emails, e => Assert.Equal(OutboxEmailStatus.Pending, e.Status));
 
-        // Il dispatcher in background scrive i .eml e marca le righe come inviate.
+        // The background dispatcher writes the .eml files and marks the rows as sent.
         await RunOutboxDispatcherAsync();
 
-        // Riquery con Contesti diversi: il dispatcher usa un contesto dedicato,
-        // quindi la lettura va fatta su una query nuova per vedere lo stato aggiornato.
+        // Re-query with a fresh context: the dispatcher uses a dedicated scope,
+        // so read operations require a new query to see the updated status.
         using (var freshScope = factory.Services.CreateScope())
         {
             var freshContext = freshScope.ServiceProvider.GetRequiredService<BookingsDbContext>();
@@ -70,8 +70,8 @@ public class OutboxEmailE2ETests(BookingsApiFactory factory) : IClassFixture<Boo
             Assert.All(sent, e => Assert.Equal(OutboxEmailStatus.Sent, e.Status));
         }
 
-        // Nel frattempo il dispatcher del servizio può aver già scritto altre code della suite:
-        // si contano solo i .eml di questa prenotazione, riconosciuti dal codice nel corpo.
+        // In the meantime the background dispatcher may have processed other queues from the suite:
+        // count only the .eml files for this booking, identified by the reference code in the body.
         var bookingReference = await dbContext.Bookings
             .Where(b => b.Id == bookingId)
             .Select(b => b.ReferenceCode)
@@ -81,14 +81,14 @@ public class OutboxEmailE2ETests(BookingsApiFactory factory) : IClassFixture<Boo
             Directory.GetFiles(factory.PickupDirectory, "*.eml")
                 .Count(f => File.ReadAllText(f).Contains(bookingReference)));
 
-        // Ogni evento produce la mail attesa: invito separato per registrato e non registrato.
+        // Each event produces the expected email: distinct invitation for registered vs unregistered.
         var invitationToExternal = emails.Single(e => e.ToAddress == "esterna@libero.test");
         Assert.Contains("Registrati sul portale", invitationToExternal.Body);
         var invitationToRegistered = emails.Single(e => e.ToAddress == "registrata@smartcampus.test");
         Assert.Contains("utente registrato", invitationToRegistered.Body);
 
-        // L'invito al non registrato punta alla registrazione con ritorno all'invito;
-        // quello al registrato punta alla pagina di conferma.
+        // The unregistered invitation links to registration with a returnUrl to the invitation;
+        // the registered invitation links to the confirmation page.
         var invitationIds = await dbContext.Invitations
             .Where(i => i.BookingId == bookingId && i.Role != ParticipantRole.Organizer)
             .ToListAsync();

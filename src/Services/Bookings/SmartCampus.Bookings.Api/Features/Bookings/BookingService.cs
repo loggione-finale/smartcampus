@@ -277,8 +277,8 @@ public class BookingService(
     {
         var strategy = dbContext.Database.CreateExecutionStrategy();
 
-        // Solo il salvataggio è nella strategia di retry: le code delle mail restano fuori,
-        // così un tentativo della strategia non può accodare due volte le notifiche.
+        // Only persistence is inside the retry strategy: email queues remain outside,
+        // so that a strategy retry attempt cannot queue duplicate notifications.
         var created = await strategy.ExecuteAsync(async () =>
         {
             dbContext.ChangeTracker.Clear();
