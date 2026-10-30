@@ -31,7 +31,7 @@ prenotazioni, uso dichiarato e dati mancanti.
 | Piattaforma | Avvio con un comando, CI su ogni PR, prove di sistema | `scripts/dev-up`; Actions |
 
 Rilasci: [`v0.1`](https://github.com/loggione-finale/smartcampus/releases/tag/v0.1) (Sprint 1) e [`v0.2`](https://github.com/loggione-finale/smartcampus/releases/tag/v0.2) (Sprint 2 e
-iper-sprint). Le PR fuse dopo la `v0.2` (#251, #269, #271–#276: interfaccia uniforme e correzioni) **non sono ancora in una release**: la `v0.2.1` si pubblica dopo le prove della consegna. Cosa è entrato con l'iper-sprint del 29/10: [piano](hyper-sprint-2026-10-29.md) e note
+iper-sprint); la versione della consegna è la [`v0.2.1`](https://github.com/loggione-finale/smartcampus/releases/tag/v0.2.1), con l'interfaccia uniforme e le correzioni fuse dopo la `v0.2`. Cosa è entrato con l'iper-sprint del 29/10: [piano](hyper-sprint-2026-10-29.md) e note
 della `v0.2`.
 
 ## 3. Architettura in una pagina
@@ -154,9 +154,8 @@ Elenco completo: [evidence/README.md](evidence/README.md). Le principali:
 1. Autenticazione tra i servizi, così `GET /users` può richiedere il login.
 2. Vincolo dei partecipanti per fascia nel database (come quello sulle persone).
 3. Strumento "Altro" con nota e risposta dell'admin all'utente (R8).
-4. Prova a voce della presentazione con tutto il gruppo, se non fatta prima della consegna (#51).
-5. `409` sulla registrazione doppia; `503` con PostgreSQL fermo entro 5 s.
-6. Misure reali d'uso con il campus, per verificare il valore dichiarato come stima.
+4. `409` sulla registrazione doppia; `503` con PostgreSQL fermo entro 5 s.
+5. Misure reali d'uso con il campus, per verificare il valore dichiarato come stima.
 
 ## 11. A chi chiedere
 

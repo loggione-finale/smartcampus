@@ -7,8 +7,17 @@ Project Work ITS Bari – Novembre 2026.
 
 ## Stato
 
-Consegnato il **29/10/2026**: due Sprint e un iper-sprint, con il perimetro e le regole concordati con il Product
-Owner ([registro delle decisioni](docs/analysis/po-decisions.md)).
+**Progetto concluso.** Consegnato e presentato il **29/10/2026**: due Sprint e un iper-sprint, con il perimetro e le
+regole concordati con il Product Owner ([registro delle decisioni](docs/analysis/po-decisions.md)). La versione
+finale è la [`v0.2.1`](https://github.com/loggione-finale/smartcampus/releases/tag/v0.2.1).
+
+Il repository resta aperto per eventuali refactoring, con le stesse regole di lavoro
+([CONTRIBUTING.md](CONTRIBUTING.md)). Da dove ripartire: [limiti noti](docs/HANDOFF.md#9-limiti-noti-e-debito-tecnico)
+e [prossimi passi consigliati](docs/HANDOFF.md#10-prossimi-passi-consigliati) nella guida al progetto.
+
+Il codice e la documentazione sono stati scritti con l'aiuto di assistenti IA (GitHub Copilot con gli
+[agenti del progetto](docs/agents/README.md), Claude Code), dentro il processo Scrum del team: ogni modifica è
+partita da una issue ed è passata da una pull request, dalla revisione di un compagno e dalla CI.
 
 - **[Guida al progetto (hand-off): da leggere per primo](docs/HANDOFF.md)**
 - [Chi ha fatto cosa e perché](docs/team-work-map.md)
@@ -188,3 +197,7 @@ Leggi [CONTRIBUTING.md](CONTRIBUTING.md) prima di aprire la tua prima pull reque
 - Solo dati sintetici: nessun dato personale reale.
 - Nessun segreto (password, token, connection string) in repository, log o materiali condivisi.
   Usa `dotnet user-secrets` o variabili d'ambiente.
+
+## Licenza
+
+[MIT](LICENSE), a nome di tutto il team.
